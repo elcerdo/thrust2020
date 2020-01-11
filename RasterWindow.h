@@ -18,6 +18,7 @@ class RasterWindow : public QWindow
         bool event(QEvent *event) override;
         void resizeEvent(QResizeEvent *event) override;
         void exposeEvent(QExposeEvent *event) override;
+        void timerEvent(QTimerEvent *event) override;
 
     private:
         QBackingStore *m_backingStore;
