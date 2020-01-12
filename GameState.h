@@ -15,5 +15,7 @@ struct GameState
     b2World world;
     b2Body* ground;
     b2Body* ship;
+
+    bool ship_firing;
 };
 

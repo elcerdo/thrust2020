@@ -9,8 +9,10 @@ using std::cout;
 using std::endl;
 
 GameState::GameState() :
-    world(b2Vec2(0, -10)),
-    ground(nullptr)
+    world(b2Vec2(0, -8)),
+    ground(nullptr),
+    ship(nullptr),
+    ship_firing(false)
 {
     cout << "init game state" << endl;
 
@@ -61,6 +63,12 @@ void GameState::step(const float dt)
 {
     int velocityIterations = 6;
     int positionIterations = 2;
+    if (ship_firing)
+    {
+        cout << "****" << endl;
+        const auto angle = ship->GetAngle();
+        ship->ApplyForceToCenter(50.f * b2Rot(angle).GetYAxis(), true);
+    }
     world.Step(dt, velocityIterations, positionIterations);
 }
 

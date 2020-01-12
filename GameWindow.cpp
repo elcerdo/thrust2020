@@ -69,6 +69,33 @@ void drawBody(QPainter& painter, const b2Body* body)
     painter.restore();
 }
 
+void GameWindow::drawFlame(QPainter& painter)
+{
+    std::bernoulli_distribution dist_flicker;
+
+    const auto* body = state.ship;
+
+    assert(body);
+    painter.save();
+    const auto& position = body->GetPosition();
+    const auto& angle = body->GetAngle();
+    painter.translate(position.x, position.y);
+    painter.rotate(qRadiansToDegrees(angle));
+
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(Qt::red);
+    QPolygonF poly;
+    poly << QPointF(0, 0) << QPointF(1, -3) ;
+    if (dist_flicker(rng)) poly << QPointF(.5, -2.5);
+    poly << QPointF(0, -4);
+    if (dist_flicker(rng)) poly << QPointF(-.5, -2.5);
+    poly << QPointF(-1, -3);
+    painter.scale(.8, .8);
+    painter.translate(0, 1.5);
+    painter.drawPolygon(poly);
+    painter.restore();
+}
+
 void GameWindow::render(QPainter& painter)
 {
     const double dt = time.elapsed() / 1e3;
@@ -84,6 +111,27 @@ void GameWindow::render(QPainter& painter)
     painter.translate(0, -20);
     drawOrigin(painter);
     drawBody(painter, state.ground);
+    if (state.ship_firing) drawFlame(painter);
     drawBody(painter, state.ship);
+}
+
+void GameWindow::keyPressEvent(QKeyEvent* event)
+{
+    if (event->key() == Qt::Key_Up)
+    {
+        state.ship_firing = true;
+        return;
+    }
+    RasterWindow::keyPressEvent(event);
+}
+
+void GameWindow::keyReleaseEvent(QKeyEvent* event)
+{
+    if (event->key() == Qt::Key_Up)
+    {
+        state.ship_firing = false;
+        return;
+    }
+    RasterWindow::keyReleaseEvent(event);
 }
 
