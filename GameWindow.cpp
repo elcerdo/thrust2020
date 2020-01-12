@@ -28,6 +28,7 @@ void drawBody(QPainter& painter, const b2Body* body)
     const auto& position = body->GetPosition();
     const auto& angle = body->GetAngle();
     const auto& local_center = body->GetLocalCenter();
+    const auto& is_awake = body->IsAwake();
     painter.translate(position.x, position.y);
     painter.rotate(qRadiansToDegrees(angle));
 
@@ -50,9 +51,20 @@ void drawBody(QPainter& painter, const b2Body* body)
     }
 
     drawOrigin(painter);
-    painter.setBrush(Qt::white);
+    painter.restore();
+
+    painter.save();
+    const auto& world_center = body->GetWorldCenter();
+    const auto& linear_velocity = body->GetLinearVelocityFromWorldPoint(world_center);
+    painter.translate(world_center.x, world_center.y);
+
+    painter.setBrush(Qt::NoBrush);
+    painter.setPen(QPen(Qt::blue, 0));
+    painter.drawLine(QPointF(0, 0), QPointF(linear_velocity.x, linear_velocity.y));
+
+    painter.setBrush(is_awake ? Qt::blue : Qt::white);
     painter.setPen(Qt::NoPen);
-    painter.drawEllipse(QPointF(local_center.x, local_center.y), .2, .2);
+    painter.drawEllipse(QPointF(0, 0), .2, .2);
 
     painter.restore();
 }
@@ -73,6 +85,5 @@ void GameWindow::render(QPainter& painter)
     drawOrigin(painter);
     drawBody(painter, state.ground);
     drawBody(painter, state.ship);
-
 }
 
