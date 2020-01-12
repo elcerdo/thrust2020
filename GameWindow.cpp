@@ -9,7 +9,8 @@ GameWindow::GameWindow(QWindow* parent)
 void GameWindow::render(QPainter *painter)
 {
     painter->drawText(QRectF(0, 0, width(), height()), Qt::AlignCenter, QStringLiteral("QWindow"));
-    qDebug() << time.elapsed();
+
+    const double dt = time.elapsed() / 1e3;
     time.restart();
 }
 
