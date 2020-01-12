@@ -1,6 +1,7 @@
 #include "GameWindow.h"
 
 #include "box2d/b2_fixture.h"
+#include "box2d/b2_polygon_shape.h"
 
 GameWindow::GameWindow(QWindow* parent)
     : RasterWindow(parent)
@@ -26,17 +27,32 @@ void drawBody(QPainter& painter, const b2Body* body)
     painter.save();
     const auto& position = body->GetPosition();
     const auto& angle = body->GetAngle();
+    const auto& local_center = body->GetLocalCenter();
     painter.translate(position.x, position.y);
     painter.rotate(qRadiansToDegrees(angle));
-    drawOrigin(painter);
 
+    painter.setBrush(Qt::black);
+    painter.setPen(QPen(Qt::white, 0));
     const auto* fixture = body->GetFixtureList();
     while (fixture)
     {
         const auto* shape = fixture->GetShape();
-        assert(shape);
+        if (const auto* poly = dynamic_cast<const b2PolygonShape*>(shape))
+        {
+            QPolygonF poly_;
+            for (int kk=0; kk<poly->m_count; kk++)
+                poly_ << QPointF(poly->m_vertices[kk].x, poly->m_vertices[kk].y);
+            painter.drawPolygon(poly_);
+        }
+        //assert(shape);
+        //qDebug() << shape->GetType();
         fixture = fixture->GetNext();
     }
+
+    drawOrigin(painter);
+    painter.setBrush(Qt::white);
+    painter.setPen(Qt::NoPen);
+    painter.drawEllipse(QPointF(local_center.x, local_center.y), .2, .2);
 
     painter.restore();
 }
