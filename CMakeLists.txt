@@ -17,13 +17,15 @@ add_subdirectory(box2d/src)
 add_executable(rocket
     RasterWindow.cpp
     GameWindow.cpp
+    GameState.cpp
+    main.cpp
     #mainwindow.ui
     #mainwindow.cpp
-    main.cpp
     #resources.qrc
-)
+    )
 
 target_link_libraries(rocket
     box2d
-    Qt5::Widgets)
+    Qt5::Widgets
+    )
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RasterWindow.h"
+#include "GameState.h"
 
 class GameWindow : public RasterWindow
 {
@@ -12,6 +13,7 @@ class GameWindow : public RasterWindow
 
     private:
         QTime time;
+        GameState state;
 };
 
 
