@@ -12,6 +12,8 @@ endif()
 
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
+add_subdirectory(box2d/src)
+
 add_executable(rocket
     RasterWindow.cpp
     GameWindow.cpp
@@ -21,5 +23,7 @@ add_executable(rocket
     #resources.qrc
 )
 
-target_link_libraries(rocket Qt5::Widgets)
+target_link_libraries(rocket
+    box2d
+    Qt5::Widgets)
 
