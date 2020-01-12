@@ -65,7 +65,6 @@ void GameState::step(const float dt)
     int positionIterations = 2;
     if (ship_firing)
     {
-        cout << "****" << endl;
         const auto angle = ship->GetAngle();
         ship->ApplyForceToCenter(50.f * b2Rot(angle).GetYAxis(), true);
     }
