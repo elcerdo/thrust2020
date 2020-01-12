@@ -69,6 +69,7 @@ void GameWindow::render(QPainter& painter)
     painter.translate(width() / 2, height() / 2);
     painter.scale(side / 50.0, -side / 50.0);
 
+    painter.translate(0, -20);
     drawOrigin(painter);
     drawBody(painter, state.ground);
     drawBody(painter, state.ship);

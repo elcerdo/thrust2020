@@ -35,11 +35,16 @@ GameState::GameState() :
     { // ship
         b2BodyDef def;
         def.type = b2_dynamicBody;
-        def.position.Set(0, 10);
+        def.position.Set(0, 20);
         def.angle = M_PI / 4 - 2e-2;
 
         b2PolygonShape shape;
-        shape.SetAsBox(1, 1);
+        static const b2Vec2 points[3] {
+            { -1, 0 },
+            { 1, 0 },
+            { 0, 2 }
+        };
+        shape.Set(points, 3);
 
         b2FixtureDef fixture;
         fixture.shape = &shape;
