@@ -1,5 +1,7 @@
 #include "GameWindow.h"
 
+#include "box2d/b2_fixture.h"
+
 GameWindow::GameWindow(QWindow* parent)
     : RasterWindow(parent)
 {
@@ -27,6 +29,15 @@ void drawBody(QPainter& painter, const b2Body* body)
     painter.translate(position.x, position.y);
     painter.rotate(qRadiansToDegrees(angle));
     drawOrigin(painter);
+
+    const auto* fixture = body->GetFixtureList();
+    while (fixture)
+    {
+        const auto* shape = fixture->GetShape();
+        assert(shape);
+        fixture = fixture->GetNext();
+    }
+
     painter.restore();
 }
 
