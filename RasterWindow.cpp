@@ -37,7 +37,7 @@ void RasterWindow::renderNow()
     linearGrad.setColorAt(1, QColor(0x30, 0xcf, 0xd0));
 
     painter.fillRect(0, 0, width(), height(), linearGrad);
-    render(&painter);
+    render(painter);
     painter.end();
 
     m_backingStore->endPaint();

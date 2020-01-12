@@ -9,7 +9,7 @@ using std::cout;
 using std::endl;
 
 GameState::GameState() :
-    world(b2Vec2(0, 10)),
+    world(b2Vec2(0, -10)),
     ground(nullptr)
 {
     cout << "init game state" << endl;
@@ -35,7 +35,8 @@ GameState::GameState() :
     { // ship
         b2BodyDef def;
         def.type = b2_dynamicBody;
-        def.position.Set(0, 2);
+        def.position.Set(0, 10);
+        def.angle = M_PI / 4 - 2e-2;
 
         b2PolygonShape shape;
         shape.SetAsBox(1, 1);

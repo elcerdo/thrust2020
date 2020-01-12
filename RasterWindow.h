@@ -7,8 +7,7 @@ class RasterWindow : public QWindow
     Q_OBJECT
     public:
         explicit RasterWindow(QWindow *parent = nullptr);
-
-        virtual void render(QPainter *painter) = 0;
+        virtual void render(QPainter& painter) = 0;
 
     public slots:
         void renderLater();
