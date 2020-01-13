@@ -17,6 +17,7 @@ struct GameState
     b2Body* ship;
 		b2Body* left_side;
 		b2Body* right_side;
+		b2Body* ball;
 
     bool ship_firing;
 		double ship_target_angular_velocity;

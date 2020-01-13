@@ -1,7 +1,9 @@
 #include "GameState.h"
 
 #include "box2d/b2_polygon_shape.h"
+#include "box2d/b2_circle_shape.h"
 #include "box2d/b2_fixture.h"
+#include "box2d/b2_distance_joint.h"
 
 #include <iostream>
 
@@ -13,6 +15,7 @@ GameState::GameState() :
     ground(nullptr),
     ship(nullptr),
     left_side(nullptr), right_side(nullptr),
+    ball(nullptr),
     ship_firing(false),
     ship_target_angular_velocity(0),
     ship_target_angle(0)
@@ -96,6 +99,35 @@ GameState::GameState() :
         body->CreateFixture(&fixture);
         ship = body;
     }
+
+    { // ship
+        b2BodyDef def;
+        def.type = b2_dynamicBody;
+        def.position.Set(0, 15);
+        def.angle = 0;
+        def.angularVelocity = 2 * M_PI;
+
+        b2CircleShape shape;
+        shape.m_radius = 1.;
+
+        b2FixtureDef fixture;
+        fixture.shape = &shape;
+        fixture.density = .8;
+        fixture.friction = .3;
+
+        auto body = world.CreateBody(&def);
+        body->CreateFixture(&fixture);
+        ball = body;
+    }
+
+    { // ship ball joint
+        b2DistanceJointDef def;
+        def.Initialize(ship, ball, ship->GetWorldCenter(), ball->GetWorldCenter());
+        def.frequencyHz = 0.;
+        def.dampingRatio = 2.;
+        def.collideConnected = true;
+        world.CreateJoint(&def);
+    }
 }
 
 void GameState::step(const float dt)
@@ -103,7 +135,7 @@ void GameState::step(const float dt)
     int velocityIterations = 6;
     int positionIterations = 2;
     const auto angle = ship->GetAngle();
-    if (ship_firing) ship->ApplyForceToCenter(50.f * b2Rot(angle).GetYAxis(), true);
+    if (ship_firing) ship->ApplyForceToCenter(100.f * b2Rot(angle).GetYAxis(), true);
     ship_target_angle += ship_target_angular_velocity * dt;
     ship->SetAngularVelocity((ship_target_angle - angle) / .2);
     world.Step(dt, velocityIterations, positionIterations);

@@ -2,13 +2,13 @@
 
 #include "box2d/b2_fixture.h"
 #include "box2d/b2_polygon_shape.h"
+#include "box2d/b2_circle_shape.h"
 
 GameWindow::GameWindow(QWindow* parent)
     : RasterWindow(parent)
 {
     time.start();
 }
-
 
 void drawOrigin(QPainter& painter)
 {
@@ -43,6 +43,10 @@ void drawBody(QPainter& painter, const b2Body* body)
             for (int kk=0; kk<poly->m_count; kk++)
                 poly_ << QPointF(poly->m_vertices[kk].x, poly->m_vertices[kk].y);
             painter.drawPolygon(poly_);
+        }
+        if (const auto* circle = dynamic_cast<const b2CircleShape*>(shape))
+        {
+            painter.drawEllipse(QPointF(0, 0), circle->m_radius, circle->m_radius);
         }
         //assert(shape);
         //qDebug() << shape->GetType();
@@ -130,6 +134,16 @@ void GameWindow::render(QPainter& painter)
     drawBody(painter, state.left_side);
     drawBody(painter, state.right_side);
     drawBody(painter, state.ground);
+
+		painter.save();
+		const auto& ball_center = state.ball->GetWorldCenter();
+		const auto& ship_center = state.ship->GetWorldCenter();
+    painter.setBrush(Qt::NoBrush);
+    painter.setPen(QPen(Qt::white, 0));
+		painter.drawLine(QPointF(ball_center.x, ball_center.y), QPointF(ship_center.x, ship_center.y));
+		painter.restore();
+
+    drawBody(painter, state.ball);
 
     if (state.ship_firing) drawFlame(painter);
     drawShip(painter);
