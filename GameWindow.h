@@ -12,6 +12,7 @@ class GameWindow : public RasterWindow
         GameWindow(QWindow* parent = nullptr);
         void render(QPainter& painter) override;
         void drawFlame(QPainter& painter);
+        void drawShip(QPainter& painter);
 
     protected:
         void keyPressEvent(QKeyEvent* event) override;

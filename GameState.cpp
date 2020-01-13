@@ -12,7 +12,10 @@ GameState::GameState() :
     world(b2Vec2(0, -8)),
     ground(nullptr),
     ship(nullptr),
-    ship_firing(false)
+    left_side(nullptr), right_side(nullptr),
+    ship_firing(false),
+    ship_target_angular_velocity(0),
+    ship_target_angle(0)
 {
     cout << "init game state" << endl;
 
@@ -32,6 +35,42 @@ GameState::GameState() :
         auto body = world.CreateBody(&def);
         body->CreateFixture(&fixture);
         ground = body;
+    }
+
+    { // left side
+        b2BodyDef def;
+        def.type = b2_staticBody;
+        def.position.Set(-40, 0);
+
+        b2PolygonShape shape;
+        shape.SetAsBox(10, 100);
+
+        b2FixtureDef fixture;
+        fixture.shape = &shape;
+        fixture.density = 0;
+        fixture.friction = .3;
+
+        auto body = world.CreateBody(&def);
+        body->CreateFixture(&fixture);
+        left_side = body;
+    }
+
+    { // right side
+        b2BodyDef def;
+        def.type = b2_staticBody;
+        def.position.Set(40, 0);
+
+        b2PolygonShape shape;
+        shape.SetAsBox(10, 100);
+
+        b2FixtureDef fixture;
+        fixture.shape = &shape;
+        fixture.density = 0;
+        fixture.friction = .3;
+
+        auto body = world.CreateBody(&def);
+        body->CreateFixture(&fixture);
+        right_side = body;
     }
 
     { // ship
@@ -63,11 +102,10 @@ void GameState::step(const float dt)
 {
     int velocityIterations = 6;
     int positionIterations = 2;
-    if (ship_firing)
-    {
-        const auto angle = ship->GetAngle();
-        ship->ApplyForceToCenter(50.f * b2Rot(angle).GetYAxis(), true);
-    }
+    const auto angle = ship->GetAngle();
+    if (ship_firing) ship->ApplyForceToCenter(50.f * b2Rot(angle).GetYAxis(), true);
+    ship_target_angle += ship_target_angular_velocity * dt;
+    ship->SetAngularVelocity((ship_target_angle - angle) / .2);
     world.Step(dt, velocityIterations, positionIterations);
 }
 

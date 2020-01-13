@@ -27,7 +27,6 @@ void drawBody(QPainter& painter, const b2Body* body)
     painter.save();
     const auto& position = body->GetPosition();
     const auto& angle = body->GetAngle();
-    const auto& local_center = body->GetLocalCenter();
     const auto& is_awake = body->IsAwake();
     painter.translate(position.x, position.y);
     painter.rotate(qRadiansToDegrees(angle));
@@ -74,8 +73,8 @@ void GameWindow::drawFlame(QPainter& painter)
     std::bernoulli_distribution dist_flicker;
 
     const auto* body = state.ship;
-
     assert(body);
+
     painter.save();
     const auto& position = body->GetPosition();
     const auto& angle = body->GetAngle();
@@ -96,6 +95,24 @@ void GameWindow::drawFlame(QPainter& painter)
     painter.restore();
 }
 
+void GameWindow::drawShip(QPainter& painter)
+{
+    const auto* body = state.ship;
+    assert(body);
+
+    drawBody(painter, body);
+
+    painter.save();
+    const auto& world_center = body->GetWorldCenter();
+    painter.translate(world_center.x, world_center.y);
+
+    painter.setBrush(Qt::NoBrush);
+    painter.setPen(QPen(Qt::blue, 0));
+    painter.drawLine(QPointF(0, 0), QPointF(-sin(state.ship_target_angle), cos(state.ship_target_angle)));
+
+    painter.restore();
+}
+
 void GameWindow::render(QPainter& painter)
 {
     const double dt = time.elapsed() / 1e3;
@@ -110,9 +127,12 @@ void GameWindow::render(QPainter& painter)
 
     painter.translate(0, -20);
     drawOrigin(painter);
+    drawBody(painter, state.left_side);
+    drawBody(painter, state.right_side);
     drawBody(painter, state.ground);
+
     if (state.ship_firing) drawFlame(painter);
-    drawBody(painter, state.ship);
+    drawShip(painter);
 }
 
 void GameWindow::keyPressEvent(QKeyEvent* event)
@@ -120,6 +140,11 @@ void GameWindow::keyPressEvent(QKeyEvent* event)
     if (event->key() == Qt::Key_Up)
     {
         state.ship_firing = true;
+        return;
+    }
+    if (event->key() == Qt::Key_Left || event->key() == Qt::Key_Right)
+    {
+        state.ship_target_angular_velocity = M_PI / 2. * (event->key() == Qt::Key_Left ? 1. : -1.);
         return;
     }
     RasterWindow::keyPressEvent(event);
@@ -130,6 +155,11 @@ void GameWindow::keyReleaseEvent(QKeyEvent* event)
     if (event->key() == Qt::Key_Up)
     {
         state.ship_firing = false;
+        return;
+    }
+    if (event->key() == Qt::Key_Left || event->key() == Qt::Key_Right)
+    {
+        state.ship_target_angular_velocity = 0;
         return;
     }
     RasterWindow::keyReleaseEvent(event);

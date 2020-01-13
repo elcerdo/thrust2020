@@ -15,7 +15,11 @@ struct GameState
     b2World world;
     b2Body* ground;
     b2Body* ship;
+		b2Body* left_side;
+		b2Body* right_side;
 
     bool ship_firing;
+		double ship_target_angular_velocity;
+		double ship_target_angle;
 };
 
