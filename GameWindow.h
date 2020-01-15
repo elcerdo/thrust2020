@@ -13,6 +13,8 @@ class GameWindow : public RasterWindow
         void render(QPainter& painter) override;
         void drawFlame(QPainter& painter);
         void drawShip(QPainter& painter);
+        void drawBody(QPainter& painter, const b2Body* body) const;
+        void drawOrigin(QPainter& painter) const;
 
     protected:
         void keyPressEvent(QKeyEvent* event) override;
@@ -22,6 +24,8 @@ class GameWindow : public RasterWindow
         QTime time;
         GameState state;
         std::default_random_engine rng;
+        bool draw_debug;
+        size_t frame_counter;
 };
 
 

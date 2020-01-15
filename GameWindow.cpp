@@ -4,14 +4,21 @@
 #include "box2d/b2_polygon_shape.h"
 #include "box2d/b2_circle_shape.h"
 
-GameWindow::GameWindow(QWindow* parent)
-    : RasterWindow(parent)
+GameWindow::GameWindow(QWindow* parent) :
+    RasterWindow(parent),
+    state(),
+    rng(0x78549632),
+    draw_debug(false),
+    frame_counter(0)
 {
     time.start();
 }
 
-void drawOrigin(QPainter& painter)
+void GameWindow::drawOrigin(QPainter& painter) const
 {
+    if (!draw_debug)
+        return;
+
     painter.save();
     painter.setBrush(Qt::NoBrush);
     painter.setPen(QPen(Qt::red, 0));
@@ -21,60 +28,75 @@ void drawOrigin(QPainter& painter)
     painter.restore();
 }
 
-void drawBody(QPainter& painter, const b2Body* body)
+void GameWindow::drawBody(QPainter& painter, const b2Body* body) const
 {
     assert(body);
-    painter.save();
-    const auto& position = body->GetPosition();
-    const auto& angle = body->GetAngle();
-    const auto& is_awake = body->IsAwake();
-    painter.translate(position.x, position.y);
-    painter.rotate(qRadiansToDegrees(angle));
 
-    painter.setBrush(Qt::black);
-    painter.setPen(QPen(Qt::white, 0));
-    const auto* fixture = body->GetFixtureList();
-    while (fixture)
-    {
-        const auto* shape = fixture->GetShape();
-        if (const auto* poly = dynamic_cast<const b2PolygonShape*>(shape))
+    { // shape and origin
+        const auto& position = body->GetPosition();
+        const auto& angle = body->GetAngle();
+
+        painter.save();
+
+        painter.translate(position.x, position.y);
+        painter.rotate(qRadiansToDegrees(angle));
+
+        painter.setBrush(Qt::black);
+        painter.setPen(QPen(Qt::white, 0));
+        const auto* fixture = body->GetFixtureList();
+        while (fixture)
         {
-            QPolygonF poly_;
-            for (int kk=0; kk<poly->m_count; kk++)
-                poly_ << QPointF(poly->m_vertices[kk].x, poly->m_vertices[kk].y);
-            painter.drawPolygon(poly_);
+            const auto* shape = fixture->GetShape();
+            if (const auto* poly = dynamic_cast<const b2PolygonShape*>(shape))
+            {
+                QPolygonF poly_;
+                for (int kk=0; kk<poly->m_count; kk++)
+                    poly_ << QPointF(poly->m_vertices[kk].x, poly->m_vertices[kk].y);
+                painter.drawPolygon(poly_);
+            }
+            if (const auto* circle = dynamic_cast<const b2CircleShape*>(shape))
+            {
+                painter.drawEllipse(QPointF(0, 0), circle->m_radius, circle->m_radius);
+            }
+            //assert(shape);
+            //qDebug() << shape->GetType();
+            fixture = fixture->GetNext();
         }
-        if (const auto* circle = dynamic_cast<const b2CircleShape*>(shape))
-        {
-            painter.drawEllipse(QPointF(0, 0), circle->m_radius, circle->m_radius);
-        }
-        //assert(shape);
-        //qDebug() << shape->GetType();
-        fixture = fixture->GetNext();
+
+        drawOrigin(painter);
+
+        painter.restore();
     }
 
-    drawOrigin(painter);
-    painter.restore();
+    if (draw_debug)
+    { // center of mass and velocity
+        const auto& world_center = body->GetWorldCenter();
+        const auto& linear_velocity = body->GetLinearVelocityFromWorldPoint(world_center);
+        const auto& is_awake = body->IsAwake();
 
-    painter.save();
-    const auto& world_center = body->GetWorldCenter();
-    const auto& linear_velocity = body->GetLinearVelocityFromWorldPoint(world_center);
-    painter.translate(world_center.x, world_center.y);
+        painter.save();
 
-    painter.setBrush(Qt::NoBrush);
-    painter.setPen(QPen(Qt::blue, 0));
-    painter.drawLine(QPointF(0, 0), QPointF(linear_velocity.x, linear_velocity.y));
+        painter.translate(world_center.x, world_center.y);
 
-    painter.setBrush(is_awake ? Qt::blue : Qt::white);
-    painter.setPen(Qt::NoPen);
-    painter.drawEllipse(QPointF(0, 0), .2, .2);
+        painter.setBrush(Qt::NoBrush);
+        painter.setPen(QPen(Qt::blue, 0));
+        painter.drawLine(QPointF(0, 0), QPointF(linear_velocity.x, linear_velocity.y));
 
-    painter.restore();
+        painter.setBrush(is_awake ? Qt::blue : Qt::white);
+        painter.setPen(Qt::NoPen);
+        painter.drawEllipse(QPointF(0, 0), .2, .2);
+
+        painter.restore();
+    }
 }
 
 void GameWindow::drawFlame(QPainter& painter)
 {
     std::bernoulli_distribution dist_flicker;
+    std::normal_distribution<float> dist_noise(0, .2);
+    const auto randomPoint = [this, &dist_noise]() -> QPointF {
+        return { dist_noise(rng), dist_noise(rng) };
+    };
 
     const auto* body = state.ship;
     assert(body);
@@ -88,11 +110,11 @@ void GameWindow::drawFlame(QPainter& painter)
     painter.setPen(Qt::NoPen);
     painter.setBrush(Qt::red);
     QPolygonF poly;
-    poly << QPointF(0, 0) << QPointF(1, -3) ;
-    if (dist_flicker(rng)) poly << QPointF(.5, -2.5);
-    poly << QPointF(0, -4);
-    if (dist_flicker(rng)) poly << QPointF(-.5, -2.5);
-    poly << QPointF(-1, -3);
+    poly << QPointF(0, 0) << QPointF(1, -3) + randomPoint();
+    if (dist_flicker(rng)) poly << QPointF(.5, -2.5) + randomPoint();
+    poly << QPointF(0, -4) + randomPoint();
+    if (dist_flicker(rng)) poly << QPointF(-.5, -2.5) + randomPoint();
+    poly << QPointF(-1, -3) + randomPoint();
     painter.scale(.8, .8);
     painter.translate(0, 1.5);
     painter.drawPolygon(poly);
@@ -104,21 +126,36 @@ void GameWindow::drawShip(QPainter& painter)
     const auto* body = state.ship;
     assert(body);
 
+    if (state.ship_firing) drawFlame(painter);
     drawBody(painter, body);
 
-    painter.save();
-    const auto& world_center = body->GetWorldCenter();
-    painter.translate(world_center.x, world_center.y);
+    if (state.canGrab() && frame_counter % 2 == 0)
+    {
+        painter.save();
+        const auto& world_center = body->GetWorldCenter();
+        painter.translate(world_center.x, world_center.y);
+        painter.setBrush(Qt::NoBrush);
+        painter.setPen(QPen(Qt::blue, 0));
+        painter.drawEllipse(QPointF(0, 0), 1.5, 1.5);
+        painter.restore();
+    }
 
-    painter.setBrush(Qt::NoBrush);
-    painter.setPen(QPen(Qt::blue, 0));
-    painter.drawLine(QPointF(0, 0), QPointF(-sin(state.ship_target_angle), cos(state.ship_target_angle)));
-
-    painter.restore();
+    if (draw_debug)
+    { // direction hint
+        painter.save();
+        const auto& world_center = body->GetWorldCenter();
+        painter.translate(world_center.x, world_center.y);
+        painter.setBrush(Qt::NoBrush);
+        painter.setPen(QPen(Qt::blue, 0));
+        painter.drawLine(QPointF(0, 0), QPointF(-sin(state.ship_target_angle), cos(state.ship_target_angle)));
+        painter.restore();
+    }
 }
 
 void GameWindow::render(QPainter& painter)
 {
+    frame_counter++;
+
     const double dt = time.elapsed() / 1e3;
     time.restart();
 
@@ -135,22 +172,30 @@ void GameWindow::render(QPainter& painter)
     drawBody(painter, state.right_side);
     drawBody(painter, state.ground);
 
-		painter.save();
-		const auto& ball_center = state.ball->GetWorldCenter();
-		const auto& ship_center = state.ship->GetWorldCenter();
-    painter.setBrush(Qt::NoBrush);
-    painter.setPen(QPen(Qt::white, 0));
-		painter.drawLine(QPointF(ball_center.x, ball_center.y), QPointF(ship_center.x, ship_center.y));
-		painter.restore();
-
     drawBody(painter, state.ball);
-
-    if (state.ship_firing) drawFlame(painter);
     drawShip(painter);
+
+    if (state.joint)
+    { // joint line
+        painter.save();
+        const auto& ball_center = state.ball->GetWorldCenter();
+        const auto& ship_center = state.ship->GetWorldCenter();
+        painter.setBrush(Qt::NoBrush);
+        painter.setPen(QPen(Qt::white, 0));
+        painter.drawLine(QPointF(ball_center.x, ball_center.y), QPointF(ship_center.x, ship_center.y));
+        painter.restore();
+    }
+
 }
 
 void GameWindow::keyPressEvent(QKeyEvent* event)
 {
+    if (event->key() == Qt::Key_A)
+    {
+        draw_debug = !draw_debug;
+        qDebug() << "draw_debug" << draw_debug;
+        return;
+    }
     if (event->key() == Qt::Key_Up)
     {
         state.ship_firing = true;
@@ -158,7 +203,7 @@ void GameWindow::keyPressEvent(QKeyEvent* event)
     }
     if (event->key() == Qt::Key_Left || event->key() == Qt::Key_Right)
     {
-        state.ship_target_angular_velocity = M_PI / 2. * (event->key() == Qt::Key_Left ? 1. : -1.);
+        state.ship_target_angular_velocity = 1.8 * M_PI / 2. * (event->key() == Qt::Key_Left ? 1. : -1.);
         return;
     }
     RasterWindow::keyPressEvent(event);

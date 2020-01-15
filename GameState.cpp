@@ -16,6 +16,7 @@ GameState::GameState() :
     ship(nullptr),
     left_side(nullptr), right_side(nullptr),
     ball(nullptr),
+    joint(nullptr),
     ship_firing(false),
     ship_target_angular_velocity(0),
     ship_target_angle(0)
@@ -100,19 +101,19 @@ GameState::GameState() :
         ship = body;
     }
 
-    { // ship
+    { // ball
         b2BodyDef def;
         def.type = b2_dynamicBody;
-        def.position.Set(0, 15);
+        def.position.Set(0, 0);
         def.angle = 0;
-        def.angularVelocity = 2 * M_PI;
+        def.angularVelocity = 0;
 
         b2CircleShape shape;
         shape.m_radius = 1.;
 
         b2FixtureDef fixture;
         fixture.shape = &shape;
-        fixture.density = .8;
+        fixture.density = .5;
         fixture.friction = .3;
 
         auto body = world.CreateBody(&def);
@@ -120,14 +121,26 @@ GameState::GameState() :
         ball = body;
     }
 
+    /*
     { // ship ball joint
         b2DistanceJointDef def;
         def.Initialize(ship, ball, ship->GetWorldCenter(), ball->GetWorldCenter());
-        def.frequencyHz = 0.;
-        def.dampingRatio = 2.;
+        def.frequencyHz = 25.;
+        def.dampingRatio = 1.;
         def.collideConnected = true;
-        world.CreateJoint(&def);
+        joint = world.CreateJoint(&def);
     }
+    */
+}
+
+bool GameState::canGrab() const
+{
+    if (joint)
+        return false;
+    assert(ship);
+    assert(ball);
+    const auto delta = ship->GetWorldCenter() - ball->GetWorldCenter();
+    return std::abs(delta.Length() - 7.5) < 1;
 }
 
 void GameState::step(const float dt)
@@ -137,7 +150,7 @@ void GameState::step(const float dt)
     const auto angle = ship->GetAngle();
     if (ship_firing) ship->ApplyForceToCenter(100.f * b2Rot(angle).GetYAxis(), true);
     ship_target_angle += ship_target_angular_velocity * dt;
-    ship->SetAngularVelocity((ship_target_angle - angle) / .2);
+    ship->SetAngularVelocity((ship_target_angle - angle) / .1);
     world.Step(dt, velocityIterations, positionIterations);
 }
 
