@@ -3,7 +3,6 @@
 #include "box2d/b2_polygon_shape.h"
 #include "box2d/b2_circle_shape.h"
 #include "box2d/b2_fixture.h"
-#include "box2d/b2_distance_joint.h"
 
 #include <iostream>
 
@@ -104,7 +103,7 @@ GameState::GameState() :
     { // ball
         b2BodyDef def;
         def.type = b2_dynamicBody;
-        def.position.Set(0, 0);
+        def.position.Set(0, 1);
         def.angle = 0;
         def.angularVelocity = 0;
 
@@ -120,23 +119,37 @@ GameState::GameState() :
         body->CreateFixture(&fixture);
         ball = body;
     }
+}
 
-    /*
-    { // ship ball joint
-        b2DistanceJointDef def;
-        def.Initialize(ship, ball, ship->GetWorldCenter(), ball->GetWorldCenter());
-        def.frequencyHz = 25.;
-        def.dampingRatio = 1.;
-        def.collideConnected = true;
-        joint = world.CreateJoint(&def);
-    }
-    */
+void GameState::grab()
+{
+    assert(!joint);
+    assert(ship);
+    assert(ball);
+
+    b2DistanceJointDef def;
+    def.Initialize(ship, ball, ship->GetWorldCenter(), ball->GetWorldCenter());
+    def.frequencyHz = 25.;
+    def.dampingRatio = 1.;
+    def.collideConnected = true;
+
+    joint = static_cast<b2DistanceJoint*>(world.CreateJoint(&def));
+}
+
+void GameState::release()
+{
+    assert(joint);
+    assert(ship);
+    assert(ball);
+    world.DestroyJoint(joint);
+    joint = nullptr;
 }
 
 bool GameState::canGrab() const
 {
     if (joint)
         return false;
+
     assert(ship);
     assert(ball);
     const auto delta = ship->GetWorldCenter() - ball->GetWorldCenter();

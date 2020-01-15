@@ -2,6 +2,7 @@
 
 #include "box2d/b2_world.h"
 #include "box2d/b2_body.h"
+#include "box2d/b2_distance_joint.h"
 
 #include <memory>
 
@@ -12,6 +13,8 @@ struct GameState
 
     void step(const float dt);
     bool canGrab() const;
+    void grab();
+    void release();
 
     b2World world;
     b2Body* ground;
@@ -19,7 +22,7 @@ struct GameState
     b2Body* left_side;
     b2Body* right_side;
     b2Body* ball;
-    b2Joint* joint;
+    b2DistanceJoint* joint;
 
     bool ship_firing;
     double ship_target_angular_velocity;

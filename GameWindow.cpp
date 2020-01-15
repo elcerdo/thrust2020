@@ -178,11 +178,11 @@ void GameWindow::render(QPainter& painter)
     if (state.joint)
     { // joint line
         painter.save();
-        const auto& ball_center = state.ball->GetWorldCenter();
-        const auto& ship_center = state.ship->GetWorldCenter();
+        const auto& anchor_aa = state.joint->GetAnchorA();
+        const auto& anchor_bb = state.joint->GetAnchorB();
         painter.setBrush(Qt::NoBrush);
         painter.setPen(QPen(Qt::white, 0));
-        painter.drawLine(QPointF(ball_center.x, ball_center.y), QPointF(ship_center.x, ship_center.y));
+        painter.drawLine(QPointF(anchor_aa.x, anchor_aa.y), QPointF(anchor_bb.x, anchor_bb.y));
         painter.restore();
     }
 
@@ -190,6 +190,12 @@ void GameWindow::render(QPainter& painter)
 
 void GameWindow::keyPressEvent(QKeyEvent* event)
 {
+    if (event->key() == Qt::Key_Space)
+    {
+        if (state.joint) state.release();
+        else if (state.canGrab()) state.grab();
+        return;
+    }
     if (event->key() == Qt::Key_A)
     {
         draw_debug = !draw_debug;
@@ -203,7 +209,7 @@ void GameWindow::keyPressEvent(QKeyEvent* event)
     }
     if (event->key() == Qt::Key_Left || event->key() == Qt::Key_Right)
     {
-        state.ship_target_angular_velocity = 1.8 * M_PI / 2. * (event->key() == Qt::Key_Left ? 1. : -1.);
+        state.ship_target_angular_velocity = 2.3 * M_PI / 2. * (event->key() == Qt::Key_Left ? 1. : -1.);
         return;
     }
     RasterWindow::keyPressEvent(event);
