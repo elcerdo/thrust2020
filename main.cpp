@@ -2,13 +2,18 @@
 
 #include <QApplication>
 
+#include <iostream>
+
 int main(int argc, char* argv[])
 {
-		QApplication app(argc, argv);
+    using std::cout;
+    cout << std::boolalpha;
 
-		GameWindow main;
-		main.show();
+    QApplication app(argc, argv);
 
-		return app.exec();
+    GameWindow main;
+    main.show();
+
+    return app.exec();
 }
 

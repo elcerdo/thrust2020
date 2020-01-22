@@ -163,29 +163,41 @@ void GameWindow::render(QPainter& painter)
 
     const int side = qMin(width(), height());
     painter.setRenderHint(QPainter::Antialiasing);
-    painter.translate(width() / 2, height() / 2);
-    painter.scale(side / 50.0, -side / 50.0);
 
-    painter.translate(0, -20);
-    drawOrigin(painter);
-    drawBody(painter, state.left_side);
-    drawBody(painter, state.right_side);
-    drawBody(painter, state.ground);
-
-    drawBody(painter, state.ball);
-    drawShip(painter);
-
-    if (state.joint)
-    { // joint line
+    { // world
         painter.save();
-        const auto& anchor_aa = state.joint->GetAnchorA();
-        const auto& anchor_bb = state.joint->GetAnchorB();
-        painter.setBrush(Qt::NoBrush);
-        painter.setPen(QPen(Qt::white, 0));
-        painter.drawLine(QPointF(anchor_aa.x, anchor_aa.y), QPointF(anchor_bb.x, anchor_bb.y));
+        painter.translate(width() / 2, height() / 2);
+        painter.scale(side / 50.0, -side / 50.0);
+        painter.translate(0, -20);
+
+        drawOrigin(painter);
+        drawBody(painter, state.left_side);
+        drawBody(painter, state.right_side);
+        drawBody(painter, state.ground);
+
+        drawBody(painter, state.ball);
+        drawShip(painter);
+
+        if (state.joint)
+        { // joint line
+            painter.save();
+            const auto& anchor_aa = state.joint->GetAnchorA();
+            const auto& anchor_bb = state.joint->GetAnchorB();
+            painter.setBrush(Qt::NoBrush);
+            painter.setPen(QPen(Qt::white, 0));
+            painter.drawLine(QPointF(anchor_aa.x, anchor_aa.y), QPointF(anchor_bb.x, anchor_bb.y));
+            painter.restore();
+        }
+
         painter.restore();
     }
 
+    { // overlay
+        painter.save();
+        painter.setPen(QPen(Qt::red, 1));
+        if (state.ship_touched_anything) painter.drawText(10, 20, "boom");
+        painter.restore();
+    }
 }
 
 void GameWindow::keyPressEvent(QKeyEvent* event)

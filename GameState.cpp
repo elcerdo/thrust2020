@@ -3,6 +3,7 @@
 #include "box2d/b2_polygon_shape.h"
 #include "box2d/b2_circle_shape.h"
 #include "box2d/b2_fixture.h"
+#include "box2d/b2_contact.h"
 
 #include <iostream>
 
@@ -18,7 +19,8 @@ GameState::GameState() :
     joint(nullptr),
     ship_firing(false),
     ship_target_angular_velocity(0),
-    ship_target_angle(0)
+    ship_target_angle(0),
+    ship_touched_anything(false)
 {
     cout << "init game state" << endl;
 
@@ -121,6 +123,8 @@ GameState::GameState() :
         body->CreateFixture(&fixture);
         ball = body;
     }
+
+    world.SetContactListener(this);
 }
 
 void GameState::grab()
@@ -167,10 +171,32 @@ void GameState::step(const float dt)
     ship_target_angle += ship_target_angular_velocity * dt;
     ship->SetAngularVelocity((ship_target_angle - angle) / .1);
     world.Step(dt, velocityIterations, positionIterations);
+    world.ClearForces();
+}
+
+void GameState::BeginContact(b2Contact* contact)
+{
+    assert(contact);
+
+    const auto* aa = contact->GetFixtureA()->GetBody();
+    assert(aa);
+    const bool aa_is_ship = aa == ship;
+    const bool aa_is_ball = aa == ball;
+
+    const auto* bb = contact->GetFixtureB()->GetBody();
+    assert(bb);
+    const bool bb_is_ship = bb == ship;
+    const bool bb_is_ball = bb == ball;
+
+    const bool any_ship = aa_is_ship || bb_is_ship;
+    const bool any_ball = aa_is_ball || bb_is_ball;
+
+    ship_touched_anything |= any_ship;
 }
 
 GameState::~GameState()
 {
+    world.SetContactListener(nullptr);
     world.DestroyBody(ship);
     world.DestroyBody(ground);
 }

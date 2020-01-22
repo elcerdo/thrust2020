@@ -6,7 +6,7 @@
 
 #include <memory>
 
-struct GameState
+struct GameState : public b2ContactListener
 {
     GameState();
     ~GameState();
@@ -15,6 +15,8 @@ struct GameState
     bool canGrab() const;
     void grab();
     void release();
+
+    void BeginContact(b2Contact* contact) override;
 
     b2World world;
     b2Body* ground;
@@ -27,5 +29,6 @@ struct GameState
     bool ship_firing;
     double ship_target_angular_velocity;
     double ship_target_angle;
+    bool ship_touched_anything;
 };
 
