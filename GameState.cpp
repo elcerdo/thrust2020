@@ -94,6 +94,7 @@ GameState::GameState() :
         fixture.shape = &shape;
         fixture.density = 1;
         fixture.friction = .3;
+        fixture.restitution = .4;
 
         auto body = world.CreateBody(&def);
         body->CreateFixture(&fixture);
@@ -114,6 +115,7 @@ GameState::GameState() :
         fixture.shape = &shape;
         fixture.density = .5;
         fixture.friction = .3;
+        fixture.restitution = .4;
 
         auto body = world.CreateBody(&def);
         body->CreateFixture(&fixture);
