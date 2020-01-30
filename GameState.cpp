@@ -129,7 +129,7 @@ GameState::GameState() :
 
 void GameState::grab()
 {
-    assert(!joint);
+    assert(!isGrabbed());
     assert(ship);
     assert(ball);
 
@@ -144,7 +144,7 @@ void GameState::grab()
 
 void GameState::release()
 {
-    assert(joint);
+    assert(isGrabbed());
     assert(ship);
     assert(ball);
     world.DestroyJoint(joint);
@@ -153,13 +153,17 @@ void GameState::release()
 
 bool GameState::canGrab() const
 {
-    if (joint)
+    if (isGrabbed())
         return false;
 
     assert(ship);
     assert(ball);
     const auto delta = ship->GetWorldCenter() - ball->GetWorldCenter();
     return std::abs(delta.Length() - 7.5) < 1;
+}
+
+bool GameState::isGrabbed() const {
+    return joint != nullptr;
 }
 
 void GameState::step(const float dt)
@@ -194,9 +198,41 @@ void GameState::BeginContact(b2Contact* contact)
     ship_touched_anything |= any_ship;
 }
 
+void GameState::addCrate(const b2Vec2 pos, const double angle)
+{
+    cout << "addCrate" << endl;
+
+    b2BodyDef def;
+    def.type = b2_dynamicBody;
+    def.position.Set(pos.x, pos.y);
+    def.angle = angle;
+
+    b2PolygonShape shape;
+    static const b2Vec2 points[4] {
+        { -1, -1 },
+        { 1, -1 },
+        { 1, 1 },
+        { -1, 1 },
+    };
+    shape.Set(points, 4);
+
+    b2FixtureDef fixture;
+    fixture.shape = &shape;
+    fixture.density = 1;
+    fixture.friction = .3;
+    fixture.restitution = .4;
+
+    auto crate = world.CreateBody(&def);
+    crate->CreateFixture(&fixture);
+
+    crates.push_back(crate);
+}
+
+
 GameState::~GameState()
 {
     world.SetContactListener(nullptr);
     world.DestroyBody(ship);
     world.DestroyBody(ground);
+    if (joint) world.DestroyJoint(joint);
 }

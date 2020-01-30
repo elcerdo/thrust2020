@@ -196,6 +196,7 @@ void GameWindow::render(QPainter& painter)
         painter.save();
         painter.setPen(QPen(Qt::red, 1));
         if (state.ship_touched_anything) painter.drawText(10, 20, "boom");
+        painter.drawText(10, 40, QString("%1 crates").arg(state.crates.size()));
         painter.restore();
     }
 }
@@ -212,6 +213,11 @@ void GameWindow::keyPressEvent(QKeyEvent* event)
     {
         draw_debug = !draw_debug;
         qDebug() << "draw_debug" << draw_debug;
+        return;
+    }
+    if (event->key() == Qt::Key_Z)
+    {
+        state.addCrate({ 0, 10 }, 0);
         return;
     }
     if (event->key() == Qt::Key_Up)

@@ -5,6 +5,7 @@
 #include "box2d/b2_distance_joint.h"
 
 #include <memory>
+#include <vector>
 
 struct GameState : public b2ContactListener
 {
@@ -13,8 +14,10 @@ struct GameState : public b2ContactListener
 
     void step(const float dt);
     bool canGrab() const;
+    bool isGrabbed() const;
     void grab();
     void release();
+    void addCrate(const b2Vec2 pos, const double angle);
 
     void BeginContact(b2Contact* contact) override;
 
@@ -24,6 +27,8 @@ struct GameState : public b2ContactListener
     b2Body* left_side;
     b2Body* right_side;
     b2Body* ball;
+
+    std::vector<b2Body*> crates;
     b2DistanceJoint* joint;
 
     bool ship_firing;
