@@ -175,6 +175,9 @@ void GameWindow::render(QPainter& painter)
         drawBody(painter, state.right_side);
         drawBody(painter, state.ground);
 
+        for (auto& crate : state.crates)
+            drawBody(painter, crate);
+
         drawBody(painter, state.ball);
         drawShip(painter);
 
@@ -217,7 +220,12 @@ void GameWindow::keyPressEvent(QKeyEvent* event)
     }
     if (event->key() == Qt::Key_Z)
     {
-        state.addCrate({ 0, 10 }, 0);
+        std::uniform_real_distribution<double> dist_angle(0, 2 * M_PI);
+        const auto angle = dist_angle(rng);
+
+        std::normal_distribution<double> dist_normal(0, 10);
+        const b2Vec2 velocity(dist_normal(rng), dist_normal(rng));
+        state.addCrate({ 0, 10 }, velocity, angle);
         return;
     }
     if (event->key() == Qt::Key_Up)

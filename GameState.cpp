@@ -198,7 +198,7 @@ void GameState::BeginContact(b2Contact* contact)
     ship_touched_anything |= any_ship;
 }
 
-void GameState::addCrate(const b2Vec2 pos, const double angle)
+void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle)
 {
     cout << "addCrate" << endl;
 
@@ -218,12 +218,13 @@ void GameState::addCrate(const b2Vec2 pos, const double angle)
 
     b2FixtureDef fixture;
     fixture.shape = &shape;
-    fixture.density = 1;
-    fixture.friction = .3;
-    fixture.restitution = .4;
+    fixture.density = .1;
+    fixture.friction = .7;
+    fixture.restitution = .5;
 
     auto crate = world.CreateBody(&def);
     crate->CreateFixture(&fixture);
+    crate->SetLinearVelocity(velocity);
 
     crates.push_back(crate);
 }
