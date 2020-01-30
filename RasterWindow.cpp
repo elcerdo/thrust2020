@@ -7,7 +7,7 @@ RasterWindow::RasterWindow(QWindow *parent)
     , m_backingStore(new QBackingStore(this))
 {
     setGeometry(100, 100, 1024, 780);
-    startTimer(std::chrono::milliseconds(20));
+    startTimer(std::chrono::milliseconds(10));
 }
 
 void RasterWindow::exposeEvent(QExposeEvent *)

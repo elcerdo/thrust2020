@@ -159,6 +159,18 @@ void GameWindow::render(QPainter& painter)
     const double dt = time.elapsed() / 1e3;
     time.restart();
 
+    dts.push_front(dt);
+    while (dts.size() > 10)
+        dts.pop_back();
+
+    double dt_mean = 0;
+    for (const auto& dt : dts)
+        dt_mean += dt;
+    assert(!dts.empty());
+    dt_mean /= dts.size();
+
+    const double fps = 1. / dt_mean;
+
     state.step(dt);
 
     const int side = qMin(width(), height());
@@ -197,9 +209,19 @@ void GameWindow::render(QPainter& painter)
 
     { // overlay
         painter.save();
+        painter.translate(QPointF(0, height()));
         painter.setPen(QPen(Qt::red, 1));
-        if (state.ship_touched_anything) painter.drawText(10, 20, "boom");
-        painter.drawText(10, 40, QString("%1 crates").arg(state.crates.size()));
+        const auto print = [&painter](const QString& text) -> void
+        {
+            painter.translate(QPointF(0, -12));
+            painter.drawText(0, 0, text);
+        };
+
+        if (state.ship_touched_anything) print("boom");
+        print(QString("%1 crates").arg(state.crates.size()));
+        print(QString("%1 fps (%2)").arg(static_cast<int>(fps)).arg(dt_mean));
+
+
         painter.restore();
     }
 }

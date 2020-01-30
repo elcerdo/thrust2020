@@ -4,6 +4,7 @@
 #include "GameState.h"
 
 #include <random>
+#include <list>
 
 class GameWindow : public RasterWindow
 {
@@ -26,6 +27,7 @@ class GameWindow : public RasterWindow
         std::default_random_engine rng;
         bool draw_debug;
         size_t frame_counter;
+        std::list<double> dts;
 };
 
 
