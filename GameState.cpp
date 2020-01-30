@@ -124,6 +124,18 @@ GameState::GameState() :
         ball = body;
     }
 
+    { // crate tower
+        constexpr int nn = 10;
+        constexpr float ww = 2;
+
+        for (auto jj=nn; jj; jj--)
+        for (auto ii=0; ii<jj; ii++)
+        {
+            const float xx = 5. + ww * ii - jj + nn;
+            addCrate({ xx, 2.5f * ( 1 + nn - jj) }, { 0, 0 }, 0);
+        }
+    }
+
     world.SetContactListener(this);
 }
 
@@ -218,8 +230,8 @@ void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double a
 
     b2FixtureDef fixture;
     fixture.shape = &shape;
-    fixture.density = .1;
-    fixture.friction = .7;
+    fixture.density = .02;
+    fixture.friction = .5;
     fixture.restitution = .5;
 
     auto crate = world.CreateBody(&def);
