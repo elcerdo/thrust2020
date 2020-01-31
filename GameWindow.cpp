@@ -185,8 +185,14 @@ void GameWindow::render(QPainter& painter)
     { // world
         painter.save();
         painter.translate(width() / 2, height() / 2);
-        painter.scale(side / 50.0, -side / 50.0);
-        painter.translate(0, -20);
+
+        const auto& pos = state.ship->GetPosition();
+        const double height =  50 * std::max(1., pos.y / 20.) ; //  std::max<double>(50, state.ship->GetPosition().y / 34.);
+        painter.scale(side / height, -side / height);
+        painter.translate(-pos.x, -20);
+
+
+
 
         drawOrigin(painter);
         drawBody(painter, state.left_side);
@@ -227,8 +233,7 @@ void GameWindow::render(QPainter& painter)
 
         if (state.ship_touched_anything) print("boom");
         print(QString("%1 crates").arg(state.crates.size()));
-        print(QString("%1 fps (%2)").arg(static_cast<int>(fps)).arg(dt_mean));
-
+        print(QString("%1 fps (%2ms)").arg(static_cast<int>(fps)).arg(static_cast<int>(dt_mean * 1000)));
 
         painter.restore();
     }
@@ -265,7 +270,7 @@ void GameWindow::keyPressEvent(QKeyEvent* event)
     }
     if (event->key() == Qt::Key_Left || event->key() == Qt::Key_Right)
     {
-        state.ship_target_angular_velocity = 2.3 * M_PI / 2. * (event->key() == Qt::Key_Left ? 1. : -1.);
+        state.ship_target_angular_velocity = (state.isGrabbed() ? 2. : 2.6) * M_PI / 2. * (event->key() == Qt::Key_Left ? 1. : -1.);
         return;
     }
     RasterWindow::keyPressEvent(event);

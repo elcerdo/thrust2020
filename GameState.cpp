@@ -27,10 +27,10 @@ GameState::GameState() :
     { // ground
         b2BodyDef def;
         def.type = b2_staticBody;
-        def.position.Set(0, -10);
+        def.position.Set(0, -100);
 
         b2PolygonShape shape;
-        shape.SetAsBox(50, 10);
+        shape.SetAsBox(600, 100);
 
         b2FixtureDef fixture;
         fixture.shape = &shape;
@@ -63,7 +63,7 @@ GameState::GameState() :
     { // right side
         b2BodyDef def;
         def.type = b2_staticBody;
-        def.position.Set(40, 0);
+        def.position.Set(90, 0);
 
         b2PolygonShape shape;
         shape.SetAsBox(10, 100);
@@ -84,18 +84,19 @@ GameState::GameState() :
         def.position.Set(0, 20);
         def.angle = M_PI / 4 - 2e-2;
 
+        constexpr float ww = 1.8;
         b2PolygonShape shape;
         static const b2Vec2 points[3] {
-            { -1, 0 },
-            { 1, 0 },
-            { 0, 2 }
+            { -ww, 0 },
+            { ww, 0 },
+            { 0, 2*ww }
         };
         shape.Set(points, 3);
 
         b2FixtureDef fixture;
         fixture.shape = &shape;
         fixture.density = 1;
-        fixture.friction = .3;
+        fixture.friction = .1;
         fixture.restitution = .4;
 
         auto body = world.CreateBody(&def);
@@ -111,13 +112,13 @@ GameState::GameState() :
         def.angularVelocity = 0;
 
         b2CircleShape shape;
-        shape.m_radius = 1.;
+        shape.m_radius = 4.;
 
         b2FixtureDef fixture;
         fixture.shape = &shape;
-        fixture.density = .5;
+        fixture.density = .1;
         fixture.friction = .3;
-        fixture.restitution = .4;
+        fixture.restitution = .6;
 
         auto body = world.CreateBody(&def);
         body->CreateFixture(&fixture);
@@ -125,8 +126,8 @@ GameState::GameState() :
     }
 
     { // crate tower
-        constexpr int nn = 30;
-        constexpr float ww = 2;
+        constexpr int nn = 40;
+        constexpr float ww = 1.5;
 
         for (auto jj=nn; jj; jj--)
         for (auto ii=0; ii<jj; ii++)
@@ -148,7 +149,7 @@ void GameState::grab()
     b2DistanceJointDef def;
     def.Initialize(ship, ball, ship->GetWorldCenter(), ball->GetWorldCenter());
     def.frequencyHz = 25.;
-    def.dampingRatio = 1.;
+    def.dampingRatio = .4;
     def.collideConnected = true;
 
     joint = static_cast<b2DistanceJoint*>(world.CreateJoint(&def));
@@ -171,7 +172,8 @@ bool GameState::canGrab() const
     assert(ship);
     assert(ball);
     const auto delta = ship->GetWorldCenter() - ball->GetWorldCenter();
-    return std::abs(delta.Length() - 7.5) < 4;
+    const double ll = delta.Length();
+    return ll > 8 && ll < 25;
 }
 
 bool GameState::isGrabbed() const {
@@ -183,9 +185,10 @@ void GameState::step(const float dt)
     int velocityIterations = 6;
     int positionIterations = 2;
     const auto angle = ship->GetAngle();
-    if (ship_firing) ship->ApplyForceToCenter(100.f * b2Rot(angle).GetYAxis(), true);
+    const auto thrust = (isGrabbed() ? 400. : 200.) * b2Rot(angle).GetYAxis();
+    if (ship_firing) ship->ApplyForceToCenter(thrust, true);
     ship_target_angle += ship_target_angular_velocity * dt;
-    ship->SetAngularVelocity((ship_target_angle - angle) / .1);
+    ship->SetAngularVelocity((ship_target_angle - angle) / .05);
     world.Step(dt, velocityIterations, positionIterations);
     world.ClearForces();
 }
@@ -231,8 +234,8 @@ void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double a
     b2FixtureDef fixture;
     fixture.shape = &shape;
     fixture.density = .02;
-    fixture.friction = .5;
-    fixture.restitution = .5;
+    fixture.friction = .3;
+    fixture.restitution = .8;
 
     auto crate = world.CreateBody(&def);
     crate->CreateFixture(&fixture);
@@ -247,5 +250,5 @@ GameState::~GameState()
     world.SetContactListener(nullptr);
     world.DestroyBody(ship);
     world.DestroyBody(ground);
-    if (joint) world.DestroyJoint(joint);
+    //if (joint) world.DestroyJoint(joint);
 }
