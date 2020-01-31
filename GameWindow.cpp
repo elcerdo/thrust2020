@@ -199,11 +199,6 @@ void GameWindow::render(QPainter& painter)
         for (auto& crate : state.crates)
             drawBody(painter, crate);
 
-        assert(state.ball);
-        const bool is_fast = state.ball->GetLinearVelocity().Length() > 30;
-        drawBody(painter, state.ball, is_fast ? Qt::red : Qt::black);
-        drawShip(painter);
-
         if (state.joint)
         { // joint line
             painter.save();
@@ -214,6 +209,11 @@ void GameWindow::render(QPainter& painter)
             painter.drawLine(QPointF(anchor_aa.x, anchor_aa.y), QPointF(anchor_bb.x, anchor_bb.y));
             painter.restore();
         }
+
+        assert(state.ball);
+        const bool is_fast = state.ball->GetLinearVelocity().Length() > 30;
+        drawBody(painter, state.ball, is_fast ? QColor(0xfd, 0xa0, 0x85) : Qt::black);
+        drawShip(painter);
 
         painter.restore();
     }
