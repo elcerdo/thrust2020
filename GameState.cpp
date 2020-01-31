@@ -20,7 +20,7 @@ GameState::GameState() :
     ship_firing(false),
     ship_target_angular_velocity(0),
     ship_target_angle(0),
-    ship_touched_anything(false)
+    ship_touched_wall(false)
 {
     cout << "init game state" << endl;
 
@@ -173,7 +173,7 @@ bool GameState::canGrab() const
     assert(ball);
     const auto delta = ship->GetWorldCenter() - ball->GetWorldCenter();
     const double ll = delta.Length();
-    return ll > 8 && ll < 25;
+    return ll > 10 && ll < 25;
 }
 
 bool GameState::isGrabbed() const {
@@ -185,7 +185,7 @@ void GameState::step(const float dt)
     int velocityIterations = 6;
     int positionIterations = 2;
     const auto angle = ship->GetAngle();
-    const auto thrust = (isGrabbed() ? 400. : 200.) * b2Rot(angle).GetYAxis();
+    const auto thrust = (isGrabbed() ? 200. : 200.) * b2Rot(angle).GetYAxis();
     if (ship_firing) ship->ApplyForceToCenter(thrust, true);
     ship_target_angle += ship_target_angular_velocity * dt;
     ship->SetAngularVelocity((ship_target_angle - angle) / .05);
@@ -201,22 +201,23 @@ void GameState::BeginContact(b2Contact* contact)
     assert(aa);
     const bool aa_is_ship = aa == ship;
     const bool aa_is_ball = aa == ball;
+    const bool aa_is_wall = aa == left_side || aa == right_side || aa == ground;
 
     const auto* bb = contact->GetFixtureB()->GetBody();
     assert(bb);
     const bool bb_is_ship = bb == ship;
     const bool bb_is_ball = bb == ball;
+    const bool bb_is_wall = bb == left_side || bb == right_side || bb == ground;
 
     const bool any_ship = aa_is_ship || bb_is_ship;
     const bool any_ball = aa_is_ball || bb_is_ball;
+    const bool any_wall = aa_is_wall || bb_is_wall;
 
-    ship_touched_anything |= any_ship;
+    ship_touched_wall |= any_ship && any_wall;
 }
 
 void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle)
 {
-    cout << "addCrate" << endl;
-
     b2BodyDef def;
     def.type = b2_dynamicBody;
     def.position.Set(pos.x, pos.y);
@@ -248,7 +249,7 @@ void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double a
 GameState::~GameState()
 {
     world.SetContactListener(nullptr);
-    world.DestroyBody(ship);
-    world.DestroyBody(ground);
+    //world.DestroyBody(ship);
+    //world.DestroyBody(ground);
     //if (joint) world.DestroyJoint(joint);
 }

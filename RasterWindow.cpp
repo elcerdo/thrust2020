@@ -33,7 +33,7 @@ void RasterWindow::renderNow()
     QPainter painter(device);
 
     QLinearGradient linearGrad(QPointF(0, 0), QPointF(0, height()));
-    linearGrad.setColorAt(0, QColor(0x33, 0x08, 0x67));
+    linearGrad.setColorAt(0, QColor(0x33, 0x08, 0x67)); // morpheus den gradient
     linearGrad.setColorAt(1, QColor(0x30, 0xcf, 0xd0));
 
     painter.fillRect(0, 0, width(), height(), linearGrad);
