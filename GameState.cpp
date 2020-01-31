@@ -125,7 +125,7 @@ GameState::GameState() :
     }
 
     { // crate tower
-        constexpr int nn = 10;
+        constexpr int nn = 30;
         constexpr float ww = 2;
 
         for (auto jj=nn; jj; jj--)
@@ -171,7 +171,7 @@ bool GameState::canGrab() const
     assert(ship);
     assert(ball);
     const auto delta = ship->GetWorldCenter() - ball->GetWorldCenter();
-    return std::abs(delta.Length() - 7.5) < 1;
+    return std::abs(delta.Length() - 7.5) < 4;
 }
 
 bool GameState::isGrabbed() const {

@@ -14,7 +14,9 @@ class GameWindow : public RasterWindow
         void render(QPainter& painter) override;
         void drawFlame(QPainter& painter);
         void drawShip(QPainter& painter);
-        void drawBody(QPainter& painter, const b2Body* body) const;
+        void drawBody(QPainter& painter, const b2Body* body, const QColor& color = Qt::black) const;
+        QColor highlightColor() const;
+
         void drawOrigin(QPainter& painter) const;
 
     protected:

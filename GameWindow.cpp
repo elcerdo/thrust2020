@@ -28,7 +28,7 @@ void GameWindow::drawOrigin(QPainter& painter) const
     painter.restore();
 }
 
-void GameWindow::drawBody(QPainter& painter, const b2Body* body) const
+void GameWindow::drawBody(QPainter& painter, const b2Body* body, const QColor& color) const
 {
     assert(body);
 
@@ -41,7 +41,7 @@ void GameWindow::drawBody(QPainter& painter, const b2Body* body) const
         painter.translate(position.x, position.y);
         painter.rotate(qRadiansToDegrees(angle));
 
-        painter.setBrush(Qt::black);
+        painter.setBrush(color);
         painter.setPen(QPen(Qt::white, 0));
         const auto* fixture = body->GetFixtureList();
         while (fixture)
@@ -127,7 +127,8 @@ void GameWindow::drawShip(QPainter& painter)
     assert(body);
 
     if (state.ship_firing) drawFlame(painter);
-    drawBody(painter, body);
+
+    drawBody(painter, body, highlightColor());
 
     if (state.canGrab() && frame_counter % 2 == 0)
     {
@@ -150,6 +151,11 @@ void GameWindow::drawShip(QPainter& painter)
         painter.drawLine(QPointF(0, 0), QPointF(-sin(state.ship_target_angle), cos(state.ship_target_angle)));
         painter.restore();
     }
+}
+
+QColor GameWindow::highlightColor() const
+{
+    return state.canGrab() || state.isGrabbed() ? Qt::yellow : Qt::black;
 }
 
 void GameWindow::render(QPainter& painter)
@@ -190,7 +196,7 @@ void GameWindow::render(QPainter& painter)
         for (auto& crate : state.crates)
             drawBody(painter, crate);
 
-        drawBody(painter, state.ball);
+        drawBody(painter, state.ball, highlightColor());
         drawShip(painter);
 
         if (state.joint)
