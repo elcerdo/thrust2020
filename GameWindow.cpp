@@ -196,7 +196,9 @@ void GameWindow::render(QPainter& painter)
         for (auto& crate : state.crates)
             drawBody(painter, crate);
 
-        drawBody(painter, state.ball, highlightColor());
+        assert(state.ball);
+        const bool is_fast = state.ball->GetLinearVelocity().Length() > 15;
+        drawBody(painter, state.ball, is_fast ? Qt::red : highlightColor());
         drawShip(painter);
 
         if (state.joint)
