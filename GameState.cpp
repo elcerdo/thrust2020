@@ -35,7 +35,7 @@ GameState::GameState() :
         b2FixtureDef fixture;
         fixture.shape = &shape;
         fixture.density = 0;
-        fixture.friction = .3;
+        fixture.friction = .9;
 
         auto body = world.CreateBody(&def);
         body->CreateFixture(&fixture);
@@ -95,9 +95,9 @@ GameState::GameState() :
 
         b2FixtureDef fixture;
         fixture.shape = &shape;
-        fixture.density = 1;
-        fixture.friction = .1;
-        fixture.restitution = .4;
+        fixture.density = .1;
+        fixture.friction = .7;
+        fixture.restitution = .1;
 
         auto body = world.CreateBody(&def);
         body->CreateFixture(&fixture);
@@ -112,13 +112,13 @@ GameState::GameState() :
         def.angularVelocity = 0;
 
         b2CircleShape shape;
-        shape.m_radius = 4.;
+        shape.m_radius = 5.;
 
         b2FixtureDef fixture;
         fixture.shape = &shape;
         fixture.density = .1;
-        fixture.friction = .3;
-        fixture.restitution = .6;
+        fixture.friction = 1;
+        fixture.restitution = 0.1;
 
         auto body = world.CreateBody(&def);
         body->CreateFixture(&fixture);
@@ -127,7 +127,7 @@ GameState::GameState() :
 
     { // crate tower
         constexpr int nn = 40;
-        constexpr float ww = 1.5;
+        constexpr float ww = 2;
 
         for (auto jj=nn; jj; jj--)
         for (auto ii=0; ii<jj; ii++)
@@ -149,7 +149,7 @@ void GameState::grab()
     b2DistanceJointDef def;
     def.Initialize(ship, ball, ship->GetWorldCenter(), ball->GetWorldCenter());
     def.frequencyHz = 25.;
-    def.dampingRatio = .4;
+    def.dampingRatio = .0;
     def.collideConnected = true;
 
     joint = static_cast<b2DistanceJoint*>(world.CreateJoint(&def));
@@ -185,7 +185,7 @@ void GameState::step(const float dt)
     int velocityIterations = 6;
     int positionIterations = 2;
     const auto angle = ship->GetAngle();
-    const auto thrust = (isGrabbed() ? 400. : 200.) * b2Rot(angle).GetYAxis();
+    const auto thrust = (isGrabbed() ? 120. : 20.) * b2Rot(angle).GetYAxis();
     if (ship_firing) ship->ApplyForceToCenter(thrust, true);
     ship_target_angle += ship_target_angular_velocity * dt;
     ship->SetAngularVelocity((ship_target_angle - angle) / .05);
@@ -222,20 +222,21 @@ void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double a
     def.position.Set(pos.x, pos.y);
     def.angle = angle;
 
+    constexpr float zz = 1.2;
     b2PolygonShape shape;
     static const b2Vec2 points[4] {
-        { -1, -1 },
-        { 1, -1 },
-        { 1, 1 },
-        { -1, 1 },
+        { -zz, -zz },
+        { zz, -zz },
+        { zz, zz },
+        { -zz, zz },
     };
     shape.Set(points, 4);
 
     b2FixtureDef fixture;
     fixture.shape = &shape;
-    fixture.density = .02;
-    fixture.friction = .3;
-    fixture.restitution = .8;
+    fixture.density = .001;
+    fixture.friction = .8;
+    fixture.restitution = .7;
 
     auto crate = world.CreateBody(&def);
     crate->CreateFixture(&fixture);
