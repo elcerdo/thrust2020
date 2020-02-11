@@ -166,7 +166,7 @@ void GameWindow::render(QPainter& painter)
     time.restart();
 
     dts.push_front(dt);
-    while (dts.size() > 10)
+    while (dts.size() > 30)
         dts.pop_back();
 
     double dt_mean = 0;
@@ -230,7 +230,8 @@ void GameWindow::render(QPainter& painter)
 
         if (state.ship_touched_wall) print("boom");
         print(QString("%1 crates").arg(state.crates.size()));
-        print(QString("%1 fps (%2ms)").arg(static_cast<int>(fps)).arg(static_cast<int>(dt_mean * 1000)));
+        print(QString("ms %1").arg(dt_mean * 1000));
+        print(QString("fps %1").arg(fps));
 
         painter.restore();
     }
