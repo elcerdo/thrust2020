@@ -232,6 +232,7 @@ void GameWindow::render(QPainter& painter)
         print(QString("%1 crates").arg(state.crates.size()));
         print(QString("ms %1").arg(dt_mean * 1000));
         print(QString("fps %1").arg(fps));
+        print(QString("aa %1").arg(state.ship_thrust_factor));
 
         painter.restore();
     }

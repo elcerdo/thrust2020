@@ -22,7 +22,8 @@ GameState::GameState() :
     ship_firing(false),
     ship_target_angular_velocity(0),
     ship_target_angle(0),
-    ship_touched_wall(false)
+    ship_touched_wall(false),
+    ship_thrust_factor(1.)
 {
     cout << "init game state" << endl;
 
@@ -202,7 +203,7 @@ void GameState::step(const float dt)
     int velocityIterations = 6;
     int positionIterations = 2;
     const auto angle = ship->GetAngle();
-    const auto thrust = (isGrabbed() ? 120. : 20.) * b2Rot(angle).GetYAxis();
+    const auto thrust = ship_thrust_factor * (isGrabbed() ? 120. : 20.) * b2Rot(angle).GetYAxis();
     if (ship_firing) ship->ApplyForceToCenter(thrust, true);
     ship_target_angle += ship_target_angular_velocity * dt;
     ship->SetAngularVelocity((ship_target_angle - angle) / .05);

@@ -38,5 +38,6 @@ struct GameState : public b2ContactListener
     double ship_target_angular_velocity;
     double ship_target_angle;
     bool ship_touched_wall;
+    double ship_thrust_factor;
 };
 

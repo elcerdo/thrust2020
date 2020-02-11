@@ -4,8 +4,8 @@
 
 RasterWindow::RasterWindow(QWindow *parent)
     : QWindow(parent)
-    , is_animated(false)
     , m_backingStore(new QBackingStore(this))
+    , is_animated(false)
 {
     setGeometry(100, 100, 1024, 780);
     //startTimer(std::chrono::milliseconds(10));
