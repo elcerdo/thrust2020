@@ -4,6 +4,7 @@
 #include "Box2D/Collision/Shapes/b2PolygonShape.h"
 #include "Box2D/Collision/Shapes/b2CircleShape.h"
 #include "Box2D/Dynamics/Contacts/b2Contact.h"
+#include "Box2D/Particle/b2ParticleGroup.h"
 
 #include <iostream>
 
@@ -17,6 +18,7 @@ GameState::GameState() :
     left_side(nullptr), right_side(nullptr),
     ball(nullptr),
     joint(nullptr),
+    system(nullptr),
     ship_firing(false),
     ship_target_angular_velocity(0),
     ship_target_angle(0),
@@ -136,6 +138,21 @@ GameState::GameState() :
             addCrate({ xx, 2.5f * ( 1 + nn - jj) }, { 0, 0 }, 0);
         }
     }
+
+    { // particle system
+        b2ParticleSystemDef system_def;
+        system = world.CreateParticleSystem(&system_def);
+
+        b2PolygonShape shape;
+        shape.SetAsBox(5, 5);
+
+        b2ParticleGroupDef group_def;
+        group_def.shape = &shape;
+        group_def.flags = b2_elasticParticle;
+        group_def.position.Set(-10, 5);
+        system->CreateParticleGroup(group_def);
+    }
+
 
     world.SetContactListener(this);
 }
