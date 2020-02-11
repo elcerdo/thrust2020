@@ -8,8 +8,6 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
-#add_subdirectory(box2d/src)
-
 set(BOX2D_VERSION 2.3.0)
 set(BOX2D_BUILD_STATIC TRUE)
 add_subdirectory(liquidfun/liquidfun/Box2D/Box2D)
