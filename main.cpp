@@ -13,6 +13,7 @@ int main(int argc, char* argv[])
 
     GameWindow main;
     main.show();
+    main.setAnimated(true);
 
     return app.exec();
 }

@@ -128,7 +128,7 @@ GameState::GameState() :
     }
 
     { // crate tower
-        constexpr int nn = 40;
+        constexpr int nn = 30;
         constexpr float ww = 2;
 
         for (auto jj=nn; jj; jj--)

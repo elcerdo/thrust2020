@@ -4,10 +4,11 @@
 
 RasterWindow::RasterWindow(QWindow *parent)
     : QWindow(parent)
+    , is_animated(false)
     , m_backingStore(new QBackingStore(this))
 {
     setGeometry(100, 100, 1024, 780);
-    startTimer(std::chrono::milliseconds(10));
+    //startTimer(std::chrono::milliseconds(10));
 }
 
 void RasterWindow::exposeEvent(QExposeEvent *)
@@ -15,6 +16,15 @@ void RasterWindow::exposeEvent(QExposeEvent *)
     if (isExposed())
         renderNow();
 }
+
+void RasterWindow::setAnimated(const bool is_animated_)
+{
+    is_animated = is_animated_;
+
+    if (is_animated)
+        renderLater();
+}
+
 
 void RasterWindow::resizeEvent(QResizeEvent *resizeEvent)
 {
@@ -42,16 +52,14 @@ void RasterWindow::renderNow()
 
     m_backingStore->endPaint();
     m_backingStore->flush(rect);
+
+    if (is_animated)
+        renderLater();
 }
 
 void RasterWindow::renderLater()
 {
     requestUpdate();
-}
-
-void RasterWindow::timerEvent(QTimerEvent *event)
-{
-    renderLater();
 }
 
 bool RasterWindow::event(QEvent *event)
