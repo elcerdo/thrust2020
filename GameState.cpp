@@ -1,9 +1,9 @@
 #include "GameState.h"
 
-#include "box2d/b2_polygon_shape.h"
-#include "box2d/b2_circle_shape.h"
-#include "box2d/b2_fixture.h"
-#include "box2d/b2_contact.h"
+#include "Box2D/Dynamics/b2Fixture.h"
+#include "Box2D/Collision/Shapes/b2PolygonShape.h"
+#include "Box2D/Collision/Shapes/b2CircleShape.h"
+#include "Box2D/Dynamics/Contacts/b2Contact.h"
 
 #include <iostream>
 

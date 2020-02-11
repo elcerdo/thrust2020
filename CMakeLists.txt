@@ -8,7 +8,12 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
-add_subdirectory(box2d/src)
+#add_subdirectory(box2d/src)
+
+set(BOX2D_VERSION 2.3.0)
+set(BOX2D_BUILD_STATIC TRUE)
+add_subdirectory(liquidfun/liquidfun/Box2D/Box2D)
+include_directories(liquidfun/liquidfun/Box2D)
 
 add_executable(rocket
     RasterWindow.cpp
@@ -21,7 +26,7 @@ add_executable(rocket
     )
 
 target_link_libraries(rocket
-    box2d
+    Box2D
     Qt5::Widgets
     )
 
