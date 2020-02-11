@@ -1,9 +1,10 @@
 #include "GameState.h"
 
-#include "box2d/b2_polygon_shape.h"
-#include "box2d/b2_circle_shape.h"
-#include "box2d/b2_fixture.h"
-#include "box2d/b2_contact.h"
+#include "Box2D/Dynamics/b2Fixture.h"
+#include "Box2D/Collision/Shapes/b2PolygonShape.h"
+#include "Box2D/Collision/Shapes/b2CircleShape.h"
+#include "Box2D/Dynamics/Contacts/b2Contact.h"
+#include "Box2D/Particle/b2ParticleGroup.h"
 
 #include <iostream>
 
@@ -17,10 +18,11 @@ GameState::GameState() :
     left_side(nullptr), right_side(nullptr),
     ball(nullptr),
     joint(nullptr),
+    system(nullptr),
     ship_firing(false),
     ship_target_angular_velocity(0),
     ship_target_angle(0),
-    ship_touched_anything(false)
+    ship_touched_wall(false)
 {
     cout << "init game state" << endl;
 
@@ -137,6 +139,21 @@ GameState::GameState() :
         }
     }
 
+    { // particle system
+        b2ParticleSystemDef system_def;
+        system = world.CreateParticleSystem(&system_def);
+
+        b2PolygonShape shape;
+        shape.SetAsBox(5, 5);
+
+        b2ParticleGroupDef group_def;
+        group_def.shape = &shape;
+        group_def.flags = b2_elasticParticle;
+        group_def.position.Set(-10, 5);
+        system->CreateParticleGroup(group_def);
+    }
+
+
     world.SetContactListener(this);
 }
 
@@ -173,7 +190,7 @@ bool GameState::canGrab() const
     assert(ball);
     const auto delta = ship->GetWorldCenter() - ball->GetWorldCenter();
     const double ll = delta.Length();
-    return ll > 8 && ll < 25;
+    return ll > 10 && ll < 25;
 }
 
 bool GameState::isGrabbed() const {
@@ -201,22 +218,23 @@ void GameState::BeginContact(b2Contact* contact)
     assert(aa);
     const bool aa_is_ship = aa == ship;
     const bool aa_is_ball = aa == ball;
+    const bool aa_is_wall = aa == left_side || aa == right_side || aa == ground;
 
     const auto* bb = contact->GetFixtureB()->GetBody();
     assert(bb);
     const bool bb_is_ship = bb == ship;
     const bool bb_is_ball = bb == ball;
+    const bool bb_is_wall = bb == left_side || bb == right_side || bb == ground;
 
     const bool any_ship = aa_is_ship || bb_is_ship;
     const bool any_ball = aa_is_ball || bb_is_ball;
+    const bool any_wall = aa_is_wall || bb_is_wall;
 
-    ship_touched_anything |= any_ship;
+    ship_touched_wall |= any_ship && any_wall;
 }
 
 void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle)
 {
-    cout << "addCrate" << endl;
-
     b2BodyDef def;
     def.type = b2_dynamicBody;
     def.position.Set(pos.x, pos.y);
@@ -249,7 +267,7 @@ void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double a
 GameState::~GameState()
 {
     world.SetContactListener(nullptr);
-    world.DestroyBody(ship);
-    world.DestroyBody(ground);
+    //world.DestroyBody(ship);
+    //world.DestroyBody(ground);
     //if (joint) world.DestroyJoint(joint);
 }

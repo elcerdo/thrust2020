@@ -1,8 +1,9 @@
 #pragma once
 
-#include "box2d/b2_world.h"
-#include "box2d/b2_body.h"
-#include "box2d/b2_distance_joint.h"
+#include "Box2D/Dynamics/b2World.h"
+#include "Box2D/Dynamics/b2Body.h"
+#include "Box2D/Dynamics/Joints/b2DistanceJoint.h"
+#include "Box2D/Particle/b2ParticleSystem.h"
 
 #include <memory>
 #include <vector>
@@ -31,9 +32,11 @@ struct GameState : public b2ContactListener
     std::vector<b2Body*> crates;
     b2DistanceJoint* joint;
 
+    b2ParticleSystem* system;
+
     bool ship_firing;
     double ship_target_angular_velocity;
     double ship_target_angle;
-    bool ship_touched_anything;
+    bool ship_touched_wall;
 };
 

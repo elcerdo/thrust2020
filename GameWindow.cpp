@@ -1,8 +1,8 @@
 #include "GameWindow.h"
 
-#include "box2d/b2_fixture.h"
-#include "box2d/b2_polygon_shape.h"
-#include "box2d/b2_circle_shape.h"
+#include "Box2D/Dynamics/b2Fixture.h"
+#include "Box2D/Collision/Shapes/b2PolygonShape.h"
+#include "Box2D/Collision/Shapes/b2CircleShape.h"
 
 GameWindow::GameWindow(QWindow* parent) :
     RasterWindow(parent),
@@ -106,9 +106,14 @@ void GameWindow::drawFlame(QPainter& painter)
     const auto& angle = body->GetAngle();
     painter.translate(position.x, position.y);
     painter.rotate(qRadiansToDegrees(angle));
+    painter.scale(2.5, 2.5);
+
+    QLinearGradient grad(QPointF(0, 0), QPointF(0, -3));
+    grad.setColorAt(0, QColor(0xfa, 0x70, 0x9a)); // true sunset
+    grad.setColorAt(1, QColor(0xfe, 0xe1, 0x40));
 
     painter.setPen(Qt::NoPen);
-    painter.setBrush(Qt::red);
+    painter.setBrush(grad);
     QPolygonF poly;
     poly << QPointF(0, 0) << QPointF(1, -3) + randomPoint();
     if (dist_flicker(rng)) poly << QPointF(.5, -2.5) + randomPoint();
@@ -128,7 +133,7 @@ void GameWindow::drawShip(QPainter& painter)
 
     if (state.ship_firing) drawFlame(painter);
 
-    drawBody(painter, body, highlightColor());
+    drawBody(painter, body, Qt::black);
 
     if (state.canGrab() && frame_counter % 2 == 0)
     {
@@ -136,8 +141,8 @@ void GameWindow::drawShip(QPainter& painter)
         const auto& world_center = body->GetWorldCenter();
         painter.translate(world_center.x, world_center.y);
         painter.setBrush(Qt::NoBrush);
-        painter.setPen(QPen(Qt::blue, 0));
-        painter.drawEllipse(QPointF(0, 0), 1.5, 1.5);
+        painter.setPen(QPen(Qt::blue, 1));
+        painter.drawEllipse(QPointF(0, 0), 3.5, 3.5);
         painter.restore();
     }
 
@@ -151,11 +156,6 @@ void GameWindow::drawShip(QPainter& painter)
         painter.drawLine(QPointF(0, 0), QPointF(-sin(state.ship_target_angle), cos(state.ship_target_angle)));
         painter.restore();
     }
-}
-
-QColor GameWindow::highlightColor() const
-{
-    return state.canGrab() || state.isGrabbed() ? Qt::yellow : Qt::black;
 }
 
 void GameWindow::render(QPainter& painter)
@@ -187,12 +187,9 @@ void GameWindow::render(QPainter& painter)
         painter.translate(width() / 2, height() / 2);
 
         const auto& pos = state.ship->GetPosition();
-        const double height =  50 * std::max(1., pos.y / 20.) ; //  std::max<double>(50, state.ship->GetPosition().y / 34.);
+        const double height =  75 * std::max(1., pos.y / 40.);
         painter.scale(side / height, -side / height);
         painter.translate(-pos.x, -20);
-
-
-
 
         drawOrigin(painter);
         drawBody(painter, state.left_side);
@@ -201,11 +198,6 @@ void GameWindow::render(QPainter& painter)
 
         for (auto& crate : state.crates)
             drawBody(painter, crate);
-
-        assert(state.ball);
-        const bool is_fast = state.ball->GetLinearVelocity().Length() > 15;
-        drawBody(painter, state.ball, is_fast ? Qt::red : highlightColor());
-        drawShip(painter);
 
         if (state.joint)
         { // joint line
@@ -217,6 +209,11 @@ void GameWindow::render(QPainter& painter)
             painter.drawLine(QPointF(anchor_aa.x, anchor_aa.y), QPointF(anchor_bb.x, anchor_bb.y));
             painter.restore();
         }
+
+        assert(state.ball);
+        const bool is_fast = state.ball->GetLinearVelocity().Length() > 30;
+        drawBody(painter, state.ball, is_fast ? QColor(0xfd, 0xa0, 0x85) : Qt::black);
+        drawShip(painter);
 
         painter.restore();
     }
@@ -231,7 +228,7 @@ void GameWindow::render(QPainter& painter)
             painter.drawText(0, 0, text);
         };
 
-        if (state.ship_touched_anything) print("boom");
+        if (state.ship_touched_wall) print("boom");
         print(QString("%1 crates").arg(state.crates.size()));
         print(QString("%1 fps (%2ms)").arg(static_cast<int>(fps)).arg(static_cast<int>(dt_mean * 1000)));
 
