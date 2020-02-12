@@ -34,10 +34,13 @@ int main(int argc, char* argv[])
         return slider;
     };
 
-    pushSlider("thrust", [&view](const int value) -> void {
+    auto foo = pushSlider("thrust", [&view](const int value) -> void {
         qDebug() << "change thrust" << value;
         view.state.ship_thrust_factor = value / 100.;
-    })->setRange(50, 200);
+    });
+    foo->setRange(50, 200);
+    foo->setValue(100);
+
     pushSlider("ball mass",  [&view](const int value) -> void {
         qDebug() << "change ball mass" << value;
         //view.state.ship_thrust_factor = value / 100.;

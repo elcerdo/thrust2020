@@ -177,7 +177,8 @@ void GameWindow::render(QPainter& painter)
 
     const double fps = 1. / dt_mean;
 
-    state.step(dt);
+    const double dt_ = std::min(50e-3, dt);
+    state.step(dt_);
 
     const int side = qMin(width(), height());
     painter.setRenderHint(QPainter::Antialiasing);
@@ -240,6 +241,16 @@ void GameWindow::render(QPainter& painter)
 
 void GameWindow::keyPressEvent(QKeyEvent* event)
 {
+    if (event->key() == Qt::Key_O)
+    {
+        renderLater();
+        return;
+    }
+    if (event->key() == Qt::Key_P)
+    {
+        setAnimated(!isAnimated());
+        return;
+    }
     if (event->key() == Qt::Key_Space)
     {
         if (state.joint) state.release();

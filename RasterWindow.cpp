@@ -17,6 +17,11 @@ void RasterWindow::exposeEvent(QExposeEvent *)
         renderNow();
 }
 
+bool RasterWindow::isAnimated() const
+{
+    return is_animated;
+}
+
 void RasterWindow::setAnimated(const bool is_animated_)
 {
     is_animated = is_animated_;
