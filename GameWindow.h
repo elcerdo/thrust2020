@@ -31,6 +31,7 @@ class GameWindow : public RasterWindow
         std::list<double> dts;
 
         QSoundEffect engine_sfx;
+        QSoundEffect click_sfx;
 };
 
 

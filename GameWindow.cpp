@@ -15,12 +15,18 @@ GameWindow::GameWindow(QWindow* parent) :
 
     const auto engine_sound = QUrl::fromLocalFile(":engine.wav");
     assert(engine_sound.isValid());
-    qDebug() << "engine_sound" << engine_sound.isValid();
     engine_sfx.setSource(engine_sound);
     engine_sfx.setLoopCount(QSoundEffect::Infinite);
     engine_sfx.setVolume(.5);
     engine_sfx.setMuted(true);
     engine_sfx.play();
+
+    const auto click_sound = QUrl::fromLocalFile(":click01.wav");
+    assert(click_sound.isValid());
+    click_sfx.setSource(click_sound);
+    click_sfx.setLoopCount(1);
+    click_sfx.setVolume(.5);
+    click_sfx.setMuted(false);
 }
 
 void GameWindow::drawOrigin(QPainter& painter) const
@@ -243,8 +249,14 @@ void GameWindow::render(QPainter& painter)
         print(QString("ms %1").arg(dt_mean * 1000));
         print(QString("fps %1").arg(fps));
         print(QString("aa %1").arg(state.ship_thrust_factor));
+        print(QString("contact %1").arg(state.accum_contact));
 
         painter.restore();
+
+        if (state.accum_contact > 0)
+            click_sfx.play();
+
+        state.accum_contact = 0;
     }
 }
 
