@@ -6,7 +6,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
+find_package(Qt5 COMPONENTS Widgets Multimedia REQUIRED)
 
 set(BOX2D_VERSION 2.3.0)
 set(BOX2D_BUILD_STATIC TRUE)
@@ -20,11 +20,12 @@ add_executable(rocket
     main.cpp
     #mainwindow.ui
     #mainwindow.cpp
-    #resources.qrc
+    rocket.qrc
     )
 
 target_link_libraries(rocket
     Box2D
     Qt5::Widgets
+    Qt5::Multimedia
     )
 
