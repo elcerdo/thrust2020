@@ -25,7 +25,8 @@ GameState::GameState() :
     ship_touched_wall(false),
     ship_thrust_factor(1.),
     ship_accum_contact(0),
-    all_accum_contact(0)
+    all_accum_contact(0),
+    all_energy(0)
 {
     cout << "init game state" << endl;
 
@@ -222,12 +223,14 @@ void GameState::BeginContact(b2Contact* contact)
     const bool aa_is_ship = aa == ship;
     const bool aa_is_ball = aa == ball;
     const bool aa_is_wall = aa == left_side || aa == right_side || aa == ground;
+    const double aa_energy = .5 * aa->GetMass() * aa->GetLinearVelocity().LengthSquared();
 
     const auto* bb = contact->GetFixtureB()->GetBody();
     assert(bb);
     const bool bb_is_ship = bb == ship;
     const bool bb_is_ball = bb == ball;
     const bool bb_is_wall = bb == left_side || bb == right_side || bb == ground;
+    const double bb_energy = .5 * bb->GetMass() * aa->GetLinearVelocity().LengthSquared();
 
     const bool any_ship = aa_is_ship || bb_is_ship;
     const bool any_ball = aa_is_ball || bb_is_ball;
@@ -236,6 +239,7 @@ void GameState::BeginContact(b2Contact* contact)
     ship_touched_wall |= any_ship && any_wall;
     if (any_ship) ship_accum_contact++;
     all_accum_contact++;
+    all_energy += aa_energy + bb_energy;
 }
 
 void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle)

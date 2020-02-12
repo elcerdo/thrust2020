@@ -268,29 +268,31 @@ void GameWindow::render(QPainter& painter)
         print(QString("fps %1").arg(fps));
         print(QString("aa %1").arg(state.ship_thrust_factor));
         print(QString("contact %1").arg(state.all_accum_contact));
-
+        print(QString("energy %1").arg(state.all_energy));
         painter.restore();
     }
 
     { // collisions
         if (state.ship_accum_contact > 0)
             ship_click_sfx.play();
-        if (state.all_accum_contact > 10)
+        if (state.all_accum_contact > 0)
         {
-            constexpr int cmin = 30;
-            constexpr int cmax = 100;
-            constexpr double min_volume = .02;
+            constexpr double cmin = 0.;
+            constexpr double cmax = 10.;
+            constexpr double min_volume = .1;
+            constexpr double max_volume = .7;
 
-            constexpr int delta = cmax - cmin;
+            constexpr double delta = cmax - cmin;
             static_assert(delta > 0, "delta must be strickly positive");
-            constexpr double aa = (1 - min_volume) / delta;
-            constexpr double bb = (min_volume * cmax - cmin) / delta;
-            const double volume = std::max(min_volume, std::min(1., aa * state.all_accum_contact + bb));
+            constexpr double aa = (max_volume - min_volume) / delta;
+            constexpr double bb = (min_volume * cmax - max_volume * cmin) / delta;
+            const double volume = std::max(min_volume, std::min(max_volume, aa * state.all_energy + bb));
             back_click_sfx.setVolume(volume);
             back_click_sfx.play();
         }
         state.ship_accum_contact = 0;
         state.all_accum_contact = 0;
+        state.all_energy = 0;
     }
 }
 

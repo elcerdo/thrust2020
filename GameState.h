@@ -41,5 +41,6 @@ struct GameState : public b2ContactListener
     double ship_thrust_factor;
     int ship_accum_contact;
     int all_accum_contact;
+    double all_energy;
 };
 
