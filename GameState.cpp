@@ -24,7 +24,8 @@ GameState::GameState() :
     ship_target_angle(0),
     ship_touched_wall(false),
     ship_thrust_factor(1.),
-    accum_contact(0)
+    ship_accum_contact(0),
+    all_accum_contact(0)
 {
     cout << "init game state" << endl;
 
@@ -233,7 +234,8 @@ void GameState::BeginContact(b2Contact* contact)
     const bool any_wall = aa_is_wall || bb_is_wall;
 
     ship_touched_wall |= any_ship && any_wall;
-    if (any_ship) accum_contact++;
+    if (any_ship) ship_accum_contact++;
+    all_accum_contact++;
 }
 
 void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle)

@@ -13,21 +13,38 @@ GameWindow::GameWindow(QWindow* parent) :
 {
     time.start();
 
-    const auto engine_sound = QUrl::fromLocalFile(":engine.wav");
-    assert(engine_sound.isValid());
-    engine_sfx.setSource(engine_sound);
-    engine_sfx.setLoopCount(QSoundEffect::Infinite);
-    engine_sfx.setVolume(.5);
-    engine_sfx.setMuted(true);
-    engine_sfx.play();
+    {
+        auto& sfx = engine_sfx;
+        const auto sound = QUrl::fromLocalFile(":engine.wav");
+        assert(sound.isValid());
+        sfx.setSource(sound);
+        sfx.setLoopCount(QSoundEffect::Infinite);
+        sfx.setVolume(.5);
+        sfx.setMuted(true);
+        sfx.play();
+    }
 
-    const auto click_sound = QUrl::fromLocalFile(":click01.wav");
-    assert(click_sound.isValid());
-    click_sfx.setSource(click_sound);
-    click_sfx.setLoopCount(1);
-    click_sfx.setVolume(.5);
-    click_sfx.setMuted(false);
-    click_sfx.stop();
+    {
+        auto& sfx = ship_click_sfx;
+        const auto click_sound = QUrl::fromLocalFile(":click01.wav");
+        assert(click_sound.isValid());
+        sfx.setSource(click_sound);
+        sfx.setLoopCount(1);
+        sfx.setVolume(.5);
+        sfx.setMuted(false);
+        sfx.stop();
+    }
+
+    {
+        auto& sfx = back_click_sfx;
+        const auto click_sound = QUrl::fromLocalFile(":click00.wav");
+        assert(click_sound.isValid());
+        sfx.setSource(click_sound);
+        sfx.setLoopCount(1);
+        sfx.setVolume(.5);
+        sfx.setMuted(false);
+        sfx.stop();
+    }
 }
 
 void GameWindow::drawOrigin(QPainter& painter) const
@@ -250,18 +267,30 @@ void GameWindow::render(QPainter& painter)
         print(QString("ms %1").arg(dt_mean * 1000));
         print(QString("fps %1").arg(fps));
         print(QString("aa %1").arg(state.ship_thrust_factor));
-        print(QString("contact %1").arg(state.accum_contact));
+        print(QString("contact %1").arg(state.all_accum_contact));
 
         painter.restore();
     }
 
     { // collisions
-        if (state.accum_contact > 0)
+        if (state.ship_accum_contact > 0)
+            ship_click_sfx.play();
+        if (state.all_accum_contact > 10)
         {
-            //click_sfx.stop();
-            click_sfx.play();
+            constexpr int cmin = 30;
+            constexpr int cmax = 100;
+            constexpr double min_volume = .02;
+
+            constexpr int delta = cmax - cmin;
+            static_assert(delta > 0, "delta must be strickly positive");
+            constexpr double aa = (1 - min_volume) / delta;
+            constexpr double bb = (min_volume * cmax - cmin) / delta;
+            const double volume = std::max(min_volume, std::min(1., aa * state.all_accum_contact + bb));
+            back_click_sfx.setVolume(volume);
+            back_click_sfx.play();
         }
-        state.accum_contact = 0;
+        state.ship_accum_contact = 0;
+        state.all_accum_contact = 0;
     }
 }
 
