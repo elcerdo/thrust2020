@@ -19,7 +19,7 @@ GameWindow::GameWindow(QWindow* parent) :
         assert(sound.isValid());
         sfx.setSource(sound);
         sfx.setLoopCount(QSoundEffect::Infinite);
-        sfx.setVolume(.5);
+        sfx.setVolume(.3);
         sfx.setMuted(true);
         sfx.play();
     }
@@ -30,7 +30,7 @@ GameWindow::GameWindow(QWindow* parent) :
         assert(click_sound.isValid());
         sfx.setSource(click_sound);
         sfx.setLoopCount(1);
-        sfx.setVolume(.5);
+        sfx.setVolume(.2);
         sfx.setMuted(false);
         sfx.stop();
     }
@@ -268,32 +268,38 @@ void GameWindow::render(QPainter& painter)
         print(QString("fps %1").arg(fps));
         print(QString("aa %1").arg(state.ship_thrust_factor));
         print(QString("contact %1").arg(state.all_accum_contact));
-        print(QString("energy %1").arg(state.all_energy));
+        const double mean_energy = state.all_accum_contact ? state.all_energy / state.all_accum_contact : 0;
+        print(QString("energy %1").arg(mean_energy, 5));
+
+        constexpr double cmin = 0.;
+        constexpr double cmax = 1;
+        constexpr double min_volume = .005;
+        constexpr double max_volume = .5;
+
+        constexpr double delta = cmax - cmin;
+        static_assert(delta != 0, "delta must be strickly positive");
+        constexpr double aa = (max_volume - min_volume) / delta;
+        constexpr double bb = (min_volume * cmax - max_volume * cmin) / delta;
+        const double volume = std::max(min_volume, std::min(max_volume, aa * mean_energy + bb));
+        print(QString("volume %1").arg(100*volume));
+
         painter.restore();
-    }
 
-    { // collisions
-        if (state.ship_accum_contact > 0)
-            ship_click_sfx.play();
-        if (state.all_accum_contact > 0)
-        {
-            constexpr double cmin = 0.;
-            constexpr double cmax = 10.;
-            constexpr double min_volume = .1;
-            constexpr double max_volume = .7;
+        { // collisions
+            if (state.ship_accum_contact > 0)
+                ship_click_sfx.play();
+            if (state.all_accum_contact > 0)
+            {
 
-            constexpr double delta = cmax - cmin;
-            static_assert(delta > 0, "delta must be strickly positive");
-            constexpr double aa = (max_volume - min_volume) / delta;
-            constexpr double bb = (min_volume * cmax - max_volume * cmin) / delta;
-            const double volume = std::max(min_volume, std::min(max_volume, aa * state.all_energy + bb));
-            back_click_sfx.setVolume(volume);
-            back_click_sfx.play();
+                back_click_sfx.setVolume(volume);
+                back_click_sfx.play();
+            }
+            state.ship_accum_contact = 0;
+            state.all_accum_contact = 0;
+            state.all_energy = 0;
         }
-        state.ship_accum_contact = 0;
-        state.all_accum_contact = 0;
-        state.all_energy = 0;
     }
+
 }
 
 void GameWindow::keyPressEvent(QKeyEvent* event)

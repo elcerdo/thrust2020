@@ -132,13 +132,13 @@ GameState::GameState() :
     }
 
     { // crate tower
-        constexpr int nn = 30;
+        constexpr int nn = 10;
         constexpr float ww = 2;
 
         for (auto jj=nn; jj; jj--)
         for (auto ii=0; ii<jj; ii++)
         {
-            const float xx = 5. + ww * ii - jj + nn;
+            const float xx = 10. + ww * ii - jj + nn;
             addCrate({ xx, 2.5f * ( 1 + nn - jj) }, { 0, 0 }, 0);
         }
     }
@@ -153,7 +153,7 @@ GameState::GameState() :
         b2ParticleGroupDef group_def;
         group_def.shape = &shape;
         group_def.flags = b2_elasticParticle;
-        group_def.position.Set(-10, 5);
+        group_def.position.Set(-15, 5);
         system->CreateParticleGroup(group_def);
     }
 
@@ -230,7 +230,7 @@ void GameState::BeginContact(b2Contact* contact)
     const bool bb_is_ship = bb == ship;
     const bool bb_is_ball = bb == ball;
     const bool bb_is_wall = bb == left_side || bb == right_side || bb == ground;
-    const double bb_energy = .5 * bb->GetMass() * aa->GetLinearVelocity().LengthSquared();
+    const double bb_energy = .5 * bb->GetMass() * bb->GetLinearVelocity().LengthSquared();
 
     const bool any_ship = aa_is_ship || bb_is_ship;
     const bool any_ball = aa_is_ball || bb_is_ball;
