@@ -27,6 +27,7 @@ GameWindow::GameWindow(QWindow* parent) :
     click_sfx.setLoopCount(1);
     click_sfx.setVolume(.5);
     click_sfx.setMuted(false);
+    click_sfx.stop();
 }
 
 void GameWindow::drawOrigin(QPainter& painter) const
@@ -252,10 +253,14 @@ void GameWindow::render(QPainter& painter)
         print(QString("contact %1").arg(state.accum_contact));
 
         painter.restore();
+    }
 
+    { // collisions
         if (state.accum_contact > 0)
+        {
+            //click_sfx.stop();
             click_sfx.play();
-
+        }
         state.accum_contact = 0;
     }
 }
