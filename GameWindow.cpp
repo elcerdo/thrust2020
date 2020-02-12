@@ -12,6 +12,15 @@ GameWindow::GameWindow(QWindow* parent) :
     frame_counter(0)
 {
     time.start();
+
+    const auto engine_sound = QUrl::fromLocalFile(":engine.wav");
+    assert(engine_sound.isValid());
+    qDebug() << "engine_sound" << engine_sound.isValid();
+    engine_sfx.setSource(engine_sound);
+    engine_sfx.setLoopCount(QSoundEffect::Infinite);
+    engine_sfx.setVolume(.5);
+    engine_sfx.setMuted(true);
+    engine_sfx.play();
 }
 
 void GameWindow::drawOrigin(QPainter& painter) const
@@ -275,6 +284,7 @@ void GameWindow::keyPressEvent(QKeyEvent* event)
     }
     if (event->key() == Qt::Key_Up)
     {
+        engine_sfx.setMuted(false);
         state.ship_firing = true;
         return;
     }
@@ -290,6 +300,7 @@ void GameWindow::keyReleaseEvent(QKeyEvent* event)
 {
     if (event->key() == Qt::Key_Up)
     {
+        engine_sfx.setMuted(true);
         state.ship_firing = false;
         return;
     }

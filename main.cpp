@@ -6,7 +6,6 @@
 #include <QSlider>
 #include <QPushButton>
 #include <QLabel>
-#include <QSoundEffect>
 #include <iostream>
 
 int main(int argc, char* argv[])
@@ -62,13 +61,6 @@ int main(int argc, char* argv[])
         qDebug() << "change ball mass" << value;
         //view.state.ship_thrust_factor = value / 100.;
     });
-
-    QSoundEffect engine_sfx;
-    const auto engine_sound = QUrl::fromLocalFile(":engine.wav");
-    qDebug() << "engine_sound" << engine_sound.isValid();
-    engine_sfx.setSource(engine_sound);
-    engine_sfx.setVolume(.5);
-    engine_sfx.play();
 
     {
         auto foo = pushButton("gravity", [&view](const bool clicked) -> void {

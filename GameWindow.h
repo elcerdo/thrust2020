@@ -3,6 +3,7 @@
 #include "RasterWindow.h"
 #include "GameState.h"
 
+#include <QSoundEffect>
 #include <random>
 #include <list>
 
@@ -28,6 +29,8 @@ class GameWindow : public RasterWindow
         bool draw_debug;
         size_t frame_counter;
         std::list<double> dts;
+
+        QSoundEffect engine_sfx;
 };
 
 
