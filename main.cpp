@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QGridLayout>
 #include <QSlider>
+#include <QPushButton>
 #include <QLabel>
 #include <iostream>
 
@@ -34,6 +35,19 @@ int main(int argc, char* argv[])
         return slider;
     };
 
+    const auto pushButton = [&layout, &row](const QString& label, const std::function<void(bool)> setter) -> QPushButton*
+    {
+        qDebug() << "creating slider" << label;
+
+        auto button = new QPushButton(label);
+        button->setCheckable(true);
+        QObject::connect(button, &QPushButton::clicked, setter);
+        layout->addWidget(button, row, 0, 1, 2);
+
+        row++;
+        return button;
+    };
+
     auto foo = pushSlider("thrust", [&view](const int value) -> void {
         qDebug() << "change thrust" << value;
         view.state.ship_thrust_factor = value / 100.;
@@ -44,6 +58,10 @@ int main(int argc, char* argv[])
     pushSlider("ball mass",  [&view](const int value) -> void {
         qDebug() << "change ball mass" << value;
         //view.state.ship_thrust_factor = value / 100.;
+    });
+
+    pushButton("coucou", [](const bool clicked) -> void {
+        qDebug() << "coucou" << clicked;
     });
 
 
