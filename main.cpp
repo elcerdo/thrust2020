@@ -48,22 +48,27 @@ int main(int argc, char* argv[])
         return button;
     };
 
-    auto foo = pushSlider("thrust", [&view](const int value) -> void {
-        qDebug() << "change thrust" << value;
-        view.state.ship_thrust_factor = value / 100.;
-    });
-    foo->setRange(50, 200);
-    foo->setValue(100);
+    {
+        auto foo = pushSlider("thrust", [&view](const int value) -> void {
+            qDebug() << "change thrust" << value;
+            view.state.ship_thrust_factor = value / 100.;
+        });
+        foo->setRange(50, 200);
+        foo->setValue(100);
+    }
 
     pushSlider("ball mass",  [&view](const int value) -> void {
         qDebug() << "change ball mass" << value;
         //view.state.ship_thrust_factor = value / 100.;
     });
 
-    pushButton("coucou", [](const bool clicked) -> void {
-        qDebug() << "coucou" << clicked;
-    });
-
+    {
+        auto foo = pushButton("gravity", [&view](const bool clicked) -> void {
+            qDebug() << "gravity" << clicked;
+            view.state.world.SetGravity(clicked ? b2Vec2 { 0, -10 } : b2Vec2 {0, 0});
+        });
+        foo->setChecked(true);
+    }
 
     auto central = new QWidget;
     central->setLayout(layout);
