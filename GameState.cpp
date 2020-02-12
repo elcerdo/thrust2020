@@ -154,6 +154,7 @@ GameState::GameState() :
         group_def.shape = &shape;
         group_def.flags = b2_elasticParticle;
         group_def.position.Set(-15, 5);
+        group_def.color.Set(255u, 255u, 0, 127u);
         system->CreateParticleGroup(group_def);
     }
 

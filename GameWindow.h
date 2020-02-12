@@ -29,6 +29,7 @@ class GameWindow : public RasterWindow
         bool draw_debug;
         size_t frame_counter;
         std::list<double> dts;
+        std::list<double> energies;
 
         QSoundEffect engine_sfx;
         QSoundEffect ship_click_sfx;

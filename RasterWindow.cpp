@@ -44,8 +44,11 @@ void RasterWindow::renderNow()
     QRect rect(0, 0, width(), height());
     m_backingStore->beginPaint(rect);
 
+    const QFont fixedFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+
     QPaintDevice *device = m_backingStore->paintDevice();
     QPainter painter(device);
+    painter.setFont(fixedFont);
 
     QLinearGradient linearGrad(QPointF(0, 0), QPointF(0, height()));
     linearGrad.setColorAt(0, QColor(0x33, 0x08, 0x67)); // morpheus den gradient

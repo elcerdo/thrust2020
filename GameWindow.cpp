@@ -193,25 +193,62 @@ void GameWindow::drawShip(QPainter& painter)
 
 void GameWindow::render(QPainter& painter)
 {
+    constexpr double max_step = 50e-3;
+
     frame_counter++;
 
     const double dt = time.elapsed() / 1e3;
-    time.restart();
 
+    // dt_mean
     dts.push_front(dt);
     while (dts.size() > 30)
         dts.pop_back();
 
     double dt_mean = 0;
+    double dt_mean_ = 0;
     for (const auto& dt : dts)
+    {
         dt_mean += dt;
+        dt_mean_ += std::min(max_step, dt);
+    }
     assert(!dts.empty());
     dt_mean /= dts.size();
+    dt_mean_ /= dts.size();
 
     const double fps = 1. / dt_mean;
 
-    const double dt_ = std::min(50e-3, dt);
+    const double dt_ = std::min(max_step, dt);
     state.step(dt_);
+
+    const double energy = state.all_accum_contact ? state.all_energy / state.all_accum_contact : 0;
+
+    // energy_mean
+    energies.push_front(energy);
+    while (energies.size() > 30)
+        energies.pop_back();
+
+    double energy_mean = 0;
+    for (const auto& energy : energies)
+        energy_mean += energy;
+    assert(!energies.empty());
+    energy_mean /= energies.size();
+
+    const auto power_mean = energy_mean / dt_mean_;
+    //if (state.all_accum_contact >  0) qDebug() << state.all_accum_contact << energy << power_mean;
+
+    const auto volume = [&power_mean]() -> double {
+        constexpr double min_power = 100;
+        constexpr double max_power = .5;
+        constexpr double min_volume = 5e-2;
+        constexpr double max_volume = 50e-2;
+
+        constexpr double delta = max_power - min_power;
+        static_assert(delta != 0, "delta must be non null");
+        static_assert(max_volume > min_volume, "max_volume must be greater than min_volume");
+        constexpr double aa = (max_volume - min_volume) / delta;
+        constexpr double bb = (min_volume * max_power - max_volume * min_power) / delta;
+        return std::max(min_volume, std::min(max_volume, aa * power_mean + bb));
+    }();
 
     const int side = qMin(width(), height());
     painter.setRenderHint(QPainter::Antialiasing);
@@ -262,44 +299,36 @@ void GameWindow::render(QPainter& painter)
             painter.drawText(0, 0, text);
         };
 
+        constexpr QChar fill(' ');
+
+        print(QString("creates %1").arg(state.crates.size(), 4, 10, fill));
+        print(QString("     ms %1").arg(dt_mean * 1000, 7, 'f', 2, fill));
+        print(QString("    fps %1").arg(fps, 7, 'f', 2, fill));
+        print(QString(" thrust %1%").arg(state.ship_thrust_factor * 100, 4, 'f', 0, fill));
+        print(QString("contact %1").arg(state.all_accum_contact, 4, 10, fill));
+        print(QString("  power %1").arg(power_mean, 7, 'f', 2, fill));
+        print(QString(" volume %1%").arg(volume * 100, 4, 'f', 0, fill));
         if (state.ship_touched_wall) print("boom");
-        print(QString("%1 crates").arg(state.crates.size()));
-        print(QString("ms %1").arg(dt_mean * 1000));
-        print(QString("fps %1").arg(fps));
-        print(QString("aa %1").arg(state.ship_thrust_factor));
-        print(QString("contact %1").arg(state.all_accum_contact));
-        const double mean_energy = state.all_accum_contact ? state.all_energy / state.all_accum_contact : 0;
-        print(QString("energy %1").arg(mean_energy, 5));
-
-        constexpr double cmin = 0.;
-        constexpr double cmax = 1;
-        constexpr double min_volume = .005;
-        constexpr double max_volume = .5;
-
-        constexpr double delta = cmax - cmin;
-        static_assert(delta != 0, "delta must be strickly positive");
-        constexpr double aa = (max_volume - min_volume) / delta;
-        constexpr double bb = (min_volume * cmax - max_volume * cmin) / delta;
-        const double volume = std::max(min_volume, std::min(max_volume, aa * mean_energy + bb));
-        print(QString("volume %1").arg(100*volume));
 
         painter.restore();
 
-        { // collisions
-            if (state.ship_accum_contact > 0)
-                ship_click_sfx.play();
-            if (state.all_accum_contact > 0)
-            {
-
-                back_click_sfx.setVolume(volume);
-                back_click_sfx.play();
-            }
-            state.ship_accum_contact = 0;
-            state.all_accum_contact = 0;
-            state.all_energy = 0;
-        }
     }
 
+    { // sfx
+        if (state.ship_accum_contact > 0)
+            ship_click_sfx.play();
+
+        back_click_sfx.setVolume(volume);
+        if (state.all_accum_contact > 0)
+            back_click_sfx.play();
+    }
+
+    { // reset
+        time.restart();
+        state.ship_accum_contact = 0;
+        state.all_accum_contact = 0;
+        state.all_energy = 0;
+    }
 }
 
 void GameWindow::keyPressEvent(QKeyEvent* event)
