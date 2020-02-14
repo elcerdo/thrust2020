@@ -1,13 +1,9 @@
 #include "QtImGui.h"
 #include "ImGuiRenderer.h"
 #include <QWindow>
-#ifdef QT_WIDGETS_LIB
 #include <QWidget>
-#endif
 
 namespace QtImGui {
-
-#ifdef QT_WIDGETS_LIB
 
 namespace {
 
@@ -38,8 +34,6 @@ private:
 void initialize(QWidget *window) {
     ImGuiRenderer::instance()->initialize(new QWidgetWindowWrapper(window));
 }
-
-#endif
 
 namespace {
 
