@@ -12,6 +12,19 @@ set(BOX2D_VERSION 2.3.0)
 set(BOX2D_BUILD_STATIC TRUE)
 add_subdirectory(liquidfun/liquidfun/Box2D/Box2D)
 include_directories(liquidfun/liquidfun/Box2D)
+include_directories(imgui)
+
+add_executable(test_imgui
+    imgui/imgui.cpp
+    imgui/imgui_draw.cpp
+    imgui/imgui_demo.cpp
+    QtImGui.cpp
+    ImGuiRenderer.cpp
+    test_imgui.cpp
+    )
+target_link_libraries(test_imgui
+    Qt5::Widgets
+    )
 
 add_executable(rocket
     RasterWindow.cpp
@@ -22,7 +35,6 @@ add_executable(rocket
     #mainwindow.cpp
     rocket.qrc
     )
-
 target_link_libraries(rocket
     Box2D
     Qt5::Widgets

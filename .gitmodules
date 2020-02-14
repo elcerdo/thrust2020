@@ -1,3 +1,6 @@
 [submodule "liquidfun"]
 	path = liquidfun
 	url = https://github.com/google/liquidfun.git
+[submodule "imgui"]
+	path = imgui
+	url = https://github.com/ocornut/imgui.git
