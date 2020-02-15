@@ -205,9 +205,9 @@ bool ImGuiRenderer::createDeviceObjects()
         "out vec4 Frag_Color;\n"
         "void main()\n"
         "{\n"
-        "	Frag_UV = UV;\n"
-        "	Frag_Color = Color;\n"
-        "	gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
+        " Frag_UV = UV;\n"
+        " Frag_Color = Color;\n"
+        " gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
         "}\n";
 
     const GLchar* fragment_shader =
@@ -218,7 +218,7 @@ bool ImGuiRenderer::createDeviceObjects()
         "out vec4 Out_Color;\n"
         "void main()\n"
         "{\n"
-        "	Out_Color = Frag_Color * texture( Texture, Frag_UV.st);\n"
+        " Out_Color = Frag_Color * texture( Texture, Frag_UV.st);\n"
         "}\n";
 
     g_ShaderHandle = glCreateProgram();
@@ -318,9 +318,12 @@ void ImGuiRenderer::onMousePressedChange(QMouseEvent *event)
 
 void ImGuiRenderer::onWheel(QWheelEvent *event)
 {
+    const auto delta = event->angleDelta() / 8.;
+
     // 5 lines per unit
-    g_MouseWheelH += event->pixelDelta().x() / (ImGui::GetTextLineHeight());
-    g_MouseWheel += event->pixelDelta().y() / (5.0 * ImGui::GetTextLineHeight());
+    qDebug() << "wheel_delta" << delta << ImGui::GetTextLineHeight();
+    g_MouseWheelH += delta.x() / (ImGui::GetTextLineHeight());
+    g_MouseWheel += delta.y() / (5.0 * ImGui::GetTextLineHeight());
 }
 
 void ImGuiRenderer::onKeyPressRelease(QKeyEvent *event)
