@@ -8,12 +8,21 @@
 
 class DemoWindow : public QOpenGLWindow, private QOpenGLExtraFunctions
 {
+public:
+    void setAnimated(const bool value)
+    {
+        is_animated = value;
+        if (is_animated)
+            update();
+    }
+
 protected:
     void initializeGL() override
     {
         initializeOpenGLFunctions();
         QtImGui::initialize(this);
     }
+
     void paintGL() override
     {
         QtImGui::newFrame();
@@ -52,12 +61,16 @@ protected:
         glClear(GL_COLOR_BUFFER_BIT);
 
         ImGui::Render();
+
+        if (is_animated)
+            update();
     }
 
 private:
     bool show_test_window = true;
     bool show_another_window = false;
     ImVec4 clear_color = ImColor(114, 144, 154);
+    bool is_animated = false;
 };
 
 int main(int argc, char *argv[])
@@ -76,10 +89,8 @@ int main(int argc, char *argv[])
     w.resize(1280, 720);
     w.show();
 
-    // Update at 60 fps
-    QTimer timer;
-    QObject::connect(&timer, SIGNAL(timeout()), &w, SLOT(update()));
-    timer.start(16);
+    // Update at max speed
+    w.setAnimated(true);
 
     return a.exec();
 }
