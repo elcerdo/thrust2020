@@ -3,12 +3,9 @@
 #include "GameState.h"
 
 #include <QOpenGLWindow>
-#include <QOpenGLPaintDevice>
 #include <QOpenGLFunctions>
-#include <QOpenGLExtraFunctions>
-
-#include <vector>
-#include <tuple>
+#include <QOpenGLPaintDevice>
+#include <QSoundEffect>
 #include <random>
 
 class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLFunctions
@@ -23,6 +20,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLFunctions
         using FloatState = std::tuple<std::string, float, float, float, FloatCallback>;
         using FloatStates = std::vector<FloatState>;
 
+        GameWindowOpenGL(QWindow* parent = nullptr);
         void setAnimated(const bool value);
         void addSlider(const std::string& label, const float& min, const float& max, const float& value, const FloatCallback& callback);
         void addCheckbox(const std::string& label, const bool& value, const BoolCallback& callback);
@@ -53,5 +51,10 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLFunctions
 
         QOpenGLPaintDevice* device = nullptr;
         size_t frame_counter = 0;
+
+        QSoundEffect engine_sfx;
+        QSoundEffect ship_click_sfx;
+        QSoundEffect back_click_sfx;
 };
+
 

@@ -9,9 +9,46 @@
 #include <QPainter>
 #include <QKeyEvent>
 #include <QtMath>
+#include <QFontDatabase>
 
 #include <imgui.h>
 #include <random>
+
+GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
+{
+    {
+        auto& sfx = engine_sfx;
+        const auto sound = QUrl::fromLocalFile(":engine.wav");
+        assert(sound.isValid());
+        sfx.setSource(sound);
+        sfx.setLoopCount(QSoundEffect::Infinite);
+        sfx.setVolume(.3);
+        sfx.setMuted(true);
+        sfx.play();
+    }
+
+    {
+        auto& sfx = ship_click_sfx;
+        const auto click_sound = QUrl::fromLocalFile(":click01.wav");
+        assert(click_sound.isValid());
+        sfx.setSource(click_sound);
+        sfx.setLoopCount(1);
+        sfx.setVolume(.2);
+        sfx.setMuted(false);
+        sfx.stop();
+    }
+
+    {
+        auto& sfx = back_click_sfx;
+        const auto click_sound = QUrl::fromLocalFile(":click00.wav");
+        assert(click_sound.isValid());
+        sfx.setSource(click_sound);
+        sfx.setLoopCount(1);
+        sfx.setVolume(.5);
+        sfx.setMuted(false);
+        sfx.stop();
+    }
+}
 
 void GameWindowOpenGL::setAnimated(const bool value)
 {
@@ -24,7 +61,7 @@ void GameWindowOpenGL::initializeGL()
 {
     initializeOpenGLFunctions();
     QtImGui::initialize(this);
-
+    glClearColor(1, 0, 1, 1);
 }
 
 void GameWindowOpenGL::addCheckbox(const std::string& label, const bool& value, const BoolCallback& callback)
@@ -242,7 +279,6 @@ void GameWindowOpenGL::paintGL()
 
     // Do render before ImGui UI is rendered
     glViewport(0, 0, width(), height());
-    glClearColor(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
     glClear(GL_COLOR_BUFFER_BIT);
 
     if (!device)
@@ -251,7 +287,18 @@ void GameWindowOpenGL::paintGL()
     device->setSize(size() * devicePixelRatio());
     device->setDevicePixelRatio(devicePixelRatio());
 
+    static const QFont fixed_font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+
     QPainter painter(device);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setFont(fixed_font);
+
+    { // background gradient
+        QLinearGradient linearGrad(QPointF(0, 0), QPointF(0, height()));
+        linearGrad.setColorAt(0, QColor(0x33, 0x08, 0x67)); // morpheus den gradient
+        linearGrad.setColorAt(1, QColor(0x30, 0xcf, 0xd0));
+        painter.fillRect(0, 0, width(), height(), linearGrad);
+    }
 
     { // world
         painter.save();
@@ -286,7 +333,46 @@ void GameWindowOpenGL::paintGL()
         const bool is_fast = state.ball->GetLinearVelocity().Length() > 30;
         drawBody(painter, state.ball, is_fast ? QColor(0xfd, 0xa0, 0x85) : Qt::black);
         drawShip(painter);
+
         painter.restore();
+    }
+
+    { // overlay
+        painter.save();
+        painter.translate(QPointF(0, height()));
+        painter.setPen(QPen(Qt::red, 1));
+        const auto print = [&painter](const QString& text) -> void
+        {
+            painter.translate(QPointF(0, -12));
+            painter.drawText(0, 0, text);
+        };
+
+        constexpr QChar fill(' ');
+
+        print(QString("creates %1").arg(state.crates.size(), 4, 10, fill));
+        print(QString(" thrust %1%").arg(state.ship_thrust_factor * 100, 4, 'f', 0, fill));
+        print(QString("contact %1").arg(state.all_accum_contact, 4, 10, fill));
+        if (state.ship_touched_wall) print("boom");
+
+        painter.restore();
+
+    }
+
+    { // sfx
+        if (state.ship_accum_contact > 0)
+            ship_click_sfx.play();
+
+        /*
+        back_click_sfx.setVolume(volume);
+        if (state.all_accum_contact > 0)
+            back_click_sfx.play();
+            */
+    }
+
+    { // reset
+        state.ship_accum_contact = 0;
+        state.all_accum_contact = 0;
+        state.all_energy = 0;
     }
 
     ImGui::Render();
@@ -297,28 +383,10 @@ void GameWindowOpenGL::paintGL()
 
 void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
 {
-    /*
-    if (event->key() == Qt::Key_O)
-    {
-        renderLater();
-        return;
-    }
-    if (event->key() == Qt::Key_P)
-    {
-        setAnimated(!isAnimated());
-        return;
-    }
-    */
     if (event->key() == Qt::Key_Space)
     {
         if (state.joint) state.release();
         else if (state.canGrab()) state.grab();
-        return;
-    }
-    if (event->key() == Qt::Key_A)
-    {
-        draw_debug = !draw_debug;
-        qDebug() << "draw_debug" << draw_debug;
         return;
     }
     if (event->key() == Qt::Key_Z)
@@ -333,7 +401,7 @@ void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
     }
     if (event->key() == Qt::Key_Up)
     {
-        //engine_sfx.setMuted(false);
+        engine_sfx.setMuted(false);
         state.ship_firing = true;
         return;
     }
@@ -348,7 +416,7 @@ void GameWindowOpenGL::keyReleaseEvent(QKeyEvent* event)
 {
     if (event->key() == Qt::Key_Up)
     {
-        //engine_sfx.setMuted(true);
+        engine_sfx.setMuted(true);
         state.ship_firing = false;
         return;
     }
