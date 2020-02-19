@@ -29,6 +29,13 @@ void GameWindowOpenGL::addCheckbox(const std::string& label, const bool& value, 
     std::get<2>(state)(std::get<1>(state));
 }
 
+void GameWindowOpenGL::addSlider(const std::string& label, const float& min, const float& max, const float& value, const FloatCallback& callback)
+{
+    auto state = std::make_tuple(label, min, max, value, callback);
+    float_states.emplace_back(state);
+    std::get<4>(state)(std::get<3>(state));
+}
+
 void GameWindowOpenGL::paintGL()
 {
     QtImGui::newFrame();
@@ -37,13 +44,18 @@ void GameWindowOpenGL::paintGL()
     // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
     {
         static float f = 0.0f;
-        ImGui::Text("Hello, world!");
-        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-        ImGui::ColorEdit3("clear color", clear_color);
+        //ImGui::Text("Hello, world!");
+        //ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+        //ImGui::ColorEdit3("clear color", clear_color);
         //if (ImGui::Button("Test Window")) show_test_window ^= 1;
         //if (ImGui::Button("Another Window")) show_another_window ^= 1;
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::Separator();
+
+        for (auto& state : float_states)
+        {
+            const auto prev = std::get<3>(state);
+            ImGui::SliderFloat(std::get<0>(state).c_str(), &std::get<3>(state), std::get<1>(state), std::get<2>(state));
+            if (prev != std::get<3>(state)) std::get<4>(state)(std::get<3>(state));
+        }
 
         for (auto& state : bool_states)
         {
@@ -51,6 +63,9 @@ void GameWindowOpenGL::paintGL()
             ImGui::Checkbox(std::get<0>(state).c_str(), &std::get<1>(state));
             if (prev != std::get<1>(state)) std::get<2>(state)(std::get<1>(state));
         }
+
+        ImGui::Separator();
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     }
 
 
