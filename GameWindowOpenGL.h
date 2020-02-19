@@ -1,10 +1,17 @@
+#pragma once
+
+#include "GameState.h"
+
 #include <QOpenGLWindow>
+#include <QOpenGLPaintDevice>
+#include <QOpenGLFunctions>
 #include <QOpenGLExtraFunctions>
 
 #include <vector>
 #include <tuple>
+#include <random>
 
-class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
+class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLFunctions
 {
     Q_OBJECT
     public:
@@ -16,7 +23,6 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         using FloatState = std::tuple<std::string, float, float, float, FloatCallback>;
         using FloatStates = std::vector<FloatState>;
 
-        GameWindowOpenGL(QWindow* parent = nullptr);
         void setAnimated(const bool value);
         void addSlider(const std::string& label, const float& min, const float& max, const float& value, const FloatCallback& callback);
         void addCheckbox(const std::string& label, const bool& value, const BoolCallback& callback);
@@ -24,14 +30,28 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
     protected:
         void initializeGL() override;
         void paintGL() override;
+        void keyPressEvent(QKeyEvent* event) override;
+        void keyReleaseEvent(QKeyEvent* event) override;
 
-    private:
+        void drawOrigin(QPainter& painter) const;
+        void drawBody(QPainter& painter, const b2Body* body, const QColor& color = Qt::black) const;
+        void drawShip(QPainter& painter);
+        void drawFlame(QPainter& painter);
+
+    public:
+        GameState state;
+        std::default_random_engine rng;
+        float clear_color[4] = { .2, .2, .2, 1 };
+        bool is_animated = false;
+        bool draw_debug = true;
+
+    protected:
         //bool show_test_window = true;
         //bool show_another_window = false;
-        float clear_color[4] = { 1, 0, 0, 1 };
-        bool is_animated = false;
-
         BoolStates bool_states;
         FloatStates float_states;
+
+        QOpenGLPaintDevice* device = nullptr;
+        size_t frame_counter = 0;
 };
 

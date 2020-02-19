@@ -250,7 +250,6 @@ void GameWindow::render(QPainter& painter)
         return std::max(min_volume, std::min(max_volume, aa * power_mean + bb));
     }();
 
-    const int side = qMin(width(), height());
     painter.setRenderHint(QPainter::Antialiasing);
 
     { // world
@@ -258,6 +257,7 @@ void GameWindow::render(QPainter& painter)
         painter.translate(width() / 2, height() / 2);
 
         const auto& pos = state.ship->GetPosition();
+        const int side = qMin(width(), height());
         const double height =  75 * std::max(1., pos.y / 40.);
         painter.scale(side / height, -side / height);
         painter.translate(-pos.x, -20);

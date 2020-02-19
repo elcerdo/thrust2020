@@ -6,7 +6,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt5 COMPONENTS Widgets Multimedia REQUIRED)
+find_package(Qt5 COMPONENTS Widgets Multimedia OpenGL REQUIRED)
 
 set(BOX2D_VERSION 2.3.0)
 set(BOX2D_BUILD_STATIC TRUE)
@@ -25,6 +25,7 @@ add_executable(test_imgui
     )
 target_link_libraries(test_imgui
     Qt5::Widgets
+    Qt5::OpenGL
     )
 
 add_executable(rocket
@@ -46,5 +47,6 @@ target_link_libraries(rocket
     Box2D
     Qt5::Widgets
     Qt5::Multimedia
+    Qt5::OpenGL
     )
 
