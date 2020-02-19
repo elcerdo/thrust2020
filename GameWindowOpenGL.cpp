@@ -10,6 +10,7 @@
 #include <QKeyEvent>
 #include <QtMath>
 #include <QFontDatabase>
+#include <QOpenGLShaderProgram>
 
 #include <imgui.h>
 #include <random>
@@ -38,7 +39,7 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
         sfx.stop();
     }
 
-    {
+    /*{
         auto& sfx = back_click_sfx;
         const auto click_sound = QUrl::fromLocalFile(":click00.wav");
         assert(click_sound.isValid());
@@ -47,7 +48,16 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
         sfx.setVolume(.5);
         sfx.setMuted(false);
         sfx.stop();
-    }
+    }*/
+}
+
+void GameWindowOpenGL::setMuted(const bool muted)
+{
+    is_muted = muted;
+
+    if (!engine_sfx.isMuted() && is_muted) engine_sfx.setMuted(true);
+    ship_click_sfx.setMuted(muted);
+    //back_click_sfx.setMuted(muted);
 }
 
 void GameWindowOpenGL::setAnimated(const bool value)
@@ -57,11 +67,43 @@ void GameWindowOpenGL::setAnimated(const bool value)
         update();
 }
 
+static const char *vertexShaderSource =
+    "attribute highp vec4 posAttr;\n"
+    "attribute lowp vec4 colAttr;\n"
+    "varying lowp vec4 col;\n"
+    "uniform highp mat4 matrix;\n"
+    "void main() {\n"
+    "   col = colAttr;\n"
+    "   gl_Position = matrix * posAttr;\n"
+    "}\n";
+
+static const char *fragmentShaderSource =
+    "varying lowp vec4 col;\n"
+    "void main() {\n"
+    "   gl_FragColor = col;\n"
+    "}\n";
+
 void GameWindowOpenGL::initializeGL()
 {
     initializeOpenGLFunctions();
     QtImGui::initialize(this);
     glClearColor(1, 0, 1, 1);
+
+    assert(!program);
+    program = new QOpenGLShaderProgram;
+    program->addShaderFromSourceCode(QOpenGLShader::Vertex, vertexShaderSource);
+    program->addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShaderSource);
+    const auto link_ok = program->link();
+    qDebug() << "link_ok" << link_ok;
+    assert(link_ok);
+
+    program->bind();
+    pos_attr = program->attributeLocation("posAttr");
+    col_attr = program->attributeLocation("colAttr");
+    //m_matrixUniform = m_program->uniformLocation("matrix");
+    qDebug() << "attrs" << pos_attr << col_attr;
+    //assert(pos_attr >= 0);
+
 }
 
 void GameWindowOpenGL::addCheckbox(const std::string& label, const bool& value, const BoolCallback& callback)
@@ -163,7 +205,8 @@ void GameWindowOpenGL::drawBody(QPainter& painter, const b2Body* body, const QCo
         painter.translate(world_center.x, world_center.y);
 
         painter.setBrush(Qt::NoBrush);
-        painter.setPen(QPen(Qt::blue, 0));
+        const QColor speed_color_ = QColor::fromRgbF(speed_color[0], speed_color[1], speed_color[2], speed_color[3]);
+        painter.setPen(QPen(speed_color_, 0));
         painter.drawLine(QPointF(0, 0), QPointF(linear_velocity.x, linear_velocity.y));
 
         painter.setBrush(is_awake ? Qt::blue : Qt::white);
@@ -253,11 +296,12 @@ void GameWindowOpenGL::paintGL()
 
     // 1. Show a simple window
     // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
+    if (display_ui)
     {
-        static float f = 0.0f;
+        //static float f = 0.0f;
         //ImGui::Text("Hello, world!");
         //ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-        ImGui::ColorEdit3("clear color", clear_color);
+        ImGui::ColorEdit3("speed color", speed_color);
         //if (ImGui::Button("Test Window")) show_test_window ^= 1;
         //if (ImGui::Button("Another Window")) show_another_window ^= 1;
 
@@ -278,7 +322,6 @@ void GameWindowOpenGL::paintGL()
         ImGui::Separator();
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::Text("Ball density %.2f", state.ball->GetFixtureList()->GetDensity());
-
     }
 
 
@@ -340,6 +383,8 @@ void GameWindowOpenGL::paintGL()
         for (auto& crate : state.crates)
             drawBody(painter, crate);
 
+        drawParticleSystem(painter, state.system);
+
         if (state.joint)
         { // joint line
             painter.save();
@@ -355,7 +400,6 @@ void GameWindowOpenGL::paintGL()
         const bool is_fast = state.ball->GetLinearVelocity().Length() > 30;
         drawBody(painter, state.ball, is_fast ? QColor(0xfd, 0xa0, 0x85) : Qt::black);
         drawShip(painter);
-        drawParticleSystem(painter, state.system);
 
         painter.restore();
     }
@@ -380,6 +424,16 @@ void GameWindowOpenGL::paintGL()
 
         painter.restore();
     }
+
+    /*glBegin(GL_TRIANGLE_STRIP);
+    glColor3f(1, 1, 0);
+    glVertex2f(-1, -1);
+    glVertex2f(1, -1);
+    glVertex2f(-1, 1);
+    glVertex2f(1, 1);
+    //glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    //glDrawElements(GL_TRIANGLE_STRIP, 4, )
+    glEnd(); */
 
     { // sfx
         if (state.ship_accum_contact > 0)
@@ -406,6 +460,12 @@ void GameWindowOpenGL::paintGL()
 
 void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
 {
+
+    if (event->key() == Qt::Key_A)
+    {
+        display_ui ^= 1;
+        return;
+    }
     if (event->key() == Qt::Key_Space)
     {
         if (state.joint) state.release();
@@ -422,9 +482,14 @@ void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
         state.addCrate({ 0, 10 }, velocity, angle);
         return;
     }
+    if (event->key() == Qt::Key_E)
+    {
+        state.flop();
+        return;
+    }
     if (event->key() == Qt::Key_Up)
     {
-        engine_sfx.setMuted(false);
+        engine_sfx.setMuted(is_muted);
         state.ship_firing = true;
         return;
     }

@@ -146,6 +146,7 @@ GameState::GameState() :
     { // particle system
         b2ParticleSystemDef system_def;
         system_def.density = 5e-2;
+        system_def.radius = 1.2;
         system = world.CreateParticleSystem(&system_def);
 
         b2PolygonShape shape;
@@ -163,6 +164,24 @@ GameState::GameState() :
 
 
     world.SetContactListener(this);
+}
+
+void GameState::flop()
+{
+    cout << "flop" << endl;
+    assert(system);
+
+    b2PolygonShape shape;
+    shape.SetAsBox(30, 10);
+
+    b2ParticleGroupDef group_def;
+    group_def.shape = &shape;
+    group_def.flags = b2_powderParticle;
+    //group_def.flags = b2_elasticParticle;
+    //group_def.groupFlags = b2_solidParticleGroup;
+    group_def.position.Set(0, 70);
+    group_def.color.Set(255u, 0, 0, 127u);
+    system->CreateParticleGroup(group_def);
 }
 
 void GameState::grab()

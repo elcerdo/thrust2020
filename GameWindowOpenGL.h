@@ -6,6 +6,7 @@
 #include <QOpenGLFunctions>
 #include <QOpenGLPaintDevice>
 #include <QSoundEffect>
+#include <QOpenGLShaderProgram>
 #include <random>
 
 class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLFunctions
@@ -24,6 +25,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLFunctions
         void setAnimated(const bool value);
         void addSlider(const std::string& label, const float& min, const float& max, const float& value, const FloatCallback& callback);
         void addCheckbox(const std::string& label, const bool& value, const BoolCallback& callback);
+        void setMuted(const bool muted);
 
     protected:
         void initializeGL() override;
@@ -40,9 +42,10 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLFunctions
     public:
         GameState state;
         std::default_random_engine rng;
-        float clear_color[4] = { .2, .2, .2, 1 };
+        float speed_color[4] = { 0, 0, 1, 1 };
         bool is_animated = false;
         bool draw_debug = true;
+        bool display_ui = true;
 
     protected:
         //bool show_test_window = true;
@@ -55,7 +58,13 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLFunctions
 
         QSoundEffect engine_sfx;
         QSoundEffect ship_click_sfx;
-        QSoundEffect back_click_sfx;
+        //QSoundEffect back_click_sfx;
+
+        bool is_muted = false;
+
+        QOpenGLShaderProgram* program = nullptr;
+        int pos_attr = -1;
+        int col_attr = -1;
 };
 
 

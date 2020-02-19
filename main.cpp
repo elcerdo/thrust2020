@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
         state.ship_thrust_factor = value;
     });
 
-    view_opengl.addSlider("ball density", .01, .2, .1, [&state](const float value) -> void {
+    view_opengl.addSlider("ball density", .01, .1, .04, [&state](const float value) -> void {
         b2MassData mass_data;
         const auto body = state.ball;
         assert(body);
@@ -45,6 +45,11 @@ int main(int argc, char* argv[])
     view_opengl.addCheckbox("draw debug", true, [&view_opengl](const bool checked) -> void {
         qDebug() << "draw debug" << checked;
         view_opengl.draw_debug = checked;
+    });
+
+    view_opengl.addCheckbox("mute sfx", false, [&view_opengl](const bool checked) -> void {
+        view_opengl.draw_debug = checked;
+        view_opengl.setMuted(checked);
     });
 
     return app.exec();

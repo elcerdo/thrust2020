@@ -19,6 +19,7 @@ struct GameState : public b2ContactListener
     void grab();
     void release();
     void addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle);
+    void flop();
 
     void BeginContact(b2Contact* contact) override;
 
