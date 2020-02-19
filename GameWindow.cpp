@@ -318,9 +318,11 @@ void GameWindow::render(QPainter& painter)
         if (state.ship_accum_contact > 0)
             ship_click_sfx.play();
 
+        /*
         back_click_sfx.setVolume(volume);
         if (state.all_accum_contact > 0)
             back_click_sfx.play();
+            */
     }
 
     { // reset

@@ -28,6 +28,12 @@ target_link_libraries(test_imgui
     )
 
 add_executable(rocket
+    imgui/imgui.cpp
+    imgui/imgui_draw.cpp
+    imgui/imgui_widgets.cpp
+    QtImGui.cpp
+    ImGuiRenderer.cpp
+    GameWindowOpenGL.cpp
     RasterWindow.cpp
     GameWindow.cpp
     GameState.cpp

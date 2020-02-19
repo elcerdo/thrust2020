@@ -1,3 +1,4 @@
+#include "GameWindowOpenGL.h"
 #include "GameWindow.h"
 
 #include <QApplication>
@@ -12,6 +13,12 @@ int main(int argc, char* argv[])
 {
     using std::cout;
     cout << std::boolalpha;
+
+    // Use OpenGL 3 Core Profile
+    QSurfaceFormat glFormat;
+    glFormat.setVersion(3, 3);
+    glFormat.setProfile(QSurfaceFormat::CoreProfile);
+    QSurfaceFormat::setDefaultFormat(glFormat);
 
     QApplication app(argc, argv);
 
@@ -76,6 +83,11 @@ int main(int argc, char* argv[])
     QMainWindow main;
     main.show();
     main.setCentralWidget(central);
+
+    auto foo = new GameWindowOpenGL;
+    foo->show();
+    foo->resize(800, 600);
+    foo->setAnimated(true);
 
 
     return app.exec();
