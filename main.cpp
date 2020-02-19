@@ -3,6 +3,8 @@
 #include <QApplication>
 #include <QDebug>
 
+#include "Box2D/Dynamics/b2Fixture.h"
+
 int main(int argc, char* argv[])
 {
     QSurfaceFormat glFormat;
@@ -24,9 +26,15 @@ int main(int argc, char* argv[])
         state.ship_thrust_factor = value;
     });
 
-    view_opengl.addSlider("ball mass", 0, 2, 1, [&state](const float value) -> void {
-        qDebug() << "change ball mass" << value;
-        //state.ship_thrust_factor = value;
+    view_opengl.addSlider("ball density", .01, .2, .1, [&state](const float value) -> void {
+        b2MassData mass_data;
+        const auto body = state.ball;
+        assert(body);
+        const auto fixture = body->GetFixtureList();
+        assert(fixture);
+        qDebug() << "change ball mass" << value << fixture->GetDensity();
+        fixture->SetDensity(value);
+        body->ResetMassData();
     });
 
     view_opengl.addCheckbox("gravity", true, [&state](const bool checked) -> void {

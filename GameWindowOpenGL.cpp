@@ -277,6 +277,8 @@ void GameWindowOpenGL::paintGL()
 
         ImGui::Separator();
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::Text("Ball density %.2f", state.ball->GetFixtureList()->GetDensity());
+
     }
 
 
