@@ -35,8 +35,6 @@ add_executable(rocket
     QtImGui.cpp
     ImGuiRenderer.cpp
     GameWindowOpenGL.cpp
-    RasterWindow.cpp
-    GameWindow.cpp
     GameState.cpp
     main.cpp
     #mainwindow.ui
