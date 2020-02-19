@@ -2,6 +2,7 @@
 #include "QtImGui.h"
 
 #include <imgui.h>
+#include <QDebug>
 
 GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
     : is_animated(false)
@@ -21,6 +22,13 @@ void GameWindowOpenGL::initializeGL()
     QtImGui::initialize(this);
 }
 
+void GameWindowOpenGL::addCheckbox(const std::string& label, const bool& value, const BoolCallback& callback)
+{
+    auto state = std::make_tuple(label, value, callback);
+    bool_states.emplace_back(state);
+    std::get<2>(state)(std::get<1>(state));
+}
+
 void GameWindowOpenGL::paintGL()
 {
     QtImGui::newFrame();
@@ -35,7 +43,16 @@ void GameWindowOpenGL::paintGL()
         //if (ImGui::Button("Test Window")) show_test_window ^= 1;
         //if (ImGui::Button("Another Window")) show_another_window ^= 1;
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::Separator();
+
+        for (auto& state : bool_states)
+        {
+            const auto prev = std::get<1>(state);
+            ImGui::Checkbox(std::get<0>(state).c_str(), &std::get<1>(state));
+            if (prev != std::get<1>(state)) std::get<2>(state)(std::get<1>(state));
+        }
     }
+
 
     /*
     // 2. Show another simple window, this time using an explicit Begin/End pair
