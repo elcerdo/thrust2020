@@ -96,14 +96,6 @@ void GameWindowOpenGL::initializeGL()
     const auto link_ok = program->link();
     qDebug() << "link_ok" << link_ok;
     assert(link_ok);
-
-    program->bind();
-    pos_attr = program->attributeLocation("posAttr");
-    col_attr = program->attributeLocation("colAttr");
-    //m_matrixUniform = m_program->uniformLocation("matrix");
-    qDebug() << "attrs" << pos_attr << col_attr;
-    //assert(pos_attr >= 0);
-
 }
 
 void GameWindowOpenGL::addCheckbox(const std::string& label, const bool& value, const BoolCallback& callback)
@@ -287,6 +279,50 @@ void GameWindowOpenGL::drawShip(QPainter& painter)
 
 void GameWindowOpenGL::paintGL()
 {
+
+    assert(program);
+    program->bind();
+    const auto pos_attr = program->attributeLocation("posAttr");
+    const auto col_attr = program->attributeLocation("colAttr");
+    const auto matrix_uniform = program->uniformLocation("matrix");
+    qDebug() << "attrs" << pos_attr << col_attr;
+    //assert(pos_attr >= 0);
+
+
+    program->bind();
+
+    QMatrix4x4 matrix;
+    matrix.perspective(60.0f, 4.0f/3.0f, 0.1f, 100.0f);
+    matrix.translate(0, 0, -2);
+    //matrix.rotate(100.0f * m_frame / screen()->refreshRate(), 0, 1, 0);
+
+    program->setUniformValue(matrix_uniform, matrix);
+
+    GLfloat vertices[] = {
+        0.0f, 0.707f,
+        -0.5f, -0.5f,
+        0.5f, -0.5f
+    };
+
+    GLfloat colors[] = {
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f
+    };
+
+    glVertexAttribPointer(pos_attr, 2, GL_FLOAT, GL_FALSE, 0, vertices);
+    glVertexAttribPointer(col_attr, 3, GL_FLOAT, GL_FALSE, 0, colors);
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(0);
+
+    program->release();
+
     frame_counter++;
 
     const double dt_ = std::min(50e-3, 1. / ImGui::GetIO().Framerate);

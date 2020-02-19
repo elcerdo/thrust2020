@@ -63,8 +63,6 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLFunctions
         bool is_muted = false;
 
         QOpenGLShaderProgram* program = nullptr;
-        int pos_attr = -1;
-        int col_attr = -1;
 };
 
 
