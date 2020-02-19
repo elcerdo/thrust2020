@@ -38,12 +38,12 @@ GameState::GameState() :
         b2PolygonShape shape;
         shape.SetAsBox(600, 100);
 
+        auto body = world.CreateBody(&def);
         b2FixtureDef fixture;
         fixture.shape = &shape;
         fixture.density = 0;
         fixture.friction = .9;
 
-        auto body = world.CreateBody(&def);
         body->CreateFixture(&fixture);
         ground = body;
     }
@@ -145,15 +145,18 @@ GameState::GameState() :
 
     { // particle system
         b2ParticleSystemDef system_def;
+        system_def.density = 5e-2;
         system = world.CreateParticleSystem(&system_def);
 
         b2PolygonShape shape;
-        shape.SetAsBox(5, 5);
+        shape.SetAsBox(8, 20);
 
         b2ParticleGroupDef group_def;
         group_def.shape = &shape;
-        group_def.flags = b2_elasticParticle;
-        group_def.position.Set(-15, 5);
+        group_def.flags = b2_powderParticle;
+        //group_def.flags = b2_elasticParticle;
+        //group_def.groupFlags = b2_solidParticleGroup;
+        group_def.position.Set(-15, 30);
         group_def.color.Set(255u, 255u, 0, 127u);
         system->CreateParticleGroup(group_def);
     }
@@ -262,7 +265,7 @@ void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double a
 
     b2FixtureDef fixture;
     fixture.shape = &shape;
-    fixture.density = .001;
+    fixture.density = .01;
     fixture.friction = .8;
     fixture.restitution = .7;
 

@@ -33,6 +33,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLFunctions
 
         void drawOrigin(QPainter& painter) const;
         void drawBody(QPainter& painter, const b2Body* body, const QColor& color = Qt::black) const;
+        void drawParticleSystem(QPainter& painter, const b2ParticleSystem* system, const QColor& color = Qt::black) const;
         void drawShip(QPainter& painter);
         void drawFlame(QPainter& painter);
 

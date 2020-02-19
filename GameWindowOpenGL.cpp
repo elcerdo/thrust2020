@@ -92,6 +92,26 @@ void GameWindowOpenGL::drawOrigin(QPainter& painter) const
     painter.restore();
 }
 
+void GameWindowOpenGL::drawParticleSystem(QPainter& painter, const b2ParticleSystem* system, const QColor& color) const
+{
+    assert(system);
+
+    const b2Vec2* positions = system->GetPositionBuffer();
+    const auto kk_max = system->GetParticleCount();
+    const auto radius = system->GetRadius();
+
+    painter.setBrush(color);
+    painter.setPen(QPen(Qt::white, 0));
+
+    for (auto kk=0; kk<kk_max; kk++)
+    {
+        painter.save();
+        painter.translate(positions[kk].x, positions[kk].y);
+        painter.drawEllipse(QPointF(0, 0), radius, radius);
+        painter.restore();
+    }
+}
+
 void GameWindowOpenGL::drawBody(QPainter& painter, const b2Body* body, const QColor& color) const
 {
     assert(body);
@@ -333,6 +353,7 @@ void GameWindowOpenGL::paintGL()
         const bool is_fast = state.ball->GetLinearVelocity().Length() > 30;
         drawBody(painter, state.ball, is_fast ? QColor(0xfd, 0xa0, 0x85) : Qt::black);
         drawShip(painter);
+        drawParticleSystem(painter, state.system);
 
         painter.restore();
     }
@@ -349,13 +370,13 @@ void GameWindowOpenGL::paintGL()
 
         constexpr QChar fill(' ');
 
-        print(QString("creates %1").arg(state.crates.size(), 4, 10, fill));
-        print(QString(" thrust %1%").arg(state.ship_thrust_factor * 100, 4, 'f', 0, fill));
-        print(QString("contact %1").arg(state.all_accum_contact, 4, 10, fill));
-        if (state.ship_touched_wall) print("boom");
+        if (state.system) print(QString("particles %1").arg(state.system->GetParticleCount(), 4, 10, fill));
+        print(QString("  creates %1").arg(state.crates.size(), 4, 10, fill));
+        print(QString("   thrust %1%").arg(state.ship_thrust_factor * 100, 4, 'f', 0, fill));
+        print(QString("  contact %1").arg(state.all_accum_contact, 4, 10, fill));
+        if (state.ship_touched_wall) print("!!!!BOOOM!!!!");
 
         painter.restore();
-
     }
 
     { // sfx
