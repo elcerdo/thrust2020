@@ -423,7 +423,15 @@ void GameWindowOpenGL::paintGL()
         const int side = qMin(width(), height());
         const double height =  75 * std::max(1., pos.y / 40.);
         painter.scale(side / height, -side / height);
-        painter.translate(-pos.x, -20);
+        painter.translate(-pos.x, -std::min(20.f, pos.y));
+
+        { // svg
+            constexpr double scale = 600;
+            painter.save();
+            painter.scale(scale, scale);
+            map_renderer.render(&painter, QRectF(-.5, -.75, 1, -1));
+            painter.restore();
+        }
 
         drawOrigin(painter);
         drawBody(painter, state.left_side);
@@ -450,13 +458,6 @@ void GameWindowOpenGL::paintGL()
         const bool is_fast = state.ball->GetLinearVelocity().Length() > 30;
         drawBody(painter, state.ball, is_fast ? QColor(0xfd, 0xa0, 0x85) : Qt::black);
         drawShip(painter);
-
-        { // svg
-            constexpr double scale = 100;
-            painter.save();
-            map_renderer.render(&painter, QRectF(-scale/2, -scale/2, scale, -scale));
-            painter.restore();
-        }
 
         painter.restore();
     }

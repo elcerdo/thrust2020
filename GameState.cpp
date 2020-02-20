@@ -33,18 +33,45 @@ GameState::GameState() :
     { // ground
         b2BodyDef def;
         def.type = b2_staticBody;
-        def.position.Set(0, -100);
-
-        b2PolygonShape shape;
-        shape.SetAsBox(600, 100);
-
+        def.position.Set(50, -100);
         auto body = world.CreateBody(&def);
-        b2FixtureDef fixture;
-        fixture.shape = &shape;
-        fixture.density = 0;
-        fixture.friction = .9;
 
-        body->CreateFixture(&fixture);
+        {
+            b2PolygonShape shape;
+            shape.SetAsBox(280, 100, { -300, 0 }, 0);
+
+            b2FixtureDef fixture;
+            fixture.shape = &shape;
+            fixture.density = 0;
+            fixture.friction = .9;
+
+            body->CreateFixture(&fixture);
+        }
+
+        {
+            b2PolygonShape shape;
+            shape.SetAsBox(280, 100, { 300, 0 }, 0);
+
+            b2FixtureDef fixture;
+            fixture.shape = &shape;
+            fixture.density = 0;
+            fixture.friction = .9;
+
+            body->CreateFixture(&fixture);
+        }
+
+        {
+            b2PolygonShape shape;
+            shape.SetAsBox(30, 25, { 0, -80 }, 0);
+
+            b2FixtureDef fixture;
+            fixture.shape = &shape;
+            fixture.density = 0;
+            fixture.friction = .9;
+
+            body->CreateFixture(&fixture);
+        }
+
         ground = body;
     }
 
