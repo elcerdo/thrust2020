@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 
     GameState& state = view_opengl.state;
 
-    view_opengl.addSlider("thrust", .5, 2, 1, [&state](const float value) -> void {
+    view_opengl.addSlider("thrust", .5, 3, 1.5, [&state](const float value) -> void {
         qDebug() << "change thrust" << value;
         state.ship_thrust_factor = value;
     });
@@ -43,12 +43,12 @@ int main(int argc, char* argv[])
     });
 
     view_opengl.addCheckbox("draw debug", true, [&view_opengl](const bool checked) -> void {
-        qDebug() << "draw debug" << checked;
+        const auto before = view_opengl.draw_debug;
         view_opengl.draw_debug = checked;
+        qDebug() << "draw debug" << before << checked << &view_opengl << view_opengl.draw_debug;
     });
 
     view_opengl.addCheckbox("mute sfx", false, [&view_opengl](const bool checked) -> void {
-        view_opengl.draw_debug = checked;
         view_opengl.setMuted(checked);
     });
 

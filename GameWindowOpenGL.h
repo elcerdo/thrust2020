@@ -7,6 +7,7 @@
 #include <QOpenGLPaintDevice>
 #include <QSoundEffect>
 #include <QOpenGLShaderProgram>
+#include <QSvgRenderer>
 #include <random>
 
 class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLFunctions
@@ -42,7 +43,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLFunctions
     public:
         GameState state;
         std::default_random_engine rng;
-        float speed_color[4] = { 0, 0, 1, 1 };
+        std::array<float, 4> speed_color = { 0, 0, 1, 1 };
         bool is_animated = false;
         bool draw_debug = true;
         bool display_ui = true;
@@ -59,6 +60,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLFunctions
         QSoundEffect engine_sfx;
         QSoundEffect ship_click_sfx;
         //QSoundEffect back_click_sfx;
+        QSvgRenderer map_renderer;
 
         bool is_muted = false;
 

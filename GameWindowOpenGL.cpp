@@ -16,6 +16,7 @@
 #include <random>
 
 GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
+    : QOpenGLWindow(QOpenGLWindow::NoPartialUpdate, parent)
 {
     {
         auto& sfx = engine_sfx;
@@ -49,6 +50,15 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
         sfx.setMuted(false);
         sfx.stop();
     }*/
+
+    {
+        auto& renderer = map_renderer;
+        const auto load_ok = renderer.load(QString(":map.svg"));
+        //qDebug() << "renderer" << renderer.isValid() << load_ok;
+        assert(renderer.isValid());
+    }
+
+    assert(draw_debug);
 }
 
 void GameWindowOpenGL::setMuted(const bool muted)
@@ -280,49 +290,6 @@ void GameWindowOpenGL::drawShip(QPainter& painter)
 void GameWindowOpenGL::paintGL()
 {
 
-    assert(program);
-    program->bind();
-    const auto pos_attr = program->attributeLocation("posAttr");
-    const auto col_attr = program->attributeLocation("colAttr");
-    const auto matrix_uniform = program->uniformLocation("matrix");
-    qDebug() << "attrs" << pos_attr << col_attr;
-    //assert(pos_attr >= 0);
-
-
-    program->bind();
-
-    QMatrix4x4 matrix;
-    matrix.perspective(60.0f, 4.0f/3.0f, 0.1f, 100.0f);
-    matrix.translate(0, 0, -2);
-    //matrix.rotate(100.0f * m_frame / screen()->refreshRate(), 0, 1, 0);
-
-    program->setUniformValue(matrix_uniform, matrix);
-
-    GLfloat vertices[] = {
-        0.0f, 0.707f,
-        -0.5f, -0.5f,
-        0.5f, -0.5f
-    };
-
-    GLfloat colors[] = {
-        1.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 1.0f
-    };
-
-    glVertexAttribPointer(pos_attr, 2, GL_FLOAT, GL_FALSE, 0, vertices);
-    glVertexAttribPointer(col_attr, 3, GL_FLOAT, GL_FALSE, 0, colors);
-
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-
-    glDisableVertexAttribArray(1);
-    glDisableVertexAttribArray(0);
-
-    program->release();
-
     frame_counter++;
 
     const double dt_ = std::min(50e-3, 1. / ImGui::GetIO().Framerate);
@@ -337,7 +304,7 @@ void GameWindowOpenGL::paintGL()
         //static float f = 0.0f;
         //ImGui::Text("Hello, world!");
         //ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-        ImGui::ColorEdit3("speed color", speed_color);
+        ImGui::ColorEdit3("speed color", speed_color.data());
         //if (ImGui::Button("Test Window")) show_test_window ^= 1;
         //if (ImGui::Button("Another Window")) show_another_window ^= 1;
 
@@ -401,6 +368,53 @@ void GameWindowOpenGL::paintGL()
         painter.fillRect(0, 0, width(), height(), linearGrad);
     }
 
+    /*{ // draw with custom shader
+        assert(program);
+        program->bind();
+        const auto pos_attr = program->attributeLocation("posAttr");
+        const auto col_attr = program->attributeLocation("colAttr");
+        const auto matrix_uniform = program->uniformLocation("matrix");
+        qDebug() << "attrs" << pos_attr << col_attr << matrix_uniform;
+        assert(pos_attr >= 0);
+        assert(col_attr >= 0);
+        assert(matrix_uniform >= 0);
+
+        program->bind();
+
+        QMatrix4x4 matrix;
+        matrix.perspective(60.0f, 4.0f/3.0f, 0.1f, 100.0f);
+        matrix.translate(0, 0, -2);
+        //matrix.rotate(100.0f * m_frame / screen()->refreshRate(), 0, 1, 0);
+
+        program->setUniformValue(matrix_uniform, matrix);
+
+        GLfloat vertices[] = {
+            0.0f, 0.707f,
+            -0.5f, -0.5f,
+            0.5f, -0.5f
+        };
+
+        GLfloat colors[] = {
+            1.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 1.0f
+        };
+
+        glVertexAttribPointer(pos_attr, 2, GL_FLOAT, GL_FALSE, 0, vertices);
+        glVertexAttribPointer(col_attr, 3, GL_FLOAT, GL_FALSE, 0, colors);
+
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        glDisableVertexAttribArray(1);
+        glDisableVertexAttribArray(0);
+
+        program->release();
+    }*/
+
+
     { // world
         painter.save();
         painter.translate(width() / 2, height() / 2);
@@ -436,6 +450,13 @@ void GameWindowOpenGL::paintGL()
         const bool is_fast = state.ball->GetLinearVelocity().Length() > 30;
         drawBody(painter, state.ball, is_fast ? QColor(0xfd, 0xa0, 0x85) : Qt::black);
         drawShip(painter);
+
+        { // svg
+            constexpr double scale = 100;
+            painter.save();
+            map_renderer.render(&painter, QRectF(-scale/2, -scale/2, scale, -scale));
+            painter.restore();
+        }
 
         painter.restore();
     }
