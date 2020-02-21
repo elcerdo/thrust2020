@@ -14,39 +14,66 @@ struct SvgDumpEngine : public QPaintEngine
     void drawPixmap(const QRectF& r, const QPixmap& pm, const QRectF& sr) override;
     void drawPath(const QPainterPath& path) override;
     Type type() const override;
+
+    bool has_pen = false;
+    bool has_brush = false;
+    QTransform transform;
 };
 
-SvgDumpEngine::SvgDumpEngine()
-    : QPaintEngine(PainterPaths | PaintOutsidePaintEvent | PrimitiveTransform)
+SvgDumpEngine::SvgDumpEngine() : QPaintEngine(PainterPaths | PaintOutsidePaintEvent | PrimitiveTransform)
 {
 }
 
 bool SvgDumpEngine::begin(QPaintDevice* pdev)
 {
-    qDebug() << "begin";
+    has_pen = false;
+    has_brush = false;
+    transform = QTransform();
     return true;
 }
 
 bool SvgDumpEngine::end()
 {
-    qDebug() << "end";
     return true;
 }
 
 void SvgDumpEngine::updateState(const QPaintEngineState& state)
 {
-    qDebug() << "udpateState" << state.state();
+    auto flags = state.state();
+    if (flags.testFlag(DirtyPen))
+    {
+        has_pen = state.pen() != Qt::NoPen;
+        flags.setFlag(DirtyPen, false);
+    }
+    if (flags.testFlag(DirtyBrush))
+    {
+        has_brush = state.brush() != Qt::NoBrush;
+        flags.setFlag(DirtyBrush, false);
+    }
+    if (flags.testFlag(DirtyTransform))
+    {
+        transform = state.transform();
+        flags.setFlag(DirtyTransform, false);
+    }
+    flags.setFlag(DirtyHints, false);
+    flags.setFlag(DirtyFont, false);
+    if (flags)
+        qWarning() << "***** unhandled flags" << flags;
 }
 
 void SvgDumpEngine::drawPixmap(const QRectF& r, const QPixmap& pm, const QRectF& sr)
 {
-    qDebug() << "drawPixmap";
 }
 
 void SvgDumpEngine::drawPath(const QPainterPath& path)
 {
+    if (has_pen)
+        return;
+    if (!has_brush)
+        return;
+
     const auto& poly = path.toFillPolygon();
-    qDebug() << "drawPath" << poly.size() << poly.isClosed() << path.toFillPolygon().boundingRect();
+    qDebug() << "got poly" << poly.size() << poly.isClosed() << path.toFillPolygon().boundingRect();
 }
 
 QPaintEngine::Type SvgDumpEngine::type() const
@@ -69,7 +96,7 @@ int SvgDumpDevice::metric(PaintDeviceMetric metric) const
     if (metric == PdmDpiY) return 100;
     if (metric == PdmDevicePixelRatio) return 1;
     if (metric == PdmDevicePixelRatioScaled) return 1;
-    qDebug() << "metric" << metric;
+    qWarning() << "***** unhandled metric" << metric;
     return QPaintDevice::metric(metric);
 }
 
@@ -90,8 +117,7 @@ int main(int argc, char* argv[])
     SvgDumpDevice device;
     QPainter painter(&device);
     renderer.render(&painter);
-
-    qDebug() << "******";
+    qDebug() << "done painting";
 
     return 0;
 }
