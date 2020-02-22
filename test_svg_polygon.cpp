@@ -17,6 +17,14 @@
 
 struct SvgDumpEngine : public QPaintEngine
 {
+    using Color = b2Vec4;
+    using Poly = std::vector<b2Vec2>;
+    struct PolyHasher
+    {
+        size_t operator()(const Poly& poly) const;
+    };
+    using PolyToColors = std::unordered_map<Poly, Color, PolyHasher>;
+
     SvgDumpEngine();
     bool begin(QPaintDevice* pdev) override;
     bool end() override;
@@ -27,21 +35,12 @@ struct SvgDumpEngine : public QPaintEngine
 
     bool has_pen = false;
     bool has_brush = false;
-    using Color = b2Vec4;
     Color current_color = { 0, 0, 0, 1 };
-
-    using Poly = std::vector<b2Vec2>;
-    using MaybePoly = std::unique_ptr<Poly>;
-    struct PolyHasher
-    {
-        size_t operator()(const Poly& poly) const;
-    };
-    using PolyToMaybePolys = std::unordered_set<Poly, PolyHasher>;
 
     static Poly closed_to_poly(const QPolygonF& poly);
     static Color to_color(const QColor& color);
-    PolyToMaybePolys pen_polys;
-    PolyToMaybePolys brush_polys;
+    PolyToColors poly_to_pen_colors;
+    PolyToColors poly_to_brush_colors;;
 
     QTransform transform;
 };
@@ -86,8 +85,8 @@ bool SvgDumpEngine::begin(QPaintDevice* pdev)
     has_pen = false;
     has_brush = false;
     current_color = { 0, 0, 0, 1 };
-    brush_polys.clear();
-    pen_polys.clear();
+    poly_to_pen_colors.clear();
+    poly_to_brush_colors.clear();
     transform = QTransform();
     return true;
 }
@@ -146,15 +145,15 @@ void SvgDumpEngine::drawPath(const QPainterPath& path)
 
     if (has_brush)
     {
-        assert(brush_polys.find(poly) == std::cend(brush_polys));
-        brush_polys.emplace(poly);
+        assert(poly_to_brush_colors.find(poly) == std::cend(poly_to_brush_colors));
+        poly_to_brush_colors.emplace(poly, current_color);
         return;
     }
 
     if (has_pen)
     {
-        assert(pen_polys.find(poly) == std::cend(pen_polys));
-        pen_polys.emplace(poly);
+        assert(poly_to_pen_colors.find(poly) == std::cend(poly_to_pen_colors));
+        poly_to_pen_colors.emplace(poly, current_color);
         return;
     }
 
@@ -209,8 +208,8 @@ int main(int argc, char* argv[])
     cout << "done painting" << endl;
 
     const auto& engine = device.engine;
-    cout << "brush_polys " << engine.brush_polys.size() << endl;
-    cout << "pen_polys " << engine.pen_polys.size() << endl;
+    cout << "poly_to_brush_colors " << engine.poly_to_brush_colors.size() << endl;
+    cout << "poly_to_pen_colors " << engine.poly_to_pen_colors.size() << endl;
 
     return 0;
 }
