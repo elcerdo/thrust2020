@@ -40,8 +40,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.98994949"
-     inkscape:cx="388.07221"
-     inkscape:cy="527.10535"
+     inkscape:cx="186.0417"
+     inkscape:cy="523.06474"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -83,7 +83,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -93,21 +93,21 @@
      id="layer1"
      transform="translate(0,-85.333337)">
     <rect
-       style="fill:#ff00ff;stroke:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none"
+       style="fill:#00ff00;fill-opacity:1;stroke:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none"
        id="rect4579"
        width="211.66667"
-       height="23.812502"
+       height="52.916672"
        x="-3.5058595e-06"
        y="138.25" />
     <path
-       style="fill:#0000ff;stroke:#ffff00;stroke-width:1.00000002;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#0000ff;stroke:#000000;stroke-width:1.00000002;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="m 29.161149,138.65618 13.811471,-20.86006 16.821947,22.02609 -3.176816,91.23842 87.195269,-3.31333 15.66797,15.0116 -16.40819,19.2643 -97.043551,3.55835 -19.235536,-29.02358 z"
        id="path10"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cccccccccc" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:1.00000002;stroke-miterlimit:4;stroke-dasharray:none"
+       style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ff00ff;fill-opacity:1;stroke:none;stroke-width:1.00000002;stroke-miterlimit:4;stroke-dasharray:none;"
        x="130.69481"
        y="246.21878"
        id="text838"><tspan
@@ -115,10 +115,10 @@
          id="tspan836"
          x="130.69481"
          y="246.21878"
-         style="fill:#ff0000;stroke-width:1.00000002;stroke-miterlimit:4;stroke-dasharray:none">X</tspan></text>
+         style="fill:#ff00ff;stroke-width:1.00000002;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1;">X</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:1.00000002;stroke-miterlimit:4;stroke-dasharray:none"
+       style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ff00ff;fill-opacity:1;stroke:none;stroke-width:1.00000002;stroke-miterlimit:4;stroke-dasharray:none;"
        x="40.214851"
        y="142.63408"
        id="text838-3"><tspan
@@ -126,9 +126,9 @@
          id="tspan836-6"
          x="40.214851"
          y="142.63408"
-         style="fill:#ff0000;stroke-width:1.00000002;stroke-miterlimit:4;stroke-dasharray:none">Y</tspan></text>
+         style="fill:#ff00ff;stroke-width:1.00000002;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1;">Y</tspan></text>
     <path
-       style="fill:#ff00ff;stroke:#ffff00;stroke-width:1.00000002;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;filter:url(#filter4573);stroke-miterlimit:4;stroke-dasharray:none"
+       style="fill:#ff0000;stroke:#ffffff;stroke-width:1.00000002;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;filter:url(#filter4573);stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1"
        d="m 103.1875,189.84375 v -9.26041 h 5.29167 v 9.26041 h 10.58333 v 5.29167 H 87.312499 v -5.29167 z"
        id="path4567"
        inkscape:connector-curvature="0" />

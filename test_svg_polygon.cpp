@@ -3,6 +3,7 @@
 #include <QPaintEngine>
 #include <QCoreApplication>
 #include <QApplication>
+#include <QDebug>
 
 #include <Box2D/Common/b2Math.h>
 
@@ -133,7 +134,7 @@ void SvgDumpEngine::drawPath(const QPainterPath& path)
     if (!poly_.isClosed())
         return;
 
-    const Poly poly = closed_to_poly(poly_);
+    const Poly poly = closed_to_poly(transform.map(poly_));
     PolyHasher hasher;
     const auto hash = hasher(poly);
     cout
@@ -142,6 +143,15 @@ void SvgDumpEngine::drawPath(const QPainterPath& path)
         << "(" << current_color.x << "|" << current_color.y << "|" << current_color.z << "|" << current_color.w << ") "
         << has_pen << " " << has_brush << " "
         << poly.size() << endl;
+
+    /*
+    qDebug() << transform;
+    qDebug() << poly_.boundingRect();
+    qDebug() << transform.map(poly_).boundingRect();
+    */
+
+    for (const auto& point : poly)
+        cout << "  " << point.x << " " << point.y << endl;
 
     if (has_brush)
     {
@@ -203,13 +213,17 @@ int main(int argc, char* argv[])
     assert(load_ok);
 
     SvgDumpDevice device;
-    QPainter painter(&device);
-    renderer.render(&painter);
-    cout << "done painting" << endl;
-
     const auto& engine = device.engine;
-    cout << "poly_to_brush_colors " << engine.poly_to_brush_colors.size() << endl;
-    cout << "poly_to_pen_colors " << engine.poly_to_pen_colors.size() << endl;
+
+    {
+        cout << "====== unit rect" << endl;
+        QPainter painter(&device);
+        renderer.render(&painter, QRectF(0, 0, 1, 1));
+        cout << "done painting" << endl;
+        cout << "poly_to_brush_colors " << engine.poly_to_brush_colors.size() << endl;
+        cout << "poly_to_pen_colors " << engine.poly_to_pen_colors.size() << endl;
+    }
+
 
     return 0;
 }
