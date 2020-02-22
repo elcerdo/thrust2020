@@ -29,11 +29,12 @@ target_link_libraries(test_imgui
     Qt5::OpenGL
     )
 
-add_executable(test_svg_polygon
-    test_svg_polygon.cpp
+add_executable(test_extract_polygons
+    extract_polygons.cpp
+    test_extract_polygons.cpp
     rocket.qrc
     )
-target_link_libraries(test_svg_polygon
+target_link_libraries(test_extract_polygons
     Qt5::Core
     Qt5::Svg
     )

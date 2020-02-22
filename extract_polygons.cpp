@@ -1,31 +1,13 @@
+#include "extract_polygons.h"
+
 #include <QSvgRenderer>
 #include <QPaintDevice>
 #include <QPaintEngine>
-#include <QCoreApplication>
-#include <QApplication>
-#include <QDebug>
-
-#include <Box2D/Common/b2Math.h>
 
 #include <boost/functional/hash.hpp>
 
-#include <unordered_map>
-#include <unordered_set>
-#include <memory>
-#include <iterator>
-#include <iostream>
-#include <iomanip>
-
 struct SvgDumpEngine : public QPaintEngine
 {
-    using Color = b2Vec4;
-    using Poly = std::vector<b2Vec2>;
-    struct PolyHasher
-    {
-        size_t operator()(const Poly& poly) const;
-    };
-    using PolyToColors = std::unordered_map<Poly, Color, PolyHasher>;
-
     SvgDumpEngine();
     bool begin(QPaintDevice* pdev) override;
     bool end() override;
@@ -46,13 +28,13 @@ struct SvgDumpEngine : public QPaintEngine
     QTransform transform;
 };
 
-SvgDumpEngine::Color SvgDumpEngine::to_color(const QColor& color)
+Color SvgDumpEngine::to_color(const QColor& color)
 {
     using Scalar = decltype(b2Vec2::x);
     return { static_cast<Scalar>(color.redF()), static_cast<Scalar>(color.greenF()), static_cast<Scalar>(color.blueF()), static_cast<Scalar>(color.alphaF()) };
 }
 
-SvgDumpEngine::Poly SvgDumpEngine::closed_to_poly(const QPolygonF& poly)
+Poly SvgDumpEngine::closed_to_poly(const QPolygonF& poly)
 {
     using Scalar = decltype(b2Vec2::x);
     assert(poly.isClosed());
@@ -66,7 +48,7 @@ SvgDumpEngine::Poly SvgDumpEngine::closed_to_poly(const QPolygonF& poly)
     return poly_;
 }
 
-size_t SvgDumpEngine::PolyHasher::operator()(const Poly& poly) const
+size_t PolyHasher::operator()(const Poly& poly) const
 {
     size_t seed = 0x1fac1e5b;
     for (const auto& point : poly)
@@ -128,8 +110,6 @@ void SvgDumpEngine::drawPixmap(const QRectF& r, const QPixmap& pm, const QRectF&
 
 void SvgDumpEngine::drawPath(const QPainterPath& path)
 {
-    using std::cout;
-    using std::endl;
     const auto& poly_ = path.toFillPolygon();
     if (!poly_.isClosed())
         return;
@@ -137,21 +117,12 @@ void SvgDumpEngine::drawPath(const QPainterPath& path)
     const Poly poly = closed_to_poly(transform.map(poly_));
     PolyHasher hasher;
     const auto hash = hasher(poly);
-    cout
-        << "got poly "
-        << std::setw(16) << std::setfill('0') << std::hex << hash << std::dec << " "
-        << "(" << current_color.x << "|" << current_color.y << "|" << current_color.z << "|" << current_color.w << ") "
-        << has_pen << " " << has_brush << " "
-        << poly.size() << endl;
 
     /*
     qDebug() << transform;
     qDebug() << poly_.boundingRect();
     qDebug() << transform.map(poly_).boundingRect();
     */
-
-    for (const auto& point : poly)
-        cout << "  " << point.x << " " << point.y << endl;
 
     if (has_brush)
     {
@@ -198,33 +169,19 @@ QPaintEngine* SvgDumpDevice::paintEngine() const
     return const_cast<SvgDumpEngine*>(&engine);
 }
 
-int main(int argc, char* argv[])
+std::tuple<PolyToColors, PolyToColors> extract_polygons(const std::string& filename)
 {
-    using std::cout;
-    using std::endl;
-    cout << std::boolalpha;
-
-    QApplication app(argc, argv);
-
     QSvgRenderer renderer;
-    const auto load_ok = renderer.load(QString(":map.svg"));
-    cout << "renderer " << renderer.isValid() << " " << load_ok << endl;
+    const auto load_ok = renderer.load(QString::fromUtf8(filename.c_str()));
     assert(renderer.isValid());
     assert(load_ok);
 
     SvgDumpDevice device;
-    const auto& engine = device.engine;
-
     {
-        cout << "====== unit rect" << endl;
         QPainter painter(&device);
         renderer.render(&painter, QRectF(0, 0, 1, 1));
-        cout << "done painting" << endl;
-        cout << "poly_to_brush_colors " << engine.poly_to_brush_colors.size() << endl;
-        cout << "poly_to_pen_colors " << engine.poly_to_pen_colors.size() << endl;
     }
 
-
-    return 0;
+    return { device.engine.poly_to_pen_colors, device.engine.poly_to_brush_colors };
 }
 
