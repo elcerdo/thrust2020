@@ -4,3 +4,6 @@
 [submodule "imgui"]
 	path = imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "acd2d"]
+	path = acd2d
+	url = https://github.com/jmlien/acd2d.git
