@@ -15,6 +15,24 @@ add_subdirectory(liquidfun/liquidfun/Box2D/Box2D)
 include_directories(liquidfun/liquidfun/Box2D)
 include_directories(imgui)
 
+add_library(acd2d STATIC
+    acd2d/src/acd2d_data.cpp
+    acd2d/src/acd2d_concavity.cpp
+    acd2d/src/acd2d_core.cpp
+    acd2d/src/mathtool/acd2d_Basic.cpp
+    acd2d/src/hull/acd2d_hull_use_qhull.cpp
+    acd2d/src/hull/acd2d_hull.cpp
+    acd2d/src/edge_visibility/acd2d_edge_visibility.cpp
+    )
+target_include_directories(acd2d
+    PRIVATE
+    acd2d/src
+    acd2d/src/mathtool
+    acd2d/src/hull
+    acd2d/src/edge_visibility
+    )
+
+
 add_executable(test_imgui
     imgui/imgui.cpp
     imgui/imgui_draw.cpp
