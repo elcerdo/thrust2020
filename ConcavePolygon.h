@@ -31,11 +31,9 @@ struct Vertex
     Vec2 position;
 };
 
-struct SliceVertex : public Vertex
+struct SliceVertex
 {
-    SliceVertex() {}
-    SliceVertex(Vec2 const & _position) : Vertex{_position} {}
-
+    Vec2 position;
     int index;
     float distanceToSlice;
 };
@@ -342,10 +340,7 @@ class ConcavePolygon
 
         for(auto it = input.begin(); it != input.end(); ++it)
         {
-            SliceVertex vert(it->second.position);
-            vert.index = it->first;
-            vert.distanceToSlice = b2Square(it->second.position - origin);
-
+            const SliceVertex vert { it->second.position, it->first, b2Square(it->second.position - origin) };
             sliceVertices.push_back(vert);
         }
 
