@@ -206,8 +206,6 @@ class ConcavePolygon
         return false;
     }
 
-
-
     bool isVertexInCone(LineSegment const & ls1,
                         LineSegment const & ls2,
                         Vec2 const & origin,

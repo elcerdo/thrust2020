@@ -29,6 +29,10 @@ target_link_libraries(test_imgui
     Qt5::OpenGL
     )
 
+add_executable(test_convex_decomposition
+    test_convex_decomposition.cpp
+    )
+
 add_executable(test_extract_polygons
     extract_polygons.cpp
     test_extract_polygons.cpp
