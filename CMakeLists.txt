@@ -19,19 +19,15 @@ add_library(acd2d STATIC
     acd2d/src/acd2d_data.cpp
     acd2d/src/acd2d_concavity.cpp
     acd2d/src/acd2d_core.cpp
-    acd2d/src/mathtool/acd2d_Basic.cpp
-    acd2d/src/hull/acd2d_hull_use_qhull.cpp
     acd2d/src/hull/acd2d_hull.cpp
-    acd2d/src/edge_visibility/acd2d_edge_visibility.cpp
     )
 target_include_directories(acd2d
-    PRIVATE
+    PUBLIC
     acd2d/src
     acd2d/src/mathtool
     acd2d/src/hull
     acd2d/src/edge_visibility
     )
-
 
 add_executable(test_imgui
     imgui/imgui.cpp
@@ -49,6 +45,9 @@ target_link_libraries(test_imgui
 
 add_executable(test_convex_decomposition
     test_convex_decomposition.cpp
+    )
+target_link_libraries(test_convex_decomposition
+    acd2d
     )
 
 add_executable(test_extract_polygons
