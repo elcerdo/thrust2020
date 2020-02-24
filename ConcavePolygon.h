@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Box2D/Common/b2Math.h>
 #include <vector>
 #include <cmath>
 #include <map>
@@ -11,82 +12,23 @@ using std::endl;
 namespace cxd
 {
 
-struct Vec2
-{
-    float x;
-    float y;
-
-    static float length(Vec2 const & v)
+    float b2Square(const b2Vec2& xx)
     {
-        return sqrtf(v.x*v.x + v.y*v.y);
+        return b2Dot(xx, xx);
     }
 
-    /*
-    static Vec2 norm(Vec2 const & v)
+    float b2Orient(const b2Vec2& v0, const b2Vec2& v1, const b2Vec2& v2)
     {
-        if(length(v) < 1e-30)
-            return {0.0f, 0.0f};
-    }
-    */
-
-    static float dot(Vec2 const & v1, Vec2 const & v2)
-    {
-        return v1.x * v2.x + v1.y * v2.y;
+        const auto edge0 = v1 - v0;
+        const auto edge1 = v2 - v0;
+        return b2Cross(edge0, edge1);
     }
 
-    static float square(Vec2 const & v)
-    {
-        return dot(v,v);
-    }
-
-    static float cross(Vec2 const & v1, Vec2 const & v2)
-    {
-        return v1.x*v2.y - v1.y*v2.x;
-    }
-
-    Vec2 operator - (Vec2 const & v1) const
-    {
-        return {x - v1.x, y - v1.y};
-    }
-
-    Vec2 operator + (Vec2 const & v1) const
-    {
-        return {x + v1.x, y + v1.y};
-    }
-
-    Vec2 operator * (float const & f) const
-    {
-        return {f*x, f*y};
-    }
-
-    Vec2 operator / (float const & f) const
-    {
-        return {x/f, y/f};
-    }
-
-    static float getSignedArea(Vec2 const & v1,
-                               Vec2 const & v2)
-    {
-        return (v2.x - v1.x) * (v2.y + v1.y);
-    }
-};
+    using Vec2 = b2Vec2;
 
 struct Vertex
 {
     Vec2 position;
-
-    Vertex() {}
-    Vertex(Vec2 const & _position) : position{_position} {}
-
-    static float getHandedness(Vertex const & v1,
-                               Vertex const & v2,
-                               Vertex const & v3)
-    {
-        Vec2 edge1 = v2.position-v1.position;
-        Vec2 edge2 = v3.position-v2.position;
-
-        return Vec2::cross(edge1, edge2);
-    }
 };
 
 struct SliceVertex : public Vertex
@@ -137,20 +79,20 @@ struct LineSegment
         Vec2 d1 = s1.direction();
         Vec2 d2 = s2.direction();
 
-        if(std::abs(Vec2::cross(d1, d2)) < 1e-30)
+        if(std::abs(b2Cross(d1, d2)) < 1e-30)
            return {false, {0.0f, 0.0f}};
 
-        float t1 = Vec2::cross(p2 - p1, d2) / Vec2::cross(d1, d2);
+        float t1 = b2Cross(p2 - p1, d2) / b2Cross(d1, d2);
 
         if((t1 < (0.0f - TOLERANCE)) || (t1 > (1.0f + TOLERANCE)))
             return {false, {0.0f, 0.0f}};
 
         Vec2 pIntersect = p1 + d1 * t1;
 
-        float t2 = Vec2::dot(pIntersect - p2,
+        float t2 = b2Dot(pIntersect - p2,
                              s2.finalPos - p2);
 
-        if(t2 < (0.0f-TOLERANCE) || t2 / Vec2::square(s2.finalPos - p2) >= 1.0f - TOLERANCE)
+        if(t2 < (0.0f-TOLERANCE) || t2 / b2Square(s2.finalPos - p2) >= 1.0f - TOLERANCE)
             return {false, {0.0f, 0.0f}};
 
         return {true, pIntersect};
@@ -196,8 +138,7 @@ class ConcavePolygon
 
         for(unsigned int i=0; i<_verts.size(); ++i)
         {
-            signedArea += Vec2::getSignedArea(_verts[i].position,
-                                                   _verts[mod(i+1, _verts.size())].position);
+            signedArea += b2Cross(_verts[i].position, _verts[mod(i+1, _verts.size())].position);
         }
 
         if(signedArea < 0.0f)
@@ -213,8 +154,8 @@ class ConcavePolygon
     {
         Vec2 relativePos = vert.position - origin;
 
-        float ls1Product = Vec2::cross(relativePos, ls1.direction());
-        float ls2Product = Vec2::cross(relativePos, ls2.direction());
+        float ls1Product = b2Cross(relativePos, ls1.direction());
+        float ls2Product = b2Cross(relativePos, ls2.direction());
 
         if(ls1Product < 0.0f && ls2Product > 0.0f)
             return true;
@@ -271,15 +212,15 @@ class ConcavePolygon
                 int index = indices[i];
                 int vertSize = polygonVertices.size();
 
-                Vertex prevVert = polygonVertices[mod(index-1, vertSize)].position;
-                Vertex currVert = polygonVertices[index].position;
-                Vertex nextVert = polygonVertices[mod(index+1, vertSize)].position;
+                Vertex prevVert = polygonVertices[mod(index-1, vertSize)];
+                Vertex currVert = polygonVertices[index];
+                Vertex nextVert = polygonVertices[mod(index+1, vertSize)];
 
                 LineSegment ls1(prevVert.position, currVert.position);
                 LineSegment ls2(nextVert.position, currVert.position);
 
-                if((Vertex::getHandedness(prevVert, currVert, nextVert) < 0.0f) &&
-                   isVertexInCone(ls1, ls2, polygonVertices[index].position, Vertex(origin)) &&
+                if((b2Orient(prevVert.position, currVert.position, nextVert.position) < 0.0f) &&
+                   isVertexInCone(ls1, ls2, polygonVertices[index].position, Vertex { origin }) &&
                    checkVisibility(origin, polygonVertices[index], polygonVertices))
                     return index;
             }
@@ -289,14 +230,14 @@ class ConcavePolygon
                 int index = indices[i];
                 int vertSize = polygonVertices.size();
 
-                Vertex prevVert = polygonVertices[mod(index-1, vertSize)].position;
-                Vertex currVert = polygonVertices[index].position;
-                Vertex nextVert = polygonVertices[mod(index+1, vertSize)].position;
+                Vertex prevVert = polygonVertices[mod(index-1, vertSize)];
+                Vertex currVert = polygonVertices[index];
+                Vertex nextVert = polygonVertices[mod(index+1, vertSize)];
 
                 LineSegment ls1(prevVert.position, currVert.position);
                 LineSegment ls2(nextVert.position, currVert.position);
 
-                if((Vertex::getHandedness(prevVert, currVert, nextVert) < 0.0f) &&
+                if((b2Orient(prevVert.position, currVert.position, nextVert.position) < 0.0f) &&
                    checkVisibility(origin, polygonVertices[index], polygonVertices))
                     return index;
             }
@@ -307,7 +248,7 @@ class ConcavePolygon
             for(unsigned int i=0; i<indices.size(); ++i)
             {
                 int index = indices[i];
-                float currDistance = Vec2::square(polygonVertices[index].position - origin);
+                float currDistance = b2Square(polygonVertices[index].position - origin);
                 if(currDistance < minDistance)
                 {
                     minDistance = currDistance;
@@ -371,9 +312,9 @@ class ConcavePolygon
     {
         for(unsigned int i=0; i<_vertices.size(); ++i)
         {
-            float handedness = Vertex::getHandedness(_vertices[mod(i-1, _vertices.size())],
-                                                     _vertices[i],
-                                                     _vertices[mod(i+1, _vertices.size())]);
+            float handedness = b2Orient(_vertices[mod(i-1, _vertices.size())].position,
+                                                     _vertices[i].position,
+                                                     _vertices[mod(i+1, _vertices.size())].position);
             if(handedness < 0.0f)
                 return i;
         }
@@ -403,7 +344,7 @@ class ConcavePolygon
         {
             SliceVertex vert(it->second.position);
             vert.index = it->first;
-            vert.distanceToSlice = Vec2::square(it->second.position - origin);
+            vert.distanceToSlice = b2Square(it->second.position - origin);
 
             sliceVertices.push_back(vert);
         }
@@ -421,7 +362,7 @@ class ConcavePolygon
         VertexIntMap result;
         for(unsigned int i=0; i<sliceVertices.size(); ++i)
         {
-            result.insert({sliceVertices[i].index, Vertex(sliceVertices[i].position)});
+            result.emplace(sliceVertices[i].index, Vertex { sliceVertices[i].position });
         }
 
         return result;
@@ -443,7 +384,7 @@ class ConcavePolygon
 
             if(intersectionResult.first == true)
             {
-                result.insert({i, Vertex(intersectionResult.second)});
+                result.emplace(i, Vertex { intersectionResult.second });
             }
         }
 
@@ -519,7 +460,7 @@ public:
 
             auto it = slicedVertices.begin();
 
-            float perpDistance = std::abs(Vec2::cross(relativePosition, segment.direction()));
+            float perpDistance = std::abs(b2Cross(relativePosition, segment.direction()));
             if(perpDistance > TOLERANCE)
             {
                 //std::cout << relCrossProd << ", i: " << i << "\n";

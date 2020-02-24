@@ -5,10 +5,10 @@
 int main(int argc, char* argv[])
 {
     const cxd::ConcavePolygon::VertexArray points = {
-        cxd::Vec2 { -1, -1 },
-        cxd::Vec2 { 1, -1 },
-        cxd::Vec2 { -.5, -.5 },
-        cxd::Vec2 { -1 , 1 }
+        cxd::Vertex {{ -1, -1 }},
+        cxd::Vertex {{ 1, -1 }},
+        cxd::Vertex {{ -.5, -.5 }},
+        cxd::Vertex {{ -1 , 1 }}
     };
 
     cxd::ConcavePolygon poly(points);

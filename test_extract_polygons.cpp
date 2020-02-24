@@ -30,7 +30,7 @@ void dump_poly_to_colors(const PolyToColors& poly_to_pen_colors)
 
         cxd::ConcavePolygon::VertexArray vertices_;
         for (const auto& point : poly)
-            vertices_.emplace_back(cxd::Vec2 { point.x, point.y });
+            vertices_.emplace_back(cxd::Vertex { point });
 
         cxd::ConcavePolygon poly_(vertices_);
         poly_.convexDecomp();
