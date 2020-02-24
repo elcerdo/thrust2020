@@ -26,11 +26,6 @@ namespace cxd
 
     using Vec2 = b2Vec2;
 
-struct Vertex
-{
-    Vec2 position;
-};
-
 struct SliceVertex
 {
     Vec2 position;
@@ -100,18 +95,18 @@ struct LineSegment
 class ConcavePolygon
 {
     public:
-    typedef std::vector<Vertex > VertexArray;
-    typedef std::vector<ConcavePolygon > PolygonArray;
+    typedef std::vector<Vec2> VertexArray;
+    typedef std::vector<ConcavePolygon> PolygonArray;
 
     protected:
     VertexArray vertices;
     PolygonArray subPolygons;
 
 
-    int mod(int x, int m)
+    static int mod(int x, int m)
     {
-        int r = x%m;
-        return r<0 ? r+m : r;
+        int r = x % m;
+        return r < 0 ? r + m : r;
     }
 
     void flipPolygon(VertexArray & _verts)
@@ -127,7 +122,7 @@ class ConcavePolygon
         }
     }
 
-    bool checkIfRightHanded(VertexArray & _verts)
+    static bool checkIfRightHanded(const VertexArray& _verts)
     {
         if(_verts.size() < 3)
             return false;
@@ -135,9 +130,7 @@ class ConcavePolygon
         float signedArea = 0.0f;
 
         for(unsigned int i=0; i<_verts.size(); ++i)
-        {
-            signedArea += b2Cross(_verts[i].position, _verts[mod(i+1, _verts.size())].position);
-        }
+            signedArea += b2Cross(_verts[i], _verts[mod(i+1, _verts.size())]);
 
         if(signedArea < 0.0f)
             return true;
@@ -145,12 +138,12 @@ class ConcavePolygon
         return false;
     }
 
-    bool isVertexInCone(LineSegment const & ls1,
-                        LineSegment const & ls2,
-                        Vec2 const & origin,
-                        Vertex const & vert)
+    bool isVertexInCone(const LineSegment& ls1,
+                        const LineSegment& ls2,
+                        const Vec2& origin,
+                        const Vec2& vert)
     {
-        Vec2 relativePos = vert.position - origin;
+        Vec2 relativePos = vert - origin;
 
         float ls1Product = b2Cross(relativePos, ls1.direction());
         float ls2Product = b2Cross(relativePos, ls2.direction());
@@ -178,11 +171,11 @@ class ConcavePolygon
         return result;
     }
 
-    bool checkVisibility(Vec2 const & originalPosition,
-                         Vertex const & vert,
-                         VertexArray const & polygonVertices)
+    bool checkVisibility(const Vec2& originalPosition,
+                         const Vec2& vert,
+                         const VertexArray& polygonVertices)
     {
-        LineSegment ls(originalPosition, vert.position);
+        LineSegment ls(originalPosition, vert);
         VertexIntMap intersectingVerts = verticesAlongLineSegment(ls, polygonVertices);
 
         //std::cout << intersectingVerts.size() << " intverts\n";
@@ -207,35 +200,35 @@ class ConcavePolygon
         {
             for(unsigned int i=0; i<indices.size(); ++i)
             {
-                int index = indices[i];
-                int vertSize = polygonVertices.size();
+                const auto& index = indices[i];
+                const auto& vertSize = polygonVertices.size();
 
-                Vertex prevVert = polygonVertices[mod(index-1, vertSize)];
-                Vertex currVert = polygonVertices[index];
-                Vertex nextVert = polygonVertices[mod(index+1, vertSize)];
+                const auto& prevVert = polygonVertices[mod(index-1, vertSize)];
+                const auto& currVert = polygonVertices[index];
+                const auto& nextVert = polygonVertices[mod(index+1, vertSize)];
 
-                LineSegment ls1(prevVert.position, currVert.position);
-                LineSegment ls2(nextVert.position, currVert.position);
+                LineSegment ls1(prevVert, currVert);
+                LineSegment ls2(nextVert, currVert);
 
-                if((b2Orient(prevVert.position, currVert.position, nextVert.position) < 0.0f) &&
-                   isVertexInCone(ls1, ls2, polygonVertices[index].position, Vertex { origin }) &&
+                if((b2Orient(prevVert, currVert, nextVert) < 0.0f) &&
+                   isVertexInCone(ls1, ls2, polygonVertices[index], origin) &&
                    checkVisibility(origin, polygonVertices[index], polygonVertices))
                     return index;
             }
 
             for(unsigned int i=0; i<indices.size(); ++i)
             {
-                int index = indices[i];
-                int vertSize = polygonVertices.size();
+                const auto& index = indices[i];
+                const auto& vertSize = polygonVertices.size();
 
-                Vertex prevVert = polygonVertices[mod(index-1, vertSize)];
-                Vertex currVert = polygonVertices[index];
-                Vertex nextVert = polygonVertices[mod(index+1, vertSize)];
+                const auto& prevVert = polygonVertices[mod(index-1, vertSize)];
+                const auto& currVert = polygonVertices[index];
+                const auto& nextVert = polygonVertices[mod(index+1, vertSize)];
 
-                LineSegment ls1(prevVert.position, currVert.position);
-                LineSegment ls2(nextVert.position, currVert.position);
+                LineSegment ls1(prevVert, currVert);
+                LineSegment ls2(nextVert, currVert);
 
-                if((b2Orient(prevVert.position, currVert.position, nextVert.position) < 0.0f) &&
+                if((b2Orient(prevVert, currVert, nextVert) < 0.0f) &&
                    checkVisibility(origin, polygonVertices[index], polygonVertices))
                     return index;
             }
@@ -246,7 +239,7 @@ class ConcavePolygon
             for(unsigned int i=0; i<indices.size(); ++i)
             {
                 int index = indices[i];
-                float currDistance = b2Square(polygonVertices[index].position - origin);
+                float currDistance = b2Square(polygonVertices[index]- origin);
                 if(currDistance < minDistance)
                 {
                     minDistance = currDistance;
@@ -273,9 +266,9 @@ class ConcavePolygon
         if(reflexIndex == -1)
             return;
 
-        Vec2 prevVertPos = _vertices[mod(reflexIndex-1, _vertices.size())].position;
-        Vec2 currVertPos = _vertices[reflexIndex].position;
-        Vec2 nextVertPos = _vertices[mod(reflexIndex+1, _vertices.size())].position;
+        Vec2 prevVertPos = _vertices[mod(reflexIndex-1, _vertices.size())];
+        Vec2 currVertPos = _vertices[reflexIndex];
+        Vec2 nextVertPos = _vertices[mod(reflexIndex+1, _vertices.size())];
 
         LineSegment ls1(prevVertPos, currVertPos);
         LineSegment ls2(nextVertPos, currVertPos);
@@ -289,7 +282,7 @@ class ConcavePolygon
             bestVert = getBestVertexToConnect(vertsInCone, _vertices, currVertPos);
             if(bestVert != -1)
             {
-                LineSegment newLine(currVertPos, _vertices[bestVert].position);
+                LineSegment newLine(currVertPos, _vertices[bestVert]);
 
                 slicePolygon(newLine);
             }
@@ -310,9 +303,9 @@ class ConcavePolygon
     {
         for(unsigned int i=0; i<_vertices.size(); ++i)
         {
-            float handedness = b2Orient(_vertices[mod(i-1, _vertices.size())].position,
-                                                     _vertices[i].position,
-                                                     _vertices[mod(i+1, _vertices.size())].position);
+            float handedness = b2Orient(_vertices[mod(i-1, _vertices.size())],
+                                                     _vertices[i],
+                                                     _vertices[mod(i+1, _vertices.size())]);
             if(handedness < 0.0f)
                 return i;
         }
@@ -325,9 +318,7 @@ class ConcavePolygon
         flipPolygon(vertices);
     }
 
-    typedef std::map<int, Vertex> VertexIntMap;
-    typedef std::pair<int, Vertex> VertexIntPair;
-
+    using VertexIntMap = std::map<int, Vec2>;
 
     VertexIntMap cullByDistance(VertexIntMap const & input,
                                 Vec2 const & origin,
@@ -340,7 +331,7 @@ class ConcavePolygon
 
         for(auto it = input.begin(); it != input.end(); ++it)
         {
-            const SliceVertex vert { it->second.position, it->first, b2Square(it->second.position - origin) };
+            const SliceVertex vert { it->second, it->first, b2Square(it->second- origin) };
             sliceVertices.push_back(vert);
         }
 
@@ -357,7 +348,7 @@ class ConcavePolygon
         VertexIntMap result;
         for(unsigned int i=0; i<sliceVertices.size(); ++i)
         {
-            result.emplace(sliceVertices[i].index, Vertex { sliceVertices[i].position });
+            result.emplace(sliceVertices[i].index, sliceVertices[i].position);
         }
 
         return result;
@@ -372,14 +363,14 @@ class ConcavePolygon
 
         for(unsigned int i=0; i<_vertices.size(); ++i)
         {
-            tempSegment.startPos = _vertices[i].position;
-            tempSegment.finalPos = _vertices[mod(i+1, _vertices.size())].position;
+            tempSegment.startPos = _vertices[i];
+            tempSegment.finalPos = _vertices[mod(i+1, _vertices.size())];
 
             std::pair<bool, Vec2 > intersectionResult = LineSegment::intersects(segment, tempSegment);
 
             if(intersectionResult.first == true)
             {
-                result.emplace(i, Vertex { intersectionResult.second });
+                result.emplace(i, intersectionResult.second);
             }
         }
 
@@ -451,7 +442,7 @@ public:
 
         for(int i=0; i<(int)vertices.size(); ++i)
         {
-            Vec2 relativePosition = vertices[i].position - segment.startPos;
+            Vec2 relativePosition = vertices[i]- segment.startPos;
 
             auto it = slicedVertices.begin();
 
@@ -531,7 +522,7 @@ public:
     Vec2 getPoint(unsigned int index) const
     {
         if(index >= 0 && index < vertices.size())
-            return vertices[index].position;
+            return vertices[index];
 
         return {0.0f, 0.0f};
     }

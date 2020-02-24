@@ -5,10 +5,10 @@
 int main(int argc, char* argv[])
 {
     const cxd::ConcavePolygon::VertexArray points = {
-        cxd::Vertex {{ -1, -1 }},
-        cxd::Vertex {{ 1, -1 }},
-        cxd::Vertex {{ -.5, -.5 }},
-        cxd::Vertex {{ -1 , 1 }}
+        { -1, -1 },
+        { 1, -1 },
+        { -.5, -.5 },
+        { -1 , 1 }
     };
 
     cxd::ConcavePolygon poly(points);
@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
         const auto& subpoly = poly.getSubPolygon(kk);
         cout << "===== " << subpoly.getNumberSubPolys() << endl;
         for (const auto& point : subpoly.getVertices())
-            cout << "  " << point.position.x << " " << point.position.y << endl;
+            cout << "  " << point.x << " " << point.y << endl;
     }
 
     return 0;

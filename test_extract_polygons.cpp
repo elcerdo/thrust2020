@@ -28,11 +28,7 @@ void dump_poly_to_colors(const PolyToColors& poly_to_pen_colors)
 
         cout << "=================" << endl;
 
-        cxd::ConcavePolygon::VertexArray vertices_;
-        for (const auto& point : poly)
-            vertices_.emplace_back(cxd::Vertex { point });
-
-        cxd::ConcavePolygon poly_(vertices_);
+        cxd::ConcavePolygon poly_(poly);
         poly_.convexDecomp();
         cout << poly_.getNumberSubPolys() << endl;
     }
