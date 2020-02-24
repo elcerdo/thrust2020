@@ -33,29 +33,29 @@ namespace cxd
         return get<1>(segment) - get<0>(segment);
     }
 
-    std::pair<bool, Vector> intersects(const Segment& s1, const Segment& s2)
+    std::pair<bool, Vector> intersects(const Segment& s0, const Segment& s1)
     {
         using std::get;
         const float TOLERANCE = 1e-2;
 
+        Vector p0 = get<0>(s0);
         Vector p1 = get<0>(s1);
-        Vector p2 = get<0>(s2);
-        Vector d1 = direction(s1);
-        Vector d2 = direction(s2);
+        Vector d1 = direction(s0);
+        Vector d2 = direction(s1);
 
         if(std::abs(b2Cross(d1, d2)) < 1e-30)
            return {false, {0.0f, 0.0f}};
 
-        float t1 = b2Cross(p2 - p1, d2) / b2Cross(d1, d2);
+        float t1 = b2Cross(p1 - p0, d2) / b2Cross(d1, d2);
 
         if((t1 < (0.0f - TOLERANCE)) || (t1 > (1.0f + TOLERANCE)))
             return {false, {0.0f, 0.0f}};
 
-        Vector pIntersect = p1 + d1 * t1;
+        Vector pIntersect = p0 + d1 * t1;
 
-        float t2 = b2Dot(pIntersect - p2, get<1>(s2) - p2);
+        float t2 = b2Dot(pIntersect - p1, get<1>(s1) - p1);
 
-        if(t2 < (0.0f-TOLERANCE) || t2 / b2Square(get<1>(s2) - p2) >= 1.0f - TOLERANCE)
+        if(t2 < (0.0f-TOLERANCE) || t2 / b2Square(get<1>(s1) - p1) >= 1.0f - TOLERANCE)
             return {false, {0.0f, 0.0f}};
 
         return {true, pIntersect};
@@ -64,11 +64,11 @@ namespace cxd
 class ConcavePolygon
 {
     public:
-    typedef std::vector<Vector> VertexArray;
+    typedef std::vector<Vector> Vertices;
     typedef std::vector<ConcavePolygon> PolygonArray;
 
     protected:
-    VertexArray vertices;
+    Vertices vertices;
     PolygonArray subPolygons;
 
 
@@ -78,7 +78,7 @@ class ConcavePolygon
         return r < 0 ? r + m : r;
     }
 
-    static void flipPolygon(VertexArray & _verts)
+    static void flipPolygon(Vertices & _verts)
     {
         int iMax = _verts.size()/2;
 
@@ -91,7 +91,7 @@ class ConcavePolygon
         }
     }
 
-    static bool checkIfRightHanded(const VertexArray& _verts)
+    static bool checkIfRightHanded(const Vertices& _verts)
     {
         if(_verts.size() < 3)
             return false;
@@ -128,7 +128,7 @@ class ConcavePolygon
     IntArray findVerticesInCone(const Segment& ls1,
                                 const Segment& ls2,
                                 const Vector& origin,
-                                const VertexArray& inputVerts)
+                                const Vertices& inputVerts)
     {
         IntArray result;
 
@@ -142,7 +142,7 @@ class ConcavePolygon
 
     static bool checkVisibility(const Vector& originalPosition,
                          const Vector& vert,
-                         const VertexArray& polygonVertices)
+                         const Vertices& polygonVertices)
     {
         const Segment ls { originalPosition, vert };
         VertexIntMap intersectingVerts = verticesAlongLineSegment(ls, polygonVertices);
@@ -157,7 +157,7 @@ class ConcavePolygon
 
 
     int getBestVertexToConnect(IntArray const & indices,
-                               VertexArray const & polygonVertices,
+                               Vertices const & polygonVertices,
                                Vector const & origin)
     {
         if(indices.size()==1)
@@ -223,7 +223,7 @@ class ConcavePolygon
         return -1;
     }
 
-    void convexDecomp(VertexArray const & _vertices)
+    void convexDecomp(Vertices const & _vertices)
     {
         if(subPolygons.size() > 0)
         {
@@ -268,7 +268,7 @@ class ConcavePolygon
         }
     }
 
-    int findFirstReflexVertex(VertexArray const & _vertices)
+    int findFirstReflexVertex(Vertices const & _vertices)
     {
         for(unsigned int i=0; i<_vertices.size(); ++i)
         {
@@ -330,7 +330,7 @@ class ConcavePolygon
         return result;
     }
 
-    static VertexIntMap verticesAlongLineSegment(const Segment& segment, const VertexArray& _vertices)
+    static VertexIntMap verticesAlongLineSegment(const Segment& segment, const Vertices& _vertices)
     {
         VertexIntMap result;
 
@@ -350,7 +350,7 @@ class ConcavePolygon
     }
 
 public:
-    ConcavePolygon(VertexArray const & _vertices) : vertices{_vertices}
+    ConcavePolygon(Vertices const & _vertices) : vertices{_vertices}
     {
         if(vertices.size() > 2)
             if(checkIfRightHanded() == false)
@@ -373,8 +373,8 @@ public:
         if(vertex1 > vertex2)
             std::swap(vertex1, vertex2);
 
-        VertexArray returnVerts;
-        VertexArray newVerts;
+        Vertices returnVerts;
+        Vertices newVerts;
         for(int i=0; i<(int)vertices.size(); ++i)
         {
             if(i==vertex1 || i==vertex2)
@@ -409,8 +409,8 @@ public:
         if(slicedVertices.size() < 2)
             return;
 
-        VertexArray leftVerts;
-        VertexArray rightVerts;
+        Vertices leftVerts;
+        Vertices rightVerts;
 
         for(int i=0; i<(int)vertices.size(); ++i)
         {
@@ -452,7 +452,7 @@ public:
             convexDecomp(vertices);
     }
 
-    VertexArray const & getVertices() const
+    Vertices const & getVertices() const
     {
         return vertices;
     }
