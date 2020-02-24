@@ -1,3 +1,4 @@
+#include "ConcavePolygon.h"
 #include "extract_polygons.h"
 
 #include <QApplication>
@@ -24,6 +25,16 @@ void dump_poly_to_colors(const PolyToColors& poly_to_pen_colors)
 
         for (const auto& point : poly)
             cout << "    " << point.x << " " << point.y << endl;
+
+        cout << "=================" << endl;
+
+        cxd::ConcavePolygon::VertexArray vertices_;
+        for (const auto& point : poly)
+            vertices_.emplace_back(cxd::Vec2 { point.x, point.y });
+
+        cxd::ConcavePolygon poly_(vertices_);
+        poly_.convexDecomp();
+        cout << poly_.getNumberSubPolys() << endl;
     }
 }
 
