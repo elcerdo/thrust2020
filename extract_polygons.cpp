@@ -129,7 +129,7 @@ void SvgDumpEngine::drawPath(const QPainterPath& path)
         return;
     }
 
-    assert(false); // should have pen or brush exclusively
+    //assert(false); // should have pen or brush exclusively
 }
 
 QPaintEngine::Type SvgDumpEngine::type() const

@@ -57,8 +57,6 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
         //qDebug() << "renderer" << renderer.isValid() << load_ok;
         assert(renderer.isValid());
     }
-
-    assert(draw_debug);
 }
 
 void GameWindowOpenGL::setMuted(const bool muted)

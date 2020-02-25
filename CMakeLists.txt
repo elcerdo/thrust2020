@@ -66,6 +66,9 @@ target_link_libraries(test_extract_polygons
     )
 
 add_executable(rocket
+    data_polygons.cpp
+    extract_polygons.cpp
+    decompose_polygons.cpp
     imgui/imgui.cpp
     imgui/imgui_draw.cpp
     imgui/imgui_widgets.cpp
@@ -84,5 +87,6 @@ target_link_libraries(rocket
     Qt5::Multimedia
     Qt5::OpenGL
     Qt5::Svg
+    acd2d
     )
 

@@ -72,7 +72,7 @@ polygons::decompose(const polygons::Poly& vertices, const double margin)
     decomp.addPolygon(polygon);
 
     Measure measure;
-    decomp.decomposeAll(.1, &measure);
+    decomp.decomposeAll(margin, &measure);
     assert(decomp.getTodoList().empty());
 
     std::list<polygons::Poly> subpolys;

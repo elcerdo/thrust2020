@@ -8,6 +8,9 @@
 
 #include <iostream>
 
+#include "extract_polygons.h"
+#include "decompose_polygons.h"
+
 using std::cout;
 using std::endl;
 
@@ -33,12 +36,13 @@ GameState::GameState() :
     { // ground
         b2BodyDef def;
         def.type = b2_staticBody;
-        def.position.Set(50, -100);
+        def.position.Set(0, 0);
         auto body = world.CreateBody(&def);
 
+        const auto push_fixture = [&body](const polygons::Poly& poly)
         {
             b2PolygonShape shape;
-            shape.SetAsBox(280, 100, { -300, 0 }, 0);
+            shape.Set(poly.data(), poly.size());
 
             b2FixtureDef fixture;
             fixture.shape = &shape;
@@ -46,30 +50,33 @@ GameState::GameState() :
             fixture.friction = .9;
 
             body->CreateFixture(&fixture);
-        }
 
+        };
+
+        const auto polys_to_colors = polygons::extract(":map.svg");
+        const polygons::Color foreground_color { 0, 1, 0, 1};
+
+        const auto foreground_transform = [](const polygons::Poly& poly) -> polygons::Poly
         {
-            b2PolygonShape shape;
-            shape.SetAsBox(280, 100, { 300, 0 }, 0);
+            polygons::Poly poly_;
+            poly_.reserve(poly.size());
+            for (const auto& point : poly)
+            {
+                const b2Vec2 point_ { point.x - .5f , .25f - point.y };
+                poly_.emplace_back(600 * point_);
+            }
+            return poly_;
+        };
 
-            b2FixtureDef fixture;
-            fixture.shape = &shape;
-            fixture.density = 0;
-            fixture.friction = .9;
-
-            body->CreateFixture(&fixture);
-        }
-
+        for (const auto& poly_color : std::get<1>(polys_to_colors))
         {
-            b2PolygonShape shape;
-            shape.SetAsBox(30, 25, { 0, -80 }, 0);
+            if (polygons::colorDistance(poly_color.second, foreground_color) > 0)
+                continue;
 
-            b2FixtureDef fixture;
-            fixture.shape = &shape;
-            fixture.density = 0;
-            fixture.friction = .9;
-
-            body->CreateFixture(&fixture);
+            const auto subpolys = polygons::decompose(poly_color.first, 0);
+            cout << "foreground subpolys " << subpolys.size() << endl;
+            for (const auto& subpoly : subpolys)
+                push_fixture(foreground_transform(subpoly));
         }
 
         ground = body;
@@ -78,7 +85,7 @@ GameState::GameState() :
     { // left side
         b2BodyDef def;
         def.type = b2_staticBody;
-        def.position.Set(-40, 0);
+        def.position.Set(-90, 45);
 
         b2PolygonShape shape;
         shape.SetAsBox(10, 100);
@@ -96,7 +103,7 @@ GameState::GameState() :
     { // right side
         b2BodyDef def;
         def.type = b2_staticBody;
-        def.position.Set(90, 0);
+        def.position.Set(90, 45);
 
         b2PolygonShape shape;
         shape.SetAsBox(10, 100);

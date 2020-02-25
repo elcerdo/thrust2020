@@ -45,7 +45,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLFunctions
         std::default_random_engine rng;
         std::array<float, 4> speed_color = { 0, 0, 1, 1 };
         bool is_animated = false;
-        bool draw_debug = true;
+        bool draw_debug = false;
         bool display_ui = true;
 
     protected:
