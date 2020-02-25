@@ -55,12 +55,14 @@ target_link_libraries(test_convex_decomposition
 add_executable(test_extract_polygons
     data_polygons.cpp
     extract_polygons.cpp
+    decompose_polygons.cpp
     test_extract_polygons.cpp
     rocket.qrc
     )
 target_link_libraries(test_extract_polygons
     Qt5::Core
     Qt5::Svg
+    acd2d
     )
 
 add_executable(rocket

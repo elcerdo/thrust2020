@@ -1,4 +1,5 @@
 #include "extract_polygons.h"
+#include "decompose_polygons.h"
 
 #include <QApplication>
 
@@ -52,6 +53,24 @@ int main(int argc, char* argv[])
 
     cout << "poly_to_brush_colors " << get<1>(polys).size() << endl;
     dump_poly_to_colors(get<1>(polys));
+
+    for (const auto& poly_color : get<1>(polys))
+    {
+        if (polygons::colorDistance(poly_color.second, polygons::Color { 0, 1, 0, 1}) > 0)
+            continue;
+
+        const auto subpolys = polygons::decompose(poly_color.first, 1e-2);
+        cout << "decomp " << poly_color.first.size() << " " << subpolys.size() << " ";
+        size_t accum = 0;
+        bool first = true;
+        for (const auto& subpoly : subpolys)
+        {
+            accum += subpoly.size();
+            cout << (first ? "[" : ", ") << subpoly.size();
+            first = false;
+        }
+        cout << "]" << endl;
+    }
 
     return 0;
 }

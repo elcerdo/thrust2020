@@ -12,12 +12,16 @@ namespace polygons
 {
 
 using Color = b2Vec4;
+
+float colorDistance(const Color& aa, const Color& bb);
+
 using Poly = std::vector<b2Vec2>;
 
 struct PolyHasher
 {
     size_t operator()(const Poly& poly) const;
 };
+
 
 using PolyToColors = std::unordered_map<Poly, Color, PolyHasher>;
 
