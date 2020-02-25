@@ -5,7 +5,7 @@
 #include <iostream>
 #include <iomanip>
 
-void dump_poly_to_colors(const PolyToColors& poly_to_pen_colors)
+void dump_poly_to_colors(const polygons::PolyToColors& poly_to_pen_colors)
 {
     using std::cout;
     using std::endl;
@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 
     QApplication app(argc, argv);
 
-    const auto polys = extract_polygons(":map.svg");
+    const auto polys = polygons::extract(":map.svg");
 
     cout << "poly_to_pen_colors " << get<0>(polys).size() << endl;
     dump_poly_to_colors(get<0>(polys));

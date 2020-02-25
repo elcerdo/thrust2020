@@ -4,7 +4,9 @@
 #include <QPaintDevice>
 #include <QPaintEngine>
 
-#include <boost/functional/hash.hpp>
+using polygons::Color;
+using polygons::Poly;
+using polygons::PolyToColors;
 
 struct SvgDumpEngine : public QPaintEngine
 {
@@ -46,17 +48,6 @@ Poly SvgDumpEngine::closed_to_poly(const QPolygonF& poly)
     poly_.pop_back();
     assert(poly_.size() + 1 == poly.size());
     return poly_;
-}
-
-size_t PolyHasher::operator()(const Poly& poly) const
-{
-    size_t seed = 0x1fac1e5b;
-    for (const auto& point : poly)
-    {
-        boost::hash_combine(seed, point.x);
-        boost::hash_combine(seed, point.y);
-    }
-    return seed;
 }
 
 SvgDumpEngine::SvgDumpEngine() : QPaintEngine(PainterPaths | PaintOutsidePaintEvent | PrimitiveTransform)
@@ -115,8 +106,8 @@ void SvgDumpEngine::drawPath(const QPainterPath& path)
         return;
 
     const Poly poly = closed_to_poly(transform.map(poly_));
-    PolyHasher hasher;
-    const auto hash = hasher(poly);
+    //polygons::PolyHasher hasher;
+    //const auto hash = hasher(poly);
 
     /*
     qDebug() << transform;
@@ -169,7 +160,7 @@ QPaintEngine* SvgDumpDevice::paintEngine() const
     return const_cast<SvgDumpEngine*>(&engine);
 }
 
-std::tuple<PolyToColors, PolyToColors> extract_polygons(const std::string& filename)
+std::tuple<PolyToColors, PolyToColors> polygons::extract(const std::string& filename)
 {
     QSvgRenderer renderer;
     const auto load_ok = renderer.load(QString::fromUtf8(filename.c_str()));

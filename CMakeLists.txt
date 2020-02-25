@@ -51,6 +51,7 @@ target_link_libraries(test_convex_decomposition
     )
 
 add_executable(test_extract_polygons
+    data_polygons.cpp
     extract_polygons.cpp
     test_extract_polygons.cpp
     rocket.qrc
