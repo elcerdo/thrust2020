@@ -44,6 +44,8 @@ target_link_libraries(test_imgui
     )
 
 add_executable(test_convex_decomposition
+    data_polygons.cpp
+    decompose_polygons.cpp
     test_convex_decomposition.cpp
     )
 target_link_libraries(test_convex_decomposition
