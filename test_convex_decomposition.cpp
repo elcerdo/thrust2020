@@ -1,9 +1,10 @@
-#include "ConcavePolygon.h"
+#include <Box2D/Common/b2Math.h>
 
 #include <acd2d_core.h>
 #include <acd2d_concavity.h>
 
 #include <iostream>
+#include <vector>
 
 template <typename BB>
 void
@@ -13,8 +14,7 @@ require(const BB cond, const std::string& message)
         throw std::runtime_error(message);
 }
 
-using Vertices = cxd::ConcavePolygon::Vertices;
-
+using Vertices = std::vector<b2Vec2>;
 
 class Prout : public acd2d::IConcavityMeasure
 {
@@ -32,22 +32,22 @@ acd2d::cd_vertex * Prout::findMaxNotch(acd2d::cd_vertex * v1, acd2d::cd_vertex *
 {
     using namespace acd2d;
 
-    cd_vertex * r=NULL;
-    cd_vertex * ptr=v1->getNext();
-    Vector2d v=(v2->getPos()-v1->getPos());
+    cd_vertex* r = NULL;
+    cd_vertex* ptr = v1->getNext();
+    Vector2d v = v2->getPos() - v1->getPos();
     Vector2d n(-v[1],v[0]);
-    double norm=n.norm();
-    if( norm!=0 ) n=n/norm;
-
-    do{
+    double norm = n.norm();
+    if (norm != 0) n = n/norm;
+    do
+    {
         double c;
-        if( norm!=0) c=findDist(n,v1->getPos(),ptr->getPos());
-        else c=(v1->getPos()-ptr->getPos()).norm();
+        if (norm != 0) c = findDist(n, v1->getPos(), ptr->getPos());
+        else c = (v1->getPos() - ptr->getPos()).norm();
         ptr->setConcavity(c);
-        if( r==NULL ) r=ptr;
-        else if( r->getConcavity()<c ){ r=ptr; }
-        ptr=ptr->getNext();
-    }while( ptr!=v2 );
+        if (r==NULL) r = ptr;
+        else if (r->getConcavity() < c) r = ptr;
+        ptr = ptr->getNext();
+    } while (ptr != v2);
     v1->setConcavity(0);
     v2->setConcavity(0);
     return r;
@@ -117,28 +117,8 @@ run_acd2d(const Vertices& vertices)
 
 
 void
-run_convex_decomp(const Vertices& vertices)
-{
-    cout << "==================== convex decomp" << endl;
-    for (const auto& point : vertices)
-        cout << point.x << " " << point.y << endl;
-
-    cxd::ConcavePolygon poly(vertices);
-    poly.convexDecomp();
-
-    for (int kk=0, kk_max=poly.getNumberSubPolys(); kk<kk_max; kk++)
-    {
-        const auto& subpoly = poly.getSubPolygon(kk);
-        cout << "** " << kk << "/" << kk_max << " " << subpoly.getNumberSubPolys() << endl;
-        for (const auto& point : subpoly.getVertices())
-            cout << "  " << point.x << " " << point.y << endl;
-    }
-}
-
-void
 run_all(const Vertices& vertices)
 {
-    run_convex_decomp(vertices);
     run_acd2d(vertices);
 }
 
