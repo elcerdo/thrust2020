@@ -2,18 +2,18 @@
 
 #include <acd2d_core.h>
 #include <acd2d_concavity.h>
+#include <acd2d_edge_visibility.h>
 
-class Prout : public acd2d::IConcavityMeasure
+class StraightMesure : public acd2d::IConcavityMeasure
 {
-    public :
+    public:
         acd2d::cd_vertex* findMaxNotch(acd2d::cd_vertex* v1, acd2d::cd_vertex* v2);
 
     private:
-
         double findDist(const acd2d::Vector2d& n, const acd2d::Point2d& p, const acd2d::Point2d& qp);
 };
 
-acd2d::cd_vertex* Prout::findMaxNotch(acd2d::cd_vertex* v1, acd2d::cd_vertex* v2)
+acd2d::cd_vertex* StraightMesure::findMaxNotch(acd2d::cd_vertex* v1, acd2d::cd_vertex* v2)
 {
     using namespace acd2d;
 
@@ -38,10 +38,12 @@ acd2d::cd_vertex* Prout::findMaxNotch(acd2d::cd_vertex* v1, acd2d::cd_vertex* v2
     return r;
 }
 
-double Prout::findDist(const acd2d::Vector2d& n, const acd2d::Point2d& p, const acd2d::Point2d& qp)
+double StraightMesure::findDist(const acd2d::Vector2d& n, const acd2d::Point2d& p, const acd2d::Point2d& qp)
 {
     return (qp-p)*n;
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 std::list<polygons::Poly>
 polygons::decompose(const polygons::Poly& vertices, const double margin)
@@ -50,7 +52,7 @@ polygons::decompose(const polygons::Poly& vertices, const double margin)
     using Polygon = acd2d::cd_polygon;
     using Decomposition = acd2d::cd_2d;
     //using Measure = acd2d::HybridMeasurement1;
-    using Measure = Prout;
+    using Measure = StraightMesure;
     using Scalar = decltype(b2Vec2::x);
 
     Polygon polygon;
