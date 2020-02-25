@@ -1,4 +1,4 @@
-#include <Box2D/Common/b2Math.h>
+#include "data_polygons.h"
 
 #include <acd2d_core.h>
 #include <acd2d_concavity.h>
@@ -14,21 +14,18 @@ require(const BB cond, const std::string& message)
         throw std::runtime_error(message);
 }
 
-using Vertices = std::vector<b2Vec2>;
 
 class Prout : public acd2d::IConcavityMeasure
 {
     public :
-
-        acd2d::cd_vertex * findMaxNotch(acd2d::cd_vertex * v1, acd2d::cd_vertex * v2);
+        acd2d::cd_vertex* findMaxNotch(acd2d::cd_vertex* v1, acd2d::cd_vertex* v2);
 
     private:
 
-        // compute distance from a point, qp, to a segment p1->p2
         double findDist(const acd2d::Vector2d& n, const acd2d::Point2d& p, const acd2d::Point2d& qp);
 };
 
-acd2d::cd_vertex * Prout::findMaxNotch(acd2d::cd_vertex * v1, acd2d::cd_vertex * v2)
+acd2d::cd_vertex* Prout::findMaxNotch(acd2d::cd_vertex* v1, acd2d::cd_vertex* v2)
 {
     using namespace acd2d;
 
@@ -58,17 +55,15 @@ double Prout::findDist(const acd2d::Vector2d& n, const acd2d::Point2d& p, const 
     return (qp-p)*n;
 }
 
-void
-run_acd2d(const Vertices& vertices)
+std::list<polygons::Poly>
+decompose_convex(const polygons::Poly& vertices, const double margin)
 {
-    using Vertex = acd2d::cd_vertex;
     using Poly = acd2d::cd_poly;
     using Polygon = acd2d::cd_polygon;
     using Decomposition = acd2d::cd_2d;
     //using Measure = acd2d::HybridMeasurement1;
     using Measure = Prout;
-
-    cout << "==================== acd2d" << endl;
+    using Scalar = decltype(b2Vec2::x);
 
     Polygon polygon;
     {
@@ -78,69 +73,82 @@ run_acd2d(const Vertices& vertices)
             poly.addVertex(point.x, point.y);
         poly.endPoly();
         //poly.scale(1);
-        cout << poly.getSize() << endl;
         polygon.emplace_back(poly);
         //polygon.buildDependency();
     }
-    require(polygon.valid(), "invalid polygon");
+    assert(polygon.valid());
 
     Decomposition decomp;
     decomp.addPolygon(polygon);
 
     Measure measure;
-
-    cout << decomp.getTodoList().size() << " " << decomp.getDoneList().size() << endl;
     decomp.decomposeAll(.1, &measure);
-    cout << decomp.getTodoList().size() << " " << decomp.getDoneList().size() << endl;
+    assert(decomp.getTodoList().empty());
 
+    std::list<polygons::Poly> subpolys;
     for (const Polygon& subpolygon : decomp.getDoneList())
     {
-        cout << "** " << subpolygon.size() << " ";
-        cout.flush();
         assert(subpolygon.size() == 1);
         const auto& subpoly = subpolygon.front();
-        cout << subpoly.getSize() << endl;
 
-
+        polygons::Poly subpoly_;
         const auto head = subpoly.getHead();
         auto ptr = head;
-        do {
+        do
+        {
             assert(ptr);
             const auto& position = ptr->getPos();
-            cout << "  " << position[0] << " " << position[1] << endl;
+            subpoly_.emplace_back(b2Vec2 { static_cast<Scalar>(position[0]), static_cast<Scalar>(position[1]) });
             ptr=ptr->getNext();
         }
-        while(ptr!=head);
+        while (ptr != head);
 
+        subpolys.emplace_back(subpoly_);
     }
+
+    return subpolys;
 }
 
-
 void
-run_all(const Vertices& vertices)
+run_acd2d(const polygons::Poly& poly)
 {
-    run_acd2d(vertices);
+
+    cout << "==================== acd2d" << endl;
+
+    cout << "II " << poly.size() << endl;
+    for (const auto& point : poly)
+        cout << "  " << point.x << " " << point.y << endl;
+
+    const auto& subpolys = decompose_convex(poly, .1);
+    for (const auto& subpoly : subpolys)
+    {
+        cout << "OO " << subpoly.size() << endl;
+        for (const auto& point : subpoly)
+            cout << "  " << point.x << " " << point.y << endl;
+    }
 }
 
 int main(int argc, char* argv[])
 {
     std::cout << std::boolalpha;
 
-    run_all(Vertices {
+    using polygons::Poly;
+
+    run_acd2d(Poly {
         { -1, -1 },
         { 1, -1 },
         { -.5, -.5 },
         { -1 , 1 }
     });
 
-    run_all(Vertices {
+    run_acd2d(Poly {
         { -1, -1 },
         { 1, -1 },
         { 1, 1 },
         { -1 , 1 }
     });
 
-    run_all(Vertices {
+    run_acd2d(Poly {
         { -1, -1 },
         { 1, -1 },
         { 1, 1 },
