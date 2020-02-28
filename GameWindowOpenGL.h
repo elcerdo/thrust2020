@@ -67,9 +67,10 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
 
         QOpenGLShaderProgram* program = nullptr;
         int pos_attr = -1;
-        int col_attr = -1;
+        //int col_attr = -1;
         int mat_unif = -1;
-        //GLuint vao = 0;
+        GLuint vao = 0;
+        GLuint vbos[2] = { 0, 0 };
 };
 
 

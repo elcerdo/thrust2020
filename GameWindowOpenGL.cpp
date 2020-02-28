@@ -119,20 +119,48 @@ void GameWindowOpenGL::initializeGL()
     assert(all_ok);
 
     /*
-    glGenVertexArrays(1, &vao);
-    qDebug() << "vao" << vao;
-    glBindVertexArray(vao);
     */
 
     assert(program);
     pos_attr = program->attributeLocation("posAttr");
-    col_attr = program->attributeLocation("colAttr");
+    //col_attr = program->attributeLocation("colAttr");
     mat_unif = program->uniformLocation("matrix");
-    qDebug() << "attrs" << pos_attr << col_attr << mat_unif;
+    qDebug() << "attrs" << pos_attr << /*col_attr << */mat_unif;
     assert(pos_attr >= 0);
-    assert(col_attr >= 0);
+    //assert(col_attr >= 0);
     assert(mat_unif >= 0);
     assert(glGetError() == GL_NO_ERROR);
+
+    {
+        glGenVertexArrays(1, &vao);
+        qDebug() << "vao" << vao;
+        glBindVertexArray(vao);
+
+        glGenBuffers(2, vbos);
+        qDebug() << "vbos" << vbos[0] << vbos[1];
+
+        glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
+        const GLfloat vertices[] = {
+            0.0f, 0.707f,
+            -0.5f, -0.5f,
+            0.5f, -0.5f
+        };
+
+        glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(pos_attr, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+    }
+
+    /*
+
+        const GLfloat colors[] = {
+            1.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 1.0f
+        };
+        */
+
 }
 
 void GameWindowOpenGL::addCheckbox(const std::string& label, const bool& value, const BoolCallback& callback)
@@ -319,10 +347,11 @@ void GameWindowOpenGL::paintGL()
     const double dt_ = std::min(50e-3, 1. / ImGui::GetIO().Framerate);
     state.step(dt_);
 
-    const qreal retinaScale = devicePixelRatio();
-    glViewport(0, 0, width() * retinaScale, height() * retinaScale);
     glClearColor(1, 0, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    const qreal retinaScale = devicePixelRatio();
+    glViewport(0, 0, width() * retinaScale, height() * retinaScale);
     assert(glGetError() == GL_NO_ERROR);
 
     QtImGui::newFrame();
@@ -374,6 +403,8 @@ void GameWindowOpenGL::paintGL()
     }
     */
 
+    glBindVertexArray(0);
+
     if (!device)
         device = new QOpenGLPaintDevice;
 
@@ -390,7 +421,7 @@ void GameWindowOpenGL::paintGL()
         QLinearGradient linearGrad(QPointF(0, 0), QPointF(0, height()));
         linearGrad.setColorAt(0, QColor(0x33, 0x08, 0x67)); // morpheus den gradient
         linearGrad.setColorAt(1, QColor(0x30, 0xcf, 0xd0));
-        painter.fillRect(0, 0, width(), height(), linearGrad);
+        painter.fillRect(0, 0, width() / 2, height(), linearGrad);
     }
 
     { // world
@@ -462,6 +493,8 @@ void GameWindowOpenGL::paintGL()
     }
 
     { // draw with custom shader
+        glBindVertexArray(vao);
+
         assert(program);
         assert(program->isLinked());
         program->bind();
@@ -469,30 +502,16 @@ void GameWindowOpenGL::paintGL()
 
         {
             QMatrix4x4 matrix;
-            //matrix.ortho(-1, 1, -1, 1, -1, 1);
-            matrix.perspective(60.0f, 4.0f/3.0f, 0.1f, 100.0f);
-            matrix.translate(0, 0, -2);
-            //matrix.rotate(100.0f * m_frame / screen()->refreshRate(), 0, 1, 0);
+            matrix.ortho(-1, 1, -1, 1, -1, 10);
+            //matrix.perspective(60.0f, 4.0f/3.0f, 0.1f, 100.0f);
+            matrix.translate(-0.5, 0, 0);
+            matrix.scale(.2, .2, 1);
+            matrix.rotate(frame_counter, 0, 1, 0);
             program->setUniformValue(mat_unif, matrix);
             assert(glGetError() == GL_NO_ERROR);
         }
 
         /*
-
-       const GLfloat vertices[] = {
-            0.0f, 0.707f,
-            -0.5f, -0.5f,
-            0.5f, -0.5f
-        };
-
-        const GLfloat colors[] = {
-            1.0f, 0.0f, 0.0f,
-            0.0f, 1.0f, 0.0f,
-            0.0f, 0.0f, 1.0f
-        };
-
-        glBindVertexArray(vao);
-
         //program->setAttributeArray(pos_attr, vertices, 2);
         //program->setAttributeArray(col_attr, colors, 3);
         glBindBuffer(GL_ARRAY_BUFFER, 1);
@@ -503,19 +522,17 @@ void GameWindowOpenGL::paintGL()
         const auto error = glGetError();
         std::cout << std::hex << error << std::dec << std::endl;
         assert(error == GL_NO_ERROR);
+        */
 
-        program->enableAttributeArray(1);
-        program->enableAttributeArray(2);
+        glEnableVertexAttribArray(pos_attr);
         assert(glGetError() == GL_NO_ERROR);
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
         assert(glGetError() == GL_NO_ERROR);
 
-        program->disableAttributeArray(2);
-        program->disableAttributeArray(1);
+        glDisableVertexAttribArray(pos_attr);
         assert(glGetError() == GL_NO_ERROR);
 
-        */
         program->release();
     }
 
