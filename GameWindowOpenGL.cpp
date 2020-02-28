@@ -13,7 +13,9 @@
 #include <QOpenGLShaderProgram>
 
 #include <imgui.h>
+
 #include <random>
+#include <iostream>
 
 GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
     : QOpenGLWindow(QOpenGLWindow::NoPartialUpdate, parent)
@@ -75,35 +77,62 @@ void GameWindowOpenGL::setAnimated(const bool value)
         update();
 }
 
-static const char *vertexShaderSource =
-    "attribute highp vec4 posAttr;\n"
-    "attribute lowp vec4 colAttr;\n"
-    "varying lowp vec4 col;\n"
-    "uniform highp mat4 matrix;\n"
-    "void main() {\n"
-    "   col = colAttr;\n"
-    "   gl_Position = matrix * posAttr;\n"
-    "}\n";
-
-static const char *fragmentShaderSource =
-    "varying lowp vec4 col;\n"
-    "void main() {\n"
-    "   gl_FragColor = col;\n"
-    "}\n";
-
 void GameWindowOpenGL::initializeGL()
 {
+
+    /*
+    assert(!context);
+    context = new QOpenGLContext(this);
+    context->setFormat(requestedFormat());
+    context->create();
+    qDebug() << context->format();
+
+    assert(context);
+    context->makeCurrent(this);
+    */
+    qDebug() << QOpenGLContext::currentContext();
+
     initializeOpenGLFunctions();
     QtImGui::initialize(this);
-    glClearColor(1, 0, 1, 1);
+    assert(glGetError() == GL_NO_ERROR);
 
     assert(!program);
     program = new QOpenGLShaderProgram;
-    program->addShaderFromSourceCode(QOpenGLShader::Vertex, vertexShaderSource);
-    program->addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShaderSource);
+    const auto vertex_compile_ok = [this]() -> bool {
+        QFile handle(":vertex.glsl");
+        if (!handle.open(QIODevice::ReadOnly))
+            return false;
+        const auto& source = handle.readAll();
+        return program->addShaderFromSourceCode(QOpenGLShader::Vertex, source);
+    }();
+    const auto fragment_compile_ok = [this]() -> bool {
+        QFile handle(":fragment.glsl");
+        if (!handle.open(QIODevice::ReadOnly))
+            return false;
+        const auto& source = handle.readAll();
+        return program->addShaderFromSourceCode(QOpenGLShader::Fragment, source);
+    }();
     const auto link_ok = program->link();
-    qDebug() << "link_ok" << link_ok;
-    assert(link_ok);
+    qDebug() << "ok" << link_ok << vertex_compile_ok << fragment_compile_ok;
+    const auto all_ok = vertex_compile_ok && fragment_compile_ok && link_ok;
+    qDebug() << program->log();
+    assert(all_ok);
+
+    /*
+    glGenVertexArrays(1, &vao);
+    qDebug() << "vao" << vao;
+    glBindVertexArray(vao);
+    */
+
+    assert(program);
+    pos_attr = program->attributeLocation("posAttr");
+    col_attr = program->attributeLocation("colAttr");
+    mat_unif = program->uniformLocation("matrix");
+    qDebug() << "attrs" << pos_attr << col_attr << mat_unif;
+    assert(pos_attr >= 0);
+    assert(col_attr >= 0);
+    assert(mat_unif >= 0);
+    assert(glGetError() == GL_NO_ERROR);
 }
 
 void GameWindowOpenGL::addCheckbox(const std::string& label, const bool& value, const BoolCallback& callback)
@@ -287,11 +316,14 @@ void GameWindowOpenGL::drawShip(QPainter& painter)
 
 void GameWindowOpenGL::paintGL()
 {
-
-    frame_counter++;
-
     const double dt_ = std::min(50e-3, 1. / ImGui::GetIO().Framerate);
     state.step(dt_);
+
+    const qreal retinaScale = devicePixelRatio();
+    glViewport(0, 0, width() * retinaScale, height() * retinaScale);
+    glClearColor(1, 0, 1, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    assert(glGetError() == GL_NO_ERROR);
 
     QtImGui::newFrame();
 
@@ -325,7 +357,6 @@ void GameWindowOpenGL::paintGL()
         ImGui::Text("Ball density %.2f", state.ball->GetFixtureList()->GetDensity());
     }
 
-
     /*
     // 2. Show another simple window, this time using an explicit Begin/End pair
     {
@@ -342,10 +373,6 @@ void GameWindowOpenGL::paintGL()
         ImGui::ShowDemoWindow();
     }
     */
-
-    // Do render before ImGui UI is rendered
-    glViewport(0, 0, width(), height());
-    glClear(GL_COLOR_BUFFER_BIT);
 
     if (!device)
         device = new QOpenGLPaintDevice;
@@ -365,53 +392,6 @@ void GameWindowOpenGL::paintGL()
         linearGrad.setColorAt(1, QColor(0x30, 0xcf, 0xd0));
         painter.fillRect(0, 0, width(), height(), linearGrad);
     }
-
-    /*{ // draw with custom shader
-        assert(program);
-        program->bind();
-        const auto pos_attr = program->attributeLocation("posAttr");
-        const auto col_attr = program->attributeLocation("colAttr");
-        const auto matrix_uniform = program->uniformLocation("matrix");
-        qDebug() << "attrs" << pos_attr << col_attr << matrix_uniform;
-        assert(pos_attr >= 0);
-        assert(col_attr >= 0);
-        assert(matrix_uniform >= 0);
-
-        program->bind();
-
-        QMatrix4x4 matrix;
-        matrix.perspective(60.0f, 4.0f/3.0f, 0.1f, 100.0f);
-        matrix.translate(0, 0, -2);
-        //matrix.rotate(100.0f * m_frame / screen()->refreshRate(), 0, 1, 0);
-
-        program->setUniformValue(matrix_uniform, matrix);
-
-        GLfloat vertices[] = {
-            0.0f, 0.707f,
-            -0.5f, -0.5f,
-            0.5f, -0.5f
-        };
-
-        GLfloat colors[] = {
-            1.0f, 0.0f, 0.0f,
-            0.0f, 1.0f, 0.0f,
-            0.0f, 0.0f, 1.0f
-        };
-
-        glVertexAttribPointer(pos_attr, 2, GL_FLOAT, GL_FALSE, 0, vertices);
-        glVertexAttribPointer(col_attr, 3, GL_FLOAT, GL_FALSE, 0, colors);
-
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
-
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
-        glDisableVertexAttribArray(1);
-        glDisableVertexAttribArray(0);
-
-        program->release();
-    }*/
-
 
     { // world
         painter.save();
@@ -481,15 +461,63 @@ void GameWindowOpenGL::paintGL()
         painter.restore();
     }
 
-    /*glBegin(GL_TRIANGLE_STRIP);
-    glColor3f(1, 1, 0);
-    glVertex2f(-1, -1);
-    glVertex2f(1, -1);
-    glVertex2f(-1, 1);
-    glVertex2f(1, 1);
-    //glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    //glDrawElements(GL_TRIANGLE_STRIP, 4, )
-    glEnd(); */
+    { // draw with custom shader
+        assert(program);
+        assert(program->isLinked());
+        program->bind();
+        assert(glGetError() == GL_NO_ERROR);
+
+        {
+            QMatrix4x4 matrix;
+            //matrix.ortho(-1, 1, -1, 1, -1, 1);
+            matrix.perspective(60.0f, 4.0f/3.0f, 0.1f, 100.0f);
+            matrix.translate(0, 0, -2);
+            //matrix.rotate(100.0f * m_frame / screen()->refreshRate(), 0, 1, 0);
+            program->setUniformValue(mat_unif, matrix);
+            assert(glGetError() == GL_NO_ERROR);
+        }
+
+        /*
+
+       const GLfloat vertices[] = {
+            0.0f, 0.707f,
+            -0.5f, -0.5f,
+            0.5f, -0.5f
+        };
+
+        const GLfloat colors[] = {
+            1.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 1.0f
+        };
+
+        glBindVertexArray(vao);
+
+        //program->setAttributeArray(pos_attr, vertices, 2);
+        //program->setAttributeArray(col_attr, colors, 3);
+        glBindBuffer(GL_ARRAY_BUFFER, 1);
+        glVertexAttribPointer(pos_attr, 2, GL_FLOAT, false, 0, vertices);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 2);
+        glVertexAttribPointer(col_attr, 3, GL_FLOAT, false, 0, colors);
+        const auto error = glGetError();
+        std::cout << std::hex << error << std::dec << std::endl;
+        assert(error == GL_NO_ERROR);
+
+        program->enableAttributeArray(1);
+        program->enableAttributeArray(2);
+        assert(glGetError() == GL_NO_ERROR);
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        assert(glGetError() == GL_NO_ERROR);
+
+        program->disableAttributeArray(2);
+        program->disableAttributeArray(1);
+        assert(glGetError() == GL_NO_ERROR);
+
+        */
+        program->release();
+    }
 
     { // sfx
         if (state.ship_accum_contact > 0)
@@ -509,6 +537,10 @@ void GameWindowOpenGL::paintGL()
     }
 
     ImGui::Render();
+
+    //context->swapBuffers(this);
+
+    frame_counter++;
 
     if (is_animated)
         update();

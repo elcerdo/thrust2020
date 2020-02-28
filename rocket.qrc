@@ -4,5 +4,7 @@
     <file>click00.wav</file>
     <file>click01.wav</file>
     <file>map.svg</file>
+    <file>vertex.glsl</file>
+    <file>fragment.glsl</file>
 </qresource>
 </RCC>

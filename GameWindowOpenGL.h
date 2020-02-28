@@ -3,14 +3,14 @@
 #include "GameState.h"
 
 #include <QOpenGLWindow>
-#include <QOpenGLFunctions>
+#include <QOpenGLExtraFunctions>
 #include <QOpenGLPaintDevice>
 #include <QSoundEffect>
 #include <QOpenGLShaderProgram>
 #include <QSvgRenderer>
 #include <random>
 
-class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLFunctions
+class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
 {
     Q_OBJECT
     public:
@@ -55,6 +55,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLFunctions
         FloatStates float_states;
 
         QOpenGLPaintDevice* device = nullptr;
+        //QOpenGLContext* context = nullptr;
         size_t frame_counter = 0;
 
         QSoundEffect engine_sfx;
@@ -65,6 +66,10 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLFunctions
         bool is_muted = false;
 
         QOpenGLShaderProgram* program = nullptr;
+        int pos_attr = -1;
+        int col_attr = -1;
+        int mat_unif = -1;
+        //GLuint vao = 0;
 };
 
 

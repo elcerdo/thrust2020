@@ -9,6 +9,7 @@ int main(int argc, char* argv[])
 {
     QSurfaceFormat glFormat;
     glFormat.setVersion(3, 3);
+    //glFormat.setSamples(2);
     glFormat.setProfile(QSurfaceFormat::CoreProfile);
     QSurfaceFormat::setDefaultFormat(glFormat);
 
