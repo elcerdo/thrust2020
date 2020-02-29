@@ -123,11 +123,11 @@ void GameWindowOpenGL::initializeGL()
 
     assert(program);
     pos_attr = program->attributeLocation("posAttr");
-    //col_attr = program->attributeLocation("colAttr");
+    col_attr = program->attributeLocation("colAttr");
     mat_unif = program->uniformLocation("matrix");
-    qDebug() << "attrs" << pos_attr << /*col_attr << */mat_unif;
+    qDebug() << "attrs" << pos_attr << col_attr << mat_unif;
     assert(pos_attr >= 0);
-    //assert(col_attr >= 0);
+    assert(col_attr >= 0);
     assert(mat_unif >= 0);
     assert(glGetError() == GL_NO_ERROR);
 
@@ -145,21 +145,18 @@ void GameWindowOpenGL::initializeGL()
             -0.5f, -0.5f,
             0.5f, -0.5f
         };
-
         glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
-
         glVertexAttribPointer(pos_attr, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
-    }
-
-    /*
-
+        glBindBuffer(GL_ARRAY_BUFFER, vbos[1]);
         const GLfloat colors[] = {
-            1.0f, 0.0f, 0.0f,
-            0.0f, 1.0f, 0.0f,
-            0.0f, 0.0f, 1.0f
+            1, 0, 0, 1,
+            0, 1, 0, 1,
+            0, 0, 1, 1,
         };
-        */
+        glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(GLfloat), colors, GL_STATIC_DRAW);
+        glVertexAttribPointer(col_attr, 4, GL_FLOAT, GL_FALSE, 0, 0);
+    }
 
 }
 
@@ -507,6 +504,7 @@ void GameWindowOpenGL::paintGL()
             matrix.translate(-0.5, 0, 0);
             matrix.scale(.2, .2, 1);
             matrix.rotate(frame_counter, 0, 1, 0);
+
             program->setUniformValue(mat_unif, matrix);
             assert(glGetError() == GL_NO_ERROR);
         }
@@ -525,11 +523,13 @@ void GameWindowOpenGL::paintGL()
         */
 
         glEnableVertexAttribArray(pos_attr);
+        glEnableVertexAttribArray(col_attr);
         assert(glGetError() == GL_NO_ERROR);
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
         assert(glGetError() == GL_NO_ERROR);
 
+        glDisableVertexAttribArray(col_attr);
         glDisableVertexAttribArray(pos_attr);
         assert(glGetError() == GL_NO_ERROR);
 
