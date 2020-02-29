@@ -165,6 +165,7 @@ GameState::GameState() :
         ball = body;
     }
 
+		/*
     { // crate tower
         constexpr int nn = 10;
         constexpr float ww = 2;
@@ -176,6 +177,7 @@ GameState::GameState() :
             addCrate({ xx, 2.5f * ( 1 + nn - jj) }, { 0, 0 }, 0);
         }
     }
+		*/
 
     { // particle system
         b2ParticleSystemDef system_def;
