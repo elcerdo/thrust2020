@@ -131,7 +131,7 @@ void GameWindowOpenGL::initializeGL()
     assert(mat_unif >= 0);
     assert(glGetError() == GL_NO_ERROR);
 
-    {
+    { // ship vao
         glGenVertexArrays(1, &vao);
         qDebug() << "vao" << vao;
         glBindVertexArray(vao);
@@ -141,20 +141,26 @@ void GameWindowOpenGL::initializeGL()
 
         glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
         const GLfloat vertices[] = {
-            0.0f, 0.707f,
-            -0.5f, -0.5f,
-            0.5f, -0.5f
+            0.0f, 0.707f, 0,
+            -0.5f, -0.5f, 0,
+            0.5f, -0.5f, 0,
+            0.0f, 0.707f, 0,
+            0, -0.5f, -0.5f,
+            0, -0.5f, 0.5f,
         };
-        glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
-        glVertexAttribPointer(pos_attr, 2, GL_FLOAT, GL_FALSE, 0, 0);
+        glBufferData(GL_ARRAY_BUFFER, 6 * 3 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+        glVertexAttribPointer(pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
         glBindBuffer(GL_ARRAY_BUFFER, vbos[1]);
         const GLfloat colors[] = {
             1, 0, 0, 1,
             0, 1, 0, 1,
             0, 0, 1, 1,
+            1, 0, 0, 1,
+            0, 1, 0, 1,
+            0, 0, 1, 1,
         };
-        glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(GLfloat), colors, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, 6 * 4 * sizeof(GLfloat), colors, GL_STATIC_DRAW);
         glVertexAttribPointer(col_attr, 4, GL_FLOAT, GL_FALSE, 0, 0);
     }
 
@@ -492,6 +498,8 @@ void GameWindowOpenGL::paintGL()
     { // draw with custom shader
         glBindVertexArray(vao);
 
+        glClear(GL_DEPTH_BUFFER_BIT);
+
         assert(program);
         assert(program->isLinked());
         program->bind();
@@ -499,10 +507,11 @@ void GameWindowOpenGL::paintGL()
 
         {
             QMatrix4x4 matrix;
-            matrix.ortho(-1, 1, -1, 1, -1, 10);
-            //matrix.perspective(60.0f, 4.0f/3.0f, 0.1f, 100.0f);
-            matrix.translate(-0.5, 0, 0);
-            matrix.scale(.2, .2, 1);
+            //matrix.ortho(-1, 1, -1, 1, 0, 10);
+            //matrix.translate(-0.5, 0, 0);
+            matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
+            matrix.translate(0, 0, -2);
+            //matrix.scale(.2, .2, .2);
             matrix.rotate(frame_counter, 0, 1, 0);
 
             program->setUniformValue(mat_unif, matrix);
@@ -526,7 +535,7 @@ void GameWindowOpenGL::paintGL()
         glEnableVertexAttribArray(col_attr);
         assert(glGetError() == GL_NO_ERROR);
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
         assert(glGetError() == GL_NO_ERROR);
 
         glDisableVertexAttribArray(col_attr);
