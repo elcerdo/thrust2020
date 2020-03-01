@@ -37,6 +37,10 @@ int main(int argc, char* argv[])
         fixture->SetDensity(value);
         body->ResetMassData();
     });
+    view_opengl.addSlider("liquid damping", 0, 1, .5, [&state](const float value) -> void {
+        assert(state.system);
+        state.system->SetDamping(1 - value);
+    });
 
     view_opengl.addCheckbox("gravity", true, [&state](const bool checked) -> void {
         qDebug() << "gravity" << checked;

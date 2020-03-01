@@ -73,7 +73,7 @@ GameState::GameState() :
             if (polygons::colorDistance(poly_color.second, foreground_color) > 0)
                 continue;
 
-            const auto subpolys = polygons::decompose(poly_color.first, 1e-2);
+            const auto subpolys = polygons::decompose(poly_color.first, 1e-5);
             cout << "foreground subpolys " << subpolys.size() << endl;
             for (const auto& subpoly : subpolys)
                 push_fixture(foreground_transform(subpoly));
@@ -186,7 +186,6 @@ GameState::GameState() :
         system_def.density = 5e-2;
         system_def.radius = .80; // FIXME 1.2;
         system = world.CreateParticleSystem(&system_def);
-        system->SetDamping(0.2f);
 
         b2PolygonShape shape;
         shape.SetAsBox(8, 20);
