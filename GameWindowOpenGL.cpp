@@ -482,12 +482,16 @@ void GameWindowOpenGL::paintGL()
     { // world
         painter.save();
         painter.translate(width() / 2, height() / 2);
+        painter.scale(1., -1);
 
         const auto& pos = state.ship->GetPosition();
         const int side = qMin(width(), height());
-        const double height =  75 * std::max(1., pos.y / 40.);
-        painter.scale(side / height, -side / height);
+        const double ship_height =  75 * std::max(1., pos.y / 40.);
+        const double factor = is_zoom_out ? 2 : 1;
+        painter.scale(factor * side / ship_height, factor * side / ship_height);
+        //painter.scale(side / height, side / height);
         painter.translate(-pos.x, -std::min(20.f, pos.y));
+
 
         { // svg
             constexpr double scale = 600;
@@ -640,7 +644,8 @@ void GameWindowOpenGL::paintGL()
             const auto& pos = state.ship->GetPosition();
             const auto side = std::min(ratio, 1.);
             const double ship_height = 75 * std::max(1., pos.y / 40.);
-            matrix.scale(side / ship_height, side / ship_height, side / ship_height);
+            const double factor = is_zoom_out ? 2. : 1;
+            matrix.scale(factor * side / ship_height, factor * side / ship_height, 1);
             matrix.scale(2, 2, 2);
             matrix.translate(-pos.x, -std::min(20.f, pos.y));
 

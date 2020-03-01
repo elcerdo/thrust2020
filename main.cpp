@@ -53,6 +53,10 @@ int main(int argc, char* argv[])
         view_opengl.setMuted(checked);
     });
 
+    view_opengl.addCheckbox("world view", false, [&view_opengl](const bool checked) -> void {
+        view_opengl.is_zoom_out = checked;
+    });
+
     return app.exec();
 }
 

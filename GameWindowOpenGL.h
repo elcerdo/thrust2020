@@ -47,6 +47,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         bool is_animated = false;
         bool draw_debug = false;
         bool display_ui = true;
+        bool is_zoom_out = true;
 
     protected:
         //bool show_test_window = true;

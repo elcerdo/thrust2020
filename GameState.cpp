@@ -195,7 +195,7 @@ GameState::GameState() :
         group_def.shape = &shape;
         //group_def.flags = particle_type;
         group_def.flags = b2_powderParticle;
-        //group_def.flags = b2_elasticParticle;
+        group_def.flags = b2_elasticParticle;
         //group_def.groupFlags = b2_solidParticleGroup;
         group_def.position.Set(-15, 30);
         group_def.color.Set(0, 0xffu, 0xffu, 127u);
