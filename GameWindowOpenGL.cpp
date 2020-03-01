@@ -505,42 +505,56 @@ void GameWindowOpenGL::paintGL()
         program->bind();
         assert(glGetError() == GL_NO_ERROR);
 
+        const auto blit_triangle = [this]() -> void
+        {
+            glEnableVertexAttribArray(pos_attr);
+            glEnableVertexAttribArray(col_attr);
+            assert(glGetError() == GL_NO_ERROR);
+
+            glEnable(GL_DEPTH_TEST);
+            glDepthFunc(GL_GREATER);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+            glDisable(GL_DEPTH_TEST);
+            assert(glGetError() == GL_NO_ERROR);
+
+            glDisableVertexAttribArray(col_attr);
+            glDisableVertexAttribArray(pos_attr);
+            assert(glGetError() == GL_NO_ERROR);
+        };
+
         {
             QMatrix4x4 matrix;
-            //matrix.ortho(-1, 1, -1, 1, 0, 10);
+            const double ratio = static_cast<double>(width()) / height();
+            const double norm_height = qMin(1., 1. / ratio);
+            //const double norm_height = qMax(1., static_cast<double>(height()) / width());
+            const double norm_width = 1;
+            matrix.ortho(-1, 1, -1, 1, 0, 10);
             //matrix.translate(-0.5, 0, 0);
-            matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
-            matrix.translate(0, 0, -2);
-            //matrix.scale(.2, .2, .2);
-            matrix.rotate(frame_counter, 0, 1, 0);
+            //matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
+
+            matrix.translate(0, 0, -5);
+
+            const auto& pos = state.ship->GetPosition();
+            const int side = norm_height;
+            const double ship_height = 0; // 75 * std::max(1., pos.y / 40.);
+            //matrix.scale(side / ship_height, -side / ship_height, 1.);
+            //matrix.translate(-pos.x, -std::min(20.f, pos.y));
+
+            //matrix.scale(20, 20, 20);
+            matrix.rotate(180. * state.ship->GetAngle() / M_PI, 0, 0, 1);
 
             program->setUniformValue(mat_unif, matrix);
             assert(glGetError() == GL_NO_ERROR);
+
+            blit_triangle();
+
+            matrix.rotate(90, 0, 1, 0);
+
+            program->setUniformValue(mat_unif, matrix);
+            assert(glGetError() == GL_NO_ERROR);
+
+            blit_triangle();
         }
-
-        /*
-        //program->setAttributeArray(pos_attr, vertices, 2);
-        //program->setAttributeArray(col_attr, colors, 3);
-        glBindBuffer(GL_ARRAY_BUFFER, 1);
-        glVertexAttribPointer(pos_attr, 2, GL_FLOAT, false, 0, vertices);
-
-        glBindBuffer(GL_ARRAY_BUFFER, 2);
-        glVertexAttribPointer(col_attr, 3, GL_FLOAT, false, 0, colors);
-        const auto error = glGetError();
-        std::cout << std::hex << error << std::dec << std::endl;
-        assert(error == GL_NO_ERROR);
-        */
-
-        glEnableVertexAttribArray(pos_attr);
-        glEnableVertexAttribArray(col_attr);
-        assert(glGetError() == GL_NO_ERROR);
-
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        assert(glGetError() == GL_NO_ERROR);
-
-        glDisableVertexAttribArray(col_attr);
-        glDisableVertexAttribArray(pos_attr);
-        assert(glGetError() == GL_NO_ERROR);
 
         program->release();
     }
