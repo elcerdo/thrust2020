@@ -242,6 +242,9 @@ void GameWindowOpenGL::drawOrigin(QPainter& painter) const
 
 void GameWindowOpenGL::drawParticleSystem(QPainter& painter, const b2ParticleSystem* system, const QColor& color) const
 {
+    if (!draw_debug)
+        return;
+
     assert(system);
 
     const b2Vec2* positions = system->GetPositionBuffer();
@@ -667,12 +670,21 @@ void GameWindowOpenGL::paintGL()
         }
 
         {
-            QMatrix4x4 matrix = world_matrix;
+            const auto* system = state.system;
+            assert(system);
 
-            program->setUniformValue(mat_unif, matrix);
-            assert(glGetError() == GL_NO_ERROR);
+            const b2Vec2* positions = system->GetPositionBuffer();
+            const auto kk_max = system->GetParticleCount();
+            const auto radius = system->GetRadius();
 
-            blit_octogon();
+            for (auto kk=0; kk<kk_max; kk++)
+            {
+                QMatrix4x4 matrix = world_matrix;
+                matrix.translate(positions[kk].x, positions[kk].y);
+                program->setUniformValue(mat_unif, matrix);
+                blit_octogon();
+                assert(glGetError() == GL_NO_ERROR);
+            }
         }
 
         program->release();
