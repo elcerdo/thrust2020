@@ -621,6 +621,7 @@ void GameWindowOpenGL::paintGL()
             assert(glGetError() == GL_NO_ERROR);
         };
 
+        const auto world_matrix = [this]() -> QMatrix4x4
         {
             QMatrix4x4 matrix;
             const auto ratio = static_cast<double>(width()) / height();
@@ -637,17 +638,18 @@ void GameWindowOpenGL::paintGL()
             matrix.scale(side / ship_height, side / ship_height, side / ship_height);
             matrix.scale(2, 2, 2);
             matrix.translate(-pos.x, -std::min(20.f, pos.y));
+
+            return matrix;
+        }();
+
+        // ship
+        {
+            QMatrix4x4 matrix = world_matrix;
+
+            const auto& pos = state.ship->GetPosition();
             matrix.translate(pos.x, pos.y);
 
             matrix.rotate(180. * state.ship->GetAngle() / M_PI, 0, 0, 1);
-            matrix.scale(2, 2, 2);
-
-            program->setUniformValue(mat_unif, matrix);
-            assert(glGetError() == GL_NO_ERROR);
-
-            blit_octogon();
-
-            matrix.scale(.5, .5, .5);
             matrix.rotate(frame_counter, 0, 1, 0);
 
             program->setUniformValue(mat_unif, matrix);
@@ -662,6 +664,15 @@ void GameWindowOpenGL::paintGL()
             assert(glGetError() == GL_NO_ERROR);
 
             blit_triangle();
+        }
+
+        {
+            QMatrix4x4 matrix = world_matrix;
+
+            program->setUniformValue(mat_unif, matrix);
+            assert(glGetError() == GL_NO_ERROR);
+
+            blit_octogon();
         }
 
         program->release();
