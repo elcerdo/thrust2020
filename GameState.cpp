@@ -121,7 +121,7 @@ GameState::GameState() :
     { // ship
         b2BodyDef def;
         def.type = b2_dynamicBody;
-        def.position.Set(0, 20);
+        def.position.Set(0, 0);
         def.angle = M_PI / 4 - 2e-2;
 
         constexpr float ww = 1.8;
@@ -165,7 +165,7 @@ GameState::GameState() :
         ball = body;
     }
 
-		/*
+    /*
     { // crate tower
         constexpr int nn = 10;
         constexpr float ww = 2;
@@ -177,7 +177,7 @@ GameState::GameState() :
             addCrate({ xx, 2.5f * ( 1 + nn - jj) }, { 0, 0 }, 0);
         }
     }
-		*/
+    */
 
     { // particle system
         b2ParticleSystemDef system_def;

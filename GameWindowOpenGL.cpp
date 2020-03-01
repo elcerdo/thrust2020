@@ -140,6 +140,15 @@ void GameWindowOpenGL::initializeGL()
         qDebug() << "vbos" << vbos[0] << vbos[1];
 
         glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
+        constexpr GLfloat ww = 1.8;
+        constexpr unsigned int nn = 3;
+        const GLfloat vertices[nn * 3] {
+            -ww, 0 , 0,
+            ww, 0 , 0,
+            0, 2.f*ww, 0,
+        };
+        glBufferData(GL_ARRAY_BUFFER, nn * 3 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+        /*
         const GLfloat vertices[] = {
             0.0f, 0.707f, 0,
             -0.5f, -0.5f, 0,
@@ -149,6 +158,7 @@ void GameWindowOpenGL::initializeGL()
             0, -0.5f, 0.5f,
         };
         glBufferData(GL_ARRAY_BUFFER, 6 * 3 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+        */
         glVertexAttribPointer(pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
         glBindBuffer(GL_ARRAY_BUFFER, vbos[1]);
@@ -513,7 +523,7 @@ void GameWindowOpenGL::paintGL()
 
             glEnable(GL_DEPTH_TEST);
             glDepthFunc(GL_GREATER);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
+            glDrawArrays(GL_TRIANGLES, 0, 3);
             glDisable(GL_DEPTH_TEST);
             assert(glGetError() == GL_NO_ERROR);
 
@@ -524,23 +534,22 @@ void GameWindowOpenGL::paintGL()
 
         {
             QMatrix4x4 matrix;
-            const double ratio = static_cast<double>(width()) / height();
-            const double norm_height = qMin(1., 1. / ratio);
-            //const double norm_height = qMax(1., static_cast<double>(height()) / width());
-            const double norm_width = 1;
-            matrix.ortho(-1, 1, -1, 1, 0, 10);
-            //matrix.translate(-0.5, 0, 0);
+            const auto ratio = static_cast<double>(width()) / height();
+            const auto norm_width = ratio;
+            const double norm_height = 1;
+            matrix.ortho(-norm_width, norm_width, -norm_height, norm_height, 0, 100);
             //matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
 
-            matrix.translate(0, 0, -5);
+            matrix.translate(0, 0, -50);
 
             const auto& pos = state.ship->GetPosition();
-            const int side = norm_height;
-            const double ship_height = 0; // 75 * std::max(1., pos.y / 40.);
-            //matrix.scale(side / ship_height, -side / ship_height, 1.);
-            //matrix.translate(-pos.x, -std::min(20.f, pos.y));
+            const auto side = std::min(ratio, 1.);
+            const double ship_height = 75 * std::max(1., pos.y / 40.);
+            matrix.scale(side / ship_height, side / ship_height, side / ship_height);
+            matrix.scale(2, 2, 2);
+            matrix.translate(-pos.x, -std::min(20.f, pos.y));
+            matrix.translate(pos.x, pos.y);
 
-            //matrix.scale(20, 20, 20);
             matrix.rotate(180. * state.ship->GetAngle() / M_PI, 0, 0, 1);
 
             program->setUniformValue(mat_unif, matrix);
