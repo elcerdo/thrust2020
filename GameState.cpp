@@ -180,16 +180,20 @@ GameState::GameState() :
     */
 
     { // particle system
+        //const uint32 particle_type = b2_powderParticle;
+
         b2ParticleSystemDef system_def;
         system_def.density = 5e-2;
-        system_def.radius = 1; // FIXME 1.2;
+        system_def.radius = .80; // FIXME 1.2;
         system = world.CreateParticleSystem(&system_def);
+        system->SetDamping(0.2f);
 
         b2PolygonShape shape;
         shape.SetAsBox(8, 20);
 
         b2ParticleGroupDef group_def;
         group_def.shape = &shape;
+        //group_def.flags = particle_type;
         group_def.flags = b2_powderParticle;
         //group_def.flags = b2_elasticParticle;
         //group_def.groupFlags = b2_solidParticleGroup;
