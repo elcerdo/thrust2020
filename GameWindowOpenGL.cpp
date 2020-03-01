@@ -677,16 +677,21 @@ void GameWindowOpenGL::paintGL()
             assert(system);
 
             const b2Vec2* positions = system->GetPositionBuffer();
+            const b2ParticleColor* colors = system->GetColorBuffer();
             const auto kk_max = system->GetParticleCount();
             const auto radius = system->GetRadius();
 
-            program->setUniformValue(dot_unif, QVector4D(1, 1, 1, 1));
+            //program->setUniformValue(dot_unif, QVector4D(1, 1, 1, 1));
 
             for (auto kk=0; kk<kk_max; kk++)
             {
                 QMatrix4x4 matrix = world_matrix;
                 matrix.translate(positions[kk].x, positions[kk].y);
                 program->setUniformValue(mat_unif, matrix);
+                const auto& color = colors[kk];
+                //const auto rr = ddstatic_cast<int>(color.r)
+                const auto& color_ = QColor::fromRgb(color.r, color.g, color.b, color.a);
+                program->setUniformValue(dot_unif, color_);
                 blit_octogon();
                 assert(glGetError() == GL_NO_ERROR);
             }

@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <vector>
+#include <random>
 
 struct GameState : public b2ContactListener
 {
@@ -43,5 +44,7 @@ struct GameState : public b2ContactListener
     int ship_accum_contact;
     int all_accum_contact;
     double all_energy;
+
+    std::default_random_engine color_rng;
 };
 

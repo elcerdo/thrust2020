@@ -194,7 +194,7 @@ GameState::GameState() :
         //group_def.flags = b2_elasticParticle;
         //group_def.groupFlags = b2_solidParticleGroup;
         group_def.position.Set(-15, 30);
-        group_def.color.Set(255u, 255u, 0, 127u);
+        group_def.color.Set(0, 0xffu, 0xffu, 127u);
         system->CreateParticleGroup(group_def);
     }
 
@@ -204,19 +204,27 @@ GameState::GameState() :
 
 void GameState::flop()
 {
-    cout << "flop" << endl;
+    cout << "flop ";
+    std::uniform_real_distribution<float32> dist(0, 255u);
+    const float32 rr = dist(color_rng);
+    const float32 gg = dist(color_rng);
+    const float32 bb = 127u; //dist(color_rng);
+    cout << rr << " ";
+    cout << gg << " ";
+    cout << bb << endl;
+
     assert(system);
 
     b2PolygonShape shape;
-    shape.SetAsBox(30, 10);
+    shape.SetAsBox(10, 10);
 
     b2ParticleGroupDef group_def;
     group_def.shape = &shape;
-    group_def.flags = b2_powderParticle;
+    //group_def.flags = b2_powderParticle;
     //group_def.flags = b2_elasticParticle;
-    //group_def.groupFlags = b2_solidParticleGroup;
+    group_def.groupFlags = b2_solidParticleGroup;
     group_def.position.Set(0, 70);
-    group_def.color.Set(255u, 0, 0, 127u);
+    group_def.color.Set(rr, gg, bb, 255u);
     system->CreateParticleGroup(group_def);
 }
 
