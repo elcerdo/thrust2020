@@ -223,7 +223,7 @@ void GameState::flop()
 
     b2ParticleGroupDef group_def;
     group_def.shape = &shape;
-    //group_def.flags = b2_powderParticle;
+    group_def.flags = b2_tensileParticle; //b2_powderParticle;
     //group_def.flags = b2_elasticParticle;
     group_def.groupFlags = b2_solidParticleGroup;
     group_def.position.Set(0, 70);
