@@ -125,10 +125,12 @@ void GameWindowOpenGL::initializeGL()
     pos_attr = program->attributeLocation("posAttr");
     col_attr = program->attributeLocation("colAttr");
     mat_unif = program->uniformLocation("matrix");
-    qDebug() << "attrs" << pos_attr << col_attr << mat_unif;
+    dot_unif = program->uniformLocation("dotColor");
+    qDebug() << "attrs" << pos_attr << col_attr << mat_unif << dot_unif;
     assert(pos_attr >= 0);
     assert(col_attr >= 0);
     assert(mat_unif >= 0);
+    assert(dot_unif >= 0);
     assert(glGetError() == GL_NO_ERROR);
 
     { // ship vao
@@ -656,6 +658,7 @@ void GameWindowOpenGL::paintGL()
             matrix.rotate(frame_counter, 0, 1, 0);
 
             program->setUniformValue(mat_unif, matrix);
+            program->setUniformValue(dot_unif, QVector4D(0, 0, 0, 1));
             assert(glGetError() == GL_NO_ERROR);
 
             blit_triangle();
@@ -676,6 +679,8 @@ void GameWindowOpenGL::paintGL()
             const b2Vec2* positions = system->GetPositionBuffer();
             const auto kk_max = system->GetParticleCount();
             const auto radius = system->GetRadius();
+
+            program->setUniformValue(dot_unif, QVector4D(1, 1, 1, 1));
 
             for (auto kk=0; kk<kk_max; kk++)
             {

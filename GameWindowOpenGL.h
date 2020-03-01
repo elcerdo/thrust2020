@@ -69,6 +69,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         int pos_attr = -1;
         int col_attr = -1;
         int mat_unif = -1;
+        int dot_unif = -1;
         GLuint vao = 0;
         std::array<GLuint, 6> vbos = { 0, 0, 0, 0, 0, 0 };
 };
