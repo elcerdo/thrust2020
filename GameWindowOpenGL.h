@@ -70,7 +70,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         int col_attr = -1;
         int mat_unif = -1;
         GLuint vao = 0;
-        GLuint vbos[2] = { 0, 0 };
+        std::array<GLuint, 4> vbos = { 0, 0, 0, 0 };
 };
 
 

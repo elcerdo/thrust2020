@@ -182,7 +182,7 @@ GameState::GameState() :
     { // particle system
         b2ParticleSystemDef system_def;
         system_def.density = 5e-2;
-        system_def.radius = 1.2;
+        system_def.radius = 1; // FIXME 1.2;
         system = world.CreateParticleSystem(&system_def);
 
         b2PolygonShape shape;

@@ -132,46 +132,64 @@ void GameWindowOpenGL::initializeGL()
     assert(glGetError() == GL_NO_ERROR);
 
     { // ship vao
+        using std::cout;
+        using std::endl;
+
         glGenVertexArrays(1, &vao);
         qDebug() << "vao" << vao;
         glBindVertexArray(vao);
 
-        glGenBuffers(2, vbos);
-        qDebug() << "vbos" << vbos[0] << vbos[1];
+        glGenBuffers(vbos.size(), vbos.data());
+        cout << "vbos";
+        for (const auto& vbo : vbos) cout << " " << vbo;
+        cout << endl;
 
-        glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
-        constexpr GLfloat ww = 1.8;
-        constexpr unsigned int nn = 3;
-        const GLfloat vertices[nn * 3] {
-            -ww, 0 , 0,
-            ww, 0 , 0,
-            0, 2.f*ww, 0,
+        const auto load_buffer3 = [this](const size_t kk, const int attr, const std::vector<b2Vec3>& vertices) -> void
+        {
+            assert(attr >= 0);
+            assert(vbos.size() > kk);
+            glBindBuffer(GL_ARRAY_BUFFER, vbos[kk]);
+            glBufferData(GL_ARRAY_BUFFER, vertices.size() * 3 * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
+            glVertexAttribPointer(attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
         };
-        glBufferData(GL_ARRAY_BUFFER, nn * 3 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+
+        const auto load_buffer4 = [this](const size_t kk, const int attr, const std::vector<b2Vec4>& vertices) -> void
+        {
+            assert(attr >= 0);
+            assert(vbos.size() > kk);
+            glBindBuffer(GL_ARRAY_BUFFER, vbos[kk]);
+            glBufferData(GL_ARRAY_BUFFER, vertices.size() * 4 * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
+            glVertexAttribPointer(attr, 4, GL_FLOAT, GL_FALSE, 0, 0);
+        };
+
+        constexpr float ww = 1.8;
+        const std::vector<b2Vec3> points {
+            { -ww, 0, 0 },
+            { ww, 0, 0 },
+            { 0, 2*ww, 0 },
+        };
+        load_buffer3(0, pos_attr, points);
         /*
-        const GLfloat vertices[] = {
-            0.0f, 0.707f, 0,
-            -0.5f, -0.5f, 0,
-            0.5f, -0.5f, 0,
-            0.0f, 0.707f, 0,
-            0, -0.5f, -0.5f,
-            0, -0.5f, 0.5f,
-        };
-        glBufferData(GL_ARRAY_BUFFER, 6 * 3 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+        load_buffer3(2, pos_attr, {
+            b2Vec3 { 0.0f, 0.707f, 0 },
+            b2Vec3 { -0.5f, -0.5f, 0 },
+            b2Vec3 { 0.5f, -0.5f, 0 },
+            b2Vec3 { 0.0f, 0.707f, 0 },
+            b2Vec3 { 0, -0.5f, -0.5f },
+            b2Vec3 { 0, -0.5f, 0.5f },
+        });
         */
-        glVertexAttribPointer(pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-        glBindBuffer(GL_ARRAY_BUFFER, vbos[1]);
-        const GLfloat colors[] = {
-            1, 0, 0, 1,
-            0, 1, 0, 1,
-            0, 0, 1, 1,
-            1, 0, 0, 1,
-            0, 1, 0, 1,
-            0, 0, 1, 1,
+        const std::vector<b2Vec4> colors = {
+            { 1, 0, 0, 1 },
+            { 0, 1, 0, 1 },
+            { 0, 0, 1, 1 },
+            { 1, 0, 0, 1 },
+            { 0, 1, 0, 1 },
+            { 0, 0, 1, 1 },
         };
-        glBufferData(GL_ARRAY_BUFFER, 6 * 4 * sizeof(GLfloat), colors, GL_STATIC_DRAW);
-        glVertexAttribPointer(col_attr, 4, GL_FLOAT, GL_FALSE, 0, 0);
+        load_buffer4(1, col_attr, colors);
+
     }
 
 }
@@ -522,10 +540,10 @@ void GameWindowOpenGL::paintGL()
             glEnableVertexAttribArray(col_attr);
             assert(glGetError() == GL_NO_ERROR);
 
-            glEnable(GL_DEPTH_TEST);
-            glDepthFunc(GL_GREATER);
+            //glEnable(GL_DEPTH_TEST);
+            //glDepthFunc(GL_GREATER);
             glDrawArrays(GL_TRIANGLES, 0, 3);
-            glDisable(GL_DEPTH_TEST);
+            //glDisable(GL_DEPTH_TEST);
             assert(glGetError() == GL_NO_ERROR);
 
             glDisableVertexAttribArray(col_attr);
