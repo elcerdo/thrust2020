@@ -330,7 +330,8 @@ void GameWindowOpenGL::drawShip(QPainter& painter)
 
     if (state.ship_firing) drawFlame(painter);
 
-    drawBody(painter, body, Qt::black);
+    if (draw_debug)
+        drawBody(painter, body, Qt::black);
 
     if (state.canGrab() && frame_counter % 2 == 0)
     {
@@ -551,6 +552,7 @@ void GameWindowOpenGL::paintGL()
             matrix.translate(pos.x, pos.y);
 
             matrix.rotate(180. * state.ship->GetAngle() / M_PI, 0, 0, 1);
+            matrix.rotate(frame_counter, 0, 1, 0);
 
             program->setUniformValue(mat_unif, matrix);
             assert(glGetError() == GL_NO_ERROR);

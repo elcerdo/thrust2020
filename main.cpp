@@ -43,13 +43,13 @@ int main(int argc, char* argv[])
         state.world.SetGravity(checked ? b2Vec2 { 0, -10 } : b2Vec2 {0, 0});
     });
 
-    view_opengl.addCheckbox("draw debug", true, [&view_opengl](const bool checked) -> void {
+    view_opengl.addCheckbox("draw debug", false, [&view_opengl](const bool checked) -> void {
         const auto before = view_opengl.draw_debug;
         view_opengl.draw_debug = checked;
         qDebug() << "draw debug" << before << checked << &view_opengl << view_opengl.draw_debug;
     });
 
-    view_opengl.addCheckbox("mute sfx", false, [&view_opengl](const bool checked) -> void {
+    view_opengl.addCheckbox("mute sfx", true, [&view_opengl](const bool checked) -> void {
         view_opengl.setMuted(checked);
     });
 
