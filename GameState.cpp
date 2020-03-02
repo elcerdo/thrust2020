@@ -147,7 +147,7 @@ GameState::GameState() :
     { // ball
         b2BodyDef def;
         def.type = b2_dynamicBody;
-        def.position.Set(0, 1);
+        def.position.Set(20, 0);
         def.angle = 0;
         def.angularVelocity = 0;
 
@@ -184,7 +184,10 @@ GameState::GameState() :
 
         b2ParticleSystemDef system_def;
         system_def.density = 5e-2;
-        system_def.radius = .80; // FIXME 1.2;
+        system_def.radius = 1; // FIXME 1.2;
+        //system_def.elasticStrength = 1;
+        system_def.surfaceTensionPressureStrength = .6;
+        system_def.surfaceTensionNormalStrength = .6;
         system = world.CreateParticleSystem(&system_def);
 
         b2PolygonShape shape;
@@ -192,9 +195,9 @@ GameState::GameState() :
 
         b2ParticleGroupDef group_def;
         group_def.shape = &shape;
-        //group_def.flags = particle_type;
-        group_def.flags = b2_powderParticle;
-        group_def.flags = b2_elasticParticle;
+        //group_def.flags = b2_powderParticle;
+        //group_def.flags = b2_elasticParticle;
+        group_def.groupFlags = b2_rigidParticleGroup | b2_solidParticleGroup;
         //group_def.groupFlags = b2_solidParticleGroup;
         group_def.position.Set(-15, 30);
         group_def.color.Set(0, 0xffu, 0xffu, 127u);
@@ -223,9 +226,9 @@ void GameState::flop()
 
     b2ParticleGroupDef group_def;
     group_def.shape = &shape;
-    group_def.flags = b2_tensileParticle; //b2_powderParticle;
+    group_def.flags = b2_tensileParticle | b2_viscousParticle; //b2_powderParticle;
     //group_def.flags = b2_elasticParticle;
-    group_def.groupFlags = b2_solidParticleGroup;
+    //group_def.groupFlags = b2_solidParticleGroup;
     group_def.position.Set(0, 70);
     group_def.color.Set(rr, gg, bb, 255u);
     system->CreateParticleGroup(group_def);

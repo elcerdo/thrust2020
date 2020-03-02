@@ -77,6 +77,35 @@ void GameWindowOpenGL::setAnimated(const bool value)
         update();
 }
 
+std::unique_ptr<QOpenGLShaderProgram> GameWindowOpenGL::loadAndCompileProgram(const QString& vertex_filename, const QString& fragment_filename)
+{
+    auto program = std::make_unique<QOpenGLShaderProgram>();
+
+    const auto load_shader = [&program, &vertex_filename](const QOpenGLShader::ShaderType type, const QString& filename) -> bool
+    {
+        QFile handle(filename);
+        if (!handle.open(QIODevice::ReadOnly))
+            return false;
+        const auto& source = handle.readAll();
+        return program->addShaderFromSourceCode(type, source);
+    };
+
+    const auto vertex_load_ok = load_shader(QOpenGLShader::Vertex, vertex_filename);
+    const auto fragment_load_ok = load_shader(QOpenGLShader::Fragment, fragment_filename);
+    const auto link_ok = program->link();
+    const auto gl_ok = glGetError() == GL_NO_ERROR;
+    qDebug() << "loadAndCompileProgram" << link_ok << vertex_load_ok << fragment_load_ok << gl_ok;
+
+    const auto all_ok = vertex_load_ok && fragment_load_ok && link_ok && gl_ok;
+    if (!all_ok) {
+        qDebug() << program->log();
+        return nullptr;
+    }
+    assert(all_ok);
+
+    return program;
+};
+
 void GameWindowOpenGL::initializeGL()
 {
 
@@ -90,48 +119,42 @@ void GameWindowOpenGL::initializeGL()
     assert(context);
     context->makeCurrent(this);
     */
-    qDebug() << QOpenGLContext::currentContext();
+    qDebug() << "currentContext" << QOpenGLContext::currentContext();
 
     initializeOpenGLFunctions();
     QtImGui::initialize(this);
     assert(glGetError() == GL_NO_ERROR);
 
-    assert(!program);
-    program = new QOpenGLShaderProgram;
-    const auto vertex_compile_ok = [this]() -> bool {
-        QFile handle(":vertex.glsl");
-        if (!handle.open(QIODevice::ReadOnly))
-            return false;
-        const auto& source = handle.readAll();
-        return program->addShaderFromSourceCode(QOpenGLShader::Vertex, source);
-    }();
-    const auto fragment_compile_ok = [this]() -> bool {
-        QFile handle(":fragment.glsl");
-        if (!handle.open(QIODevice::ReadOnly))
-            return false;
-        const auto& source = handle.readAll();
-        return program->addShaderFromSourceCode(QOpenGLShader::Fragment, source);
-    }();
-    const auto link_ok = program->link();
-    qDebug() << "ok" << link_ok << vertex_compile_ok << fragment_compile_ok;
-    const auto all_ok = vertex_compile_ok && fragment_compile_ok && link_ok;
-    qDebug() << program->log();
-    assert(all_ok);
 
-    /*
-    */
+    {
+        assert(!main_program);
+        main_program = loadAndCompileProgram(":main_vertex.glsl", ":main_fragment.glsl");
 
-    assert(program);
-    pos_attr = program->attributeLocation("posAttr");
-    col_attr = program->attributeLocation("colAttr");
-    mat_unif = program->uniformLocation("matrix");
-    dot_unif = program->uniformLocation("dotColor");
-    qDebug() << "attrs" << pos_attr << col_attr << mat_unif << dot_unif;
-    assert(pos_attr >= 0);
-    assert(col_attr >= 0);
-    assert(mat_unif >= 0);
-    assert(dot_unif >= 0);
-    assert(glGetError() == GL_NO_ERROR);
+        assert(main_program);
+        main_pos_attr = main_program->attributeLocation("posAttr");
+        main_col_attr = main_program->attributeLocation("colAttr");
+        main_mat_unif = main_program->uniformLocation("matrix");
+        main_dot_unif = main_program->uniformLocation("dotColor");
+        qDebug() << "main_locations" << main_pos_attr << main_col_attr << main_mat_unif << main_dot_unif;
+        assert(main_pos_attr >= 0);
+        assert(main_col_attr >= 0);
+        assert(main_mat_unif >= 0);
+        assert(main_dot_unif >= 0);
+        assert(glGetError() == GL_NO_ERROR);
+    }
+
+    {
+        assert(!base_program);
+        base_program = loadAndCompileProgram(":base_vertex.glsl", ":base_fragment.glsl");
+
+        assert(base_program);
+        base_pos_attr = base_program->attributeLocation("posAttr");
+        base_mat_unif = base_program->uniformLocation("matrix");
+        qDebug() << "base_locations" << base_pos_attr << base_mat_unif;
+        assert(base_pos_attr >= 0);
+        assert(base_mat_unif >= 0);
+        assert(glGetError() == GL_NO_ERROR);
+    }
 
     { // ship vao
         using std::cout;
@@ -160,6 +183,14 @@ void GameWindowOpenGL::initializeGL()
             glBufferData(GL_ARRAY_BUFFER, vertices.size() * 4 * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
         };
 
+        const auto load_indices = [this](const size_t kk, const std::vector<GLuint>& indices) -> void
+        {
+            assert(vbos.size() > kk);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[kk]);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
+
+        };
+
         // ship
         load_buffer3(0, {
             { -1.8, 0, 0 },
@@ -186,11 +217,7 @@ void GameWindowOpenGL::initializeGL()
             { 0, 0, 1, 1 },
         });
 
-
-        // octogon
-        {
-            using std::cout;
-            using std::endl;
+        { // octogon
             std::vector<b2Vec3> positions;
             std::vector<b2Vec4> colors;
 
@@ -210,6 +237,22 @@ void GameWindowOpenGL::initializeGL()
             load_buffer4(5, colors);
         }
 
+        {
+            load_buffer3(6, {
+                { -1, -1, 1 },
+                { 1, -1, 1 },
+                { 1, 1, 1 },
+                { -1, 1, 1 },
+                { -1, -1, -1 },
+                { 1, -1, -1 },
+                { 1, 1, -1 },
+                { -1, 1, -1 },
+            });
+            load_indices(7, {
+                0, 1, 3, 2, 7, 6, 4, 5,
+                3, 7, 0, 4, 1, 5, 2, 6,
+            });
+        }
     }
 
 }
@@ -484,14 +527,16 @@ void GameWindowOpenGL::paintGL()
         painter.translate(width() / 2, height() / 2);
         painter.scale(1., -1);
 
-        const auto& pos = state.ship->GetPosition();
-        const int side = qMin(width(), height());
-        const double ship_height =  75 * std::max(1., pos.y / 40.);
-        const double factor = is_zoom_out ? 2 : 1;
-        painter.scale(factor * side / ship_height, factor * side / ship_height);
-        //painter.scale(side / height, side / height);
-        painter.translate(-pos.x, -std::min(20.f, pos.y));
-
+        if (!is_zoom_out)
+        {
+            const auto& pos = state.ship->GetPosition();
+            const int side = qMin(width(), height());
+            const double ship_height =  75 * std::max(1., pos.y / 40.);
+            painter.scale(side / ship_height, side / ship_height);
+            painter.translate(-pos.x, -std::min(20.f, pos.y));
+        }
+        else
+            painter.translate(0, 150);
 
         { // svg
             constexpr double scale = 600;
@@ -551,106 +596,107 @@ void GameWindowOpenGL::paintGL()
         painter.restore();
     }
 
-    { // draw with custom shader
+    const auto world_matrix = [this]() -> QMatrix4x4
+    {
+        QMatrix4x4 matrix;
+        const auto ratio = static_cast<double>(width()) / height();
+        const auto norm_width = ratio;
+        const double norm_height = 1;
+        matrix.ortho(-norm_width, norm_width, -norm_height, norm_height, 0, 100);
+        //matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
+
+        matrix.translate(0, 0, -50);
+        matrix.scale(2, 2, 2);
+
+        if (!is_zoom_out)
+        {
+            const auto& pos = state.ship->GetPosition();
+            const auto side = std::min(ratio, 1.);
+            const double ship_height = 75 * std::max(1., pos.y / 40.);
+            matrix.scale(side / ship_height, side / ship_height, 1);
+            matrix.translate(-pos.x, -std::min(20.f, pos.y), 0);
+        }
+        else
+        {
+            const int side = qMin(width(), height());
+            matrix.scale(1./side, 1./side, 1);
+            matrix.translate(0, 150);
+        }
+
+        return matrix;
+    }();
+
+    { // draw with main program
         glBindVertexArray(vao);
 
-        glClear(GL_DEPTH_BUFFER_BIT);
+        //glClear(GL_DEPTH_BUFFER_BIT);
 
-        assert(program);
-        assert(program->isLinked());
-        program->bind();
+        assert(main_program);
+        main_program->bind();
         assert(glGetError() == GL_NO_ERROR);
+
+        glDepthFunc(GL_LESS);
+        glEnable(GL_DEPTH_TEST);
 
         const auto blit_triangle = [this]() -> void
         {
             glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
-            glVertexAttribPointer(pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(pos_attr);
+            glVertexAttribPointer(main_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(main_pos_attr);
             assert(glGetError() == GL_NO_ERROR);
 
             glBindBuffer(GL_ARRAY_BUFFER, vbos[1]);
-            glVertexAttribPointer(col_attr, 4, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(col_attr);
+            glVertexAttribPointer(main_col_attr, 4, GL_FLOAT, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(main_col_attr);
             assert(glGetError() == GL_NO_ERROR);
 
-            //glEnable(GL_DEPTH_TEST);
-            //glDepthFunc(GL_GREATER);
             glDrawArrays(GL_TRIANGLES, 0, 3);
-            //glDisable(GL_DEPTH_TEST);
             assert(glGetError() == GL_NO_ERROR);
 
-            glDisableVertexAttribArray(col_attr);
-            glDisableVertexAttribArray(pos_attr);
+            glDisableVertexAttribArray(main_col_attr);
+            glDisableVertexAttribArray(main_pos_attr);
             assert(glGetError() == GL_NO_ERROR);
         };
 
         const auto blit_square = [this]() -> void
         {
             glBindBuffer(GL_ARRAY_BUFFER, vbos[2]);
-            glVertexAttribPointer(pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(pos_attr);
+            glVertexAttribPointer(main_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(main_pos_attr);
             assert(glGetError() == GL_NO_ERROR);
 
             glBindBuffer(GL_ARRAY_BUFFER, vbos[3]);
-            glVertexAttribPointer(col_attr, 4, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(col_attr);
+            glVertexAttribPointer(main_col_attr, 4, GL_FLOAT, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(main_col_attr);
             assert(glGetError() == GL_NO_ERROR);
 
-            //glEnable(GL_DEPTH_TEST);
-            //glDepthFunc(GL_GREATER);
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            //glDisable(GL_DEPTH_TEST);
             assert(glGetError() == GL_NO_ERROR);
 
-            glDisableVertexAttribArray(col_attr);
-            glDisableVertexAttribArray(pos_attr);
+            glDisableVertexAttribArray(main_col_attr);
+            glDisableVertexAttribArray(main_pos_attr);
             assert(glGetError() == GL_NO_ERROR);
         };
 
         const auto blit_octogon = [this, &blit_square]() -> void
         {
             glBindBuffer(GL_ARRAY_BUFFER, vbos[4]);
-            glVertexAttribPointer(pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(pos_attr);
+            glVertexAttribPointer(main_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(main_pos_attr);
             assert(glGetError() == GL_NO_ERROR);
 
             glBindBuffer(GL_ARRAY_BUFFER, vbos[5]);
-            glVertexAttribPointer(col_attr, 4, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(col_attr);
+            glVertexAttribPointer(main_col_attr, 4, GL_FLOAT, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(main_col_attr);
             assert(glGetError() == GL_NO_ERROR);
 
-            //glEnable(GL_DEPTH_TEST);
-            //glDepthFunc(GL_GREATER);
             glDrawArrays(GL_TRIANGLE_FAN, 0, 10);
-            //glDisable(GL_DEPTH_TEST);
             assert(glGetError() == GL_NO_ERROR);
 
-            glDisableVertexAttribArray(col_attr);
-            glDisableVertexAttribArray(pos_attr);
+            glDisableVertexAttribArray(main_col_attr);
+            glDisableVertexAttribArray(main_pos_attr);
             assert(glGetError() == GL_NO_ERROR);
         };
-
-        const auto world_matrix = [this]() -> QMatrix4x4
-        {
-            QMatrix4x4 matrix;
-            const auto ratio = static_cast<double>(width()) / height();
-            const auto norm_width = ratio;
-            const double norm_height = 1;
-            matrix.ortho(-norm_width, norm_width, -norm_height, norm_height, 0, 100);
-            //matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
-
-            matrix.translate(0, 0, -50);
-
-            const auto& pos = state.ship->GetPosition();
-            const auto side = std::min(ratio, 1.);
-            const double ship_height = 75 * std::max(1., pos.y / 40.);
-            const double factor = is_zoom_out ? 2. : 1;
-            matrix.scale(factor * side / ship_height, factor * side / ship_height, 1);
-            matrix.scale(2, 2, 2);
-            matrix.translate(-pos.x, -std::min(20.f, pos.y));
-
-            return matrix;
-        }();
 
         // ship
         {
@@ -662,8 +708,8 @@ void GameWindowOpenGL::paintGL()
             matrix.rotate(180. * state.ship->GetAngle() / M_PI, 0, 0, 1);
             matrix.rotate(frame_counter, 0, 1, 0);
 
-            program->setUniformValue(mat_unif, matrix);
-            program->setUniformValue(dot_unif, QVector4D(0, 0, 0, 1));
+            main_program->setUniformValue(main_mat_unif, matrix);
+            main_program->setUniformValue(main_dot_unif, QVector4D(0, 0, 0, 1));
             assert(glGetError() == GL_NO_ERROR);
 
             blit_triangle();
@@ -671,7 +717,7 @@ void GameWindowOpenGL::paintGL()
 
             matrix.rotate(90, 0, 1, 0);
 
-            program->setUniformValue(mat_unif, matrix);
+            main_program->setUniformValue(main_mat_unif, matrix);
             assert(glGetError() == GL_NO_ERROR);
 
             blit_triangle();
@@ -686,23 +732,70 @@ void GameWindowOpenGL::paintGL()
             const auto kk_max = system->GetParticleCount();
             const auto radius = system->GetRadius();
 
-            //program->setUniformValue(dot_unif, QVector4D(1, 1, 1, 1));
-
             for (auto kk=0; kk<kk_max; kk++)
             {
+                const auto& color = colors[kk];
+                const auto& color_ = QColor::fromRgb(color.r, color.g, color.b, color.a);
+                main_program->setUniformValue(main_dot_unif, color_);
+                assert(glGetError() == GL_NO_ERROR);
+
                 QMatrix4x4 matrix = world_matrix;
                 matrix.translate(positions[kk].x, positions[kk].y);
-                program->setUniformValue(mat_unif, matrix);
-                const auto& color = colors[kk];
-                //const auto rr = ddstatic_cast<int>(color.r)
-                const auto& color_ = QColor::fromRgb(color.r, color.g, color.b, color.a);
-                program->setUniformValue(dot_unif, color_);
+                main_program->setUniformValue(main_mat_unif, matrix);
+                assert(glGetError() == GL_NO_ERROR);
+
                 blit_octogon();
                 assert(glGetError() == GL_NO_ERROR);
             }
         }
 
-        program->release();
+        glDisable(GL_DEPTH_TEST);
+
+        main_program->release();
+    }
+
+    { // draw with base program
+        glBindVertexArray(vao);
+
+        assert(base_program);
+        base_program->bind();
+        assert(glGetError() == GL_NO_ERROR);
+
+        glDepthFunc(GL_LESS);
+        glEnable(GL_DEPTH_TEST);
+
+        const auto blit_cube = [this]() -> void
+        {
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[7]);
+            assert(glGetError() == GL_NO_ERROR);
+
+            glBindBuffer(GL_ARRAY_BUFFER, vbos[6]);
+            glVertexAttribPointer(base_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(base_pos_attr);
+            assert(glGetError() == GL_NO_ERROR);
+
+
+            //glEnable(GL_CULL_FACE);
+            glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
+            glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(8 * sizeof(unsigned int)));
+            //glDisable(GL_CULL_FACE);
+            assert(glGetError() == GL_NO_ERROR);
+
+            glDisableVertexAttribArray(base_pos_attr);
+            assert(glGetError() == GL_NO_ERROR);
+        };
+
+        {
+            auto matrix = world_matrix;
+            matrix.translate(0, 10);
+            matrix.scale(3, 3, 3);
+            matrix.rotate(frame_counter, 1, 1, 1);
+            base_program->setUniformValue(base_mat_unif, matrix);
+
+            blit_cube();
+        }
+
+        base_program->release();
     }
 
     { // sfx

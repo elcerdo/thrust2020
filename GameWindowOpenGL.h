@@ -40,6 +40,8 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         void drawShip(QPainter& painter);
         void drawFlame(QPainter& painter);
 
+        std::unique_ptr<QOpenGLShaderProgram> loadAndCompileProgram(const QString& vertex_filename, const QString& fragment_filename);
+
     public:
         GameState state;
         std::default_random_engine rng;
@@ -66,13 +68,18 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
 
         bool is_muted = false;
 
-        QOpenGLShaderProgram* program = nullptr;
-        int pos_attr = -1;
-        int col_attr = -1;
-        int mat_unif = -1;
-        int dot_unif = -1;
+        std::unique_ptr<QOpenGLShaderProgram> main_program = nullptr;
+        int main_pos_attr = -1;
+        int main_col_attr = -1;
+        int main_mat_unif = -1;
+        int main_dot_unif = -1;
+
+        std::unique_ptr<QOpenGLShaderProgram> base_program = nullptr;
+        int base_pos_attr = -1;
+        int base_mat_unif = -1;
+
         GLuint vao = 0;
-        std::array<GLuint, 6> vbos = { 0, 0, 0, 0, 0, 0 };
+        std::array<GLuint, 8> vbos = { 0, 0, 0, 0, 0, 0, 0, 0 };
 };
 
 
