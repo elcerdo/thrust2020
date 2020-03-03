@@ -40,7 +40,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         void drawShip(QPainter& painter);
         void drawFlame(QPainter& painter);
 
-        std::unique_ptr<QOpenGLShaderProgram> loadAndCompileProgram(const QString& vertex_filename, const QString& fragment_filename);
+        std::unique_ptr<QOpenGLShaderProgram> loadAndCompileProgram(const QString& vertex_filename, const QString& fragment_filename, const QString& geometry_filename = QString());
 
     public:
         GameState state;
@@ -79,6 +79,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
 
         std::unique_ptr<QOpenGLShaderProgram> particle_program = nullptr;
         int particle_pos_attr = -1;
+        int particle_col_attr = -1;
         int particle_mat_unif = -1;
         int particle_color_unif = -1;
         int particle_radius_unif = -1;

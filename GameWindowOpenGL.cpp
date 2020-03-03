@@ -77,12 +77,13 @@ void GameWindowOpenGL::setAnimated(const bool value)
         update();
 }
 
-std::unique_ptr<QOpenGLShaderProgram> GameWindowOpenGL::loadAndCompileProgram(const QString& vertex_filename, const QString& fragment_filename)
+std::unique_ptr<QOpenGLShaderProgram> GameWindowOpenGL::loadAndCompileProgram(const QString& vertex_filename, const QString& fragment_filename, const QString& geometry_filename)
 {
     auto program = std::make_unique<QOpenGLShaderProgram>();
 
     const auto load_shader = [&program, &vertex_filename](const QOpenGLShader::ShaderType type, const QString& filename) -> bool
     {
+        qDebug() << "compiling" << filename;
         QFile handle(filename);
         if (!handle.open(QIODevice::ReadOnly))
             return false;
@@ -91,12 +92,13 @@ std::unique_ptr<QOpenGLShaderProgram> GameWindowOpenGL::loadAndCompileProgram(co
     };
 
     const auto vertex_load_ok = load_shader(QOpenGLShader::Vertex, vertex_filename);
+    const auto geometry_load_ok = geometry_filename.isNull() ? true : load_shader(QOpenGLShader::Geometry, geometry_filename);
     const auto fragment_load_ok = load_shader(QOpenGLShader::Fragment, fragment_filename);
     const auto link_ok = program->link();
     const auto gl_ok = glGetError() == GL_NO_ERROR;
-    qDebug() << "loadAndCompileProgram" << link_ok << vertex_load_ok << fragment_load_ok << gl_ok;
+    qDebug() << "loadAndCompileProgram" << link_ok << vertex_load_ok << fragment_load_ok << geometry_load_ok << gl_ok;
 
-    const auto all_ok = vertex_load_ok && fragment_load_ok && link_ok && gl_ok;
+    const auto all_ok = vertex_load_ok && fragment_load_ok && geometry_load_ok && link_ok && gl_ok;
     if (!all_ok) {
         qDebug() << program->log();
         return nullptr;
@@ -156,15 +158,17 @@ void GameWindowOpenGL::initializeGL()
 
     {
         assert(!particle_program);
-        particle_program = loadAndCompileProgram(":particle_vertex.glsl", ":particle_fragment.glsl");
+        particle_program = loadAndCompileProgram(":particle_vertex.glsl", ":particle_fragment.glsl", ":particle_geometry.glsl");
 
         assert(particle_program);
         particle_pos_attr = particle_program->attributeLocation("posAttr");
+        particle_col_attr = particle_program->attributeLocation("colAttr");
         particle_mat_unif = particle_program->uniformLocation("matrix");
-        particle_color_unif = particle_program->uniformLocation("color");
-        particle_radius_unif = particle_program->uniformLocation("radius");
-        qDebug() << "particle_locations" << particle_pos_attr << particle_mat_unif << particle_color_unif << particle_radius_unif;
+        particle_color_unif = particle_program->uniformLocation("dotColor");
+        particle_radius_unif = particle_program->uniformLocation("dotRadius");
+        qDebug() << "particle_locations" << particle_pos_attr << particle_col_attr << particle_mat_unif << particle_color_unif << particle_radius_unif;
         assert(particle_pos_attr >= 0);
+        assert(particle_col_attr >= 0);
         assert(particle_mat_unif >= 0);
         assert(particle_color_unif >= 0);
         assert(particle_radius_unif >= 0);
@@ -232,19 +236,6 @@ void GameWindowOpenGL::initializeGL()
             { 0, 0, 1, 1 },
         });
 
-        { // octogon
-            std::vector<b2Vec3> positions;
-            positions.emplace_back(b2Vec3 { 0, 0, 0 });
-            for (int kk=0; kk<=8; kk++)
-            {
-                const float theta = 2. * kk * M_PI / 8;
-                positions.emplace_back(1.2f * b2Vec3 { cos(theta), sin(theta), 0 });
-            }
-
-            assert(positions.size() == 10);
-            load_buffer3(4, positions);
-        }
-
         { // cube
             load_buffer3(6, {
                 { -1, -1, 1 },
@@ -262,7 +253,7 @@ void GameWindowOpenGL::initializeGL()
             });
         }
 
-        // buffer 5 is free
+        // buffers 4 & 5 are free
     }
 
 }
@@ -722,28 +713,6 @@ void GameWindowOpenGL::paintGL()
         glDepthFunc(GL_LESS);
         glEnable(GL_DEPTH_TEST);
 
-        const auto blit_octogon = [this]() -> void
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[4]);
-            glVertexAttribPointer(particle_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(particle_pos_attr);
-            assert(glGetError() == GL_NO_ERROR);
-
-            /*
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[5]);
-            glVertexAttribPointer(particle_col_attr, 4, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(particle_col_attr);
-            assert(glGetError() == GL_NO_ERROR);
-            */
-
-            glDrawArrays(GL_TRIANGLE_FAN, 0, 10);
-            assert(glGetError() == GL_NO_ERROR);
-
-            //glDisableVertexAttribArray(particle_col_attr);
-            glDisableVertexAttribArray(particle_pos_attr);
-            assert(glGetError() == GL_NO_ERROR);
-        };
-
         { // particle system
             const auto* system = state.system;
             assert(system);
@@ -754,22 +723,31 @@ void GameWindowOpenGL::paintGL()
             const auto radius = system->GetRadius();
 
             particle_program->setUniformValue(particle_radius_unif, 0.2f);
+            const auto& color = QColor::fromRgb(255u, 255u, 0, 255u);
+            particle_program->setUniformValue(particle_color_unif, color);
+            particle_program->setUniformValue(particle_mat_unif, world_matrix);
+            assert(glGetError() == GL_NO_ERROR);
 
-            for (auto kk=0; kk<kk_max; kk++)
-            {
-                const auto& color = colors[kk];
-                const auto& color_ = QColor::fromRgb(color.r, color.g, color.b, color.a);
-                particle_program->setUniformValue(particle_color_unif, color_);
-                assert(glGetError() == GL_NO_ERROR);
+            glBindBuffer(GL_ARRAY_BUFFER, vbos[4]);
+            glBufferData(GL_ARRAY_BUFFER, kk_max * 2 * sizeof(GLfloat), positions, GL_DYNAMIC_DRAW);
+            glVertexAttribPointer(particle_pos_attr, 2, GL_FLOAT, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(particle_pos_attr);
+            assert(glGetError() == GL_NO_ERROR);
 
-                QMatrix4x4 matrix = world_matrix;
-                matrix.translate(positions[kk].x, positions[kk].y);
-                particle_program->setUniformValue(particle_mat_unif, matrix);
-                assert(glGetError() == GL_NO_ERROR);
+            static_assert(std::is_same<GLubyte, decltype(b2ParticleColor::r)>::value, "mismatching color types");
 
-                blit_octogon();
-                assert(glGetError() == GL_NO_ERROR);
-            }
+            glBindBuffer(GL_ARRAY_BUFFER, vbos[5]);
+            glBufferData(GL_ARRAY_BUFFER, kk_max * 4 * sizeof(GLubyte), colors, GL_DYNAMIC_DRAW);
+            glVertexAttribPointer(particle_col_attr, 4,  GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(particle_col_attr);
+            assert(glGetError() == GL_NO_ERROR);
+
+            glDrawArrays(GL_POINTS, 0, kk_max);
+            assert(glGetError() == GL_NO_ERROR);
+
+            //glDisableVertexAttribArray(particle_col_attr);
+            glDisableVertexAttribArray(particle_pos_attr);
+            assert(glGetError() == GL_NO_ERROR);
         }
 
         glDisable(GL_DEPTH_TEST);
