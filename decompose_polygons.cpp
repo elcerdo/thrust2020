@@ -55,6 +55,11 @@ polygons::decompose(const polygons::Poly& vertices, const double margin)
     using Measure = StraightMesure;
     using Scalar = decltype(b2Vec2::x);
 
+    assert(vertices.size() > 2);
+
+    if (vertices.size() == 3)
+        return { vertices };
+
     Polygon polygon;
     {
         Poly poly(Poly::POUT);
