@@ -455,11 +455,11 @@ void GameWindowOpenGL::paintGL()
 
     QtImGui::newFrame();
 
-    // 1. Show a simple window
-    // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
     if (display_ui)
     {
-        //static float f = 0.0f;
+        ImGui::SetNextWindowSize(ImVec2(200,100), ImGuiCond_FirstUseEver);
+        ImGui::Begin("~.: THRUST :.~", &display_ui);
+
         //ImGui::Text("Hello, world!");
         //ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
         ImGui::ColorEdit3("speed color", speed_color.data());
@@ -483,24 +483,9 @@ void GameWindowOpenGL::paintGL()
         ImGui::Separator();
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::Text("Ship position %.2f %.2f", state.ship->GetPosition().x, state.ship->GetPosition().y);
-    }
 
-    /*
-    // 2. Show another simple window, this time using an explicit Begin/End pair
-    {
-        ImGui::SetNextWindowSize(ImVec2(200,100), ImGuiCond_FirstUseEver);
-        ImGui::Begin("Another Window", &show_another_window);
-        ImGui::Text("Hello");
         ImGui::End();
     }
-
-    // 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowTestWindow()
-    if (show_test_window)
-    {
-        ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiCond_FirstUseEver);
-        ImGui::ShowDemoWindow();
-    }
-    */
 
     glBindVertexArray(0);
 
@@ -552,6 +537,9 @@ void GameWindowOpenGL::paintGL()
 
         for (auto& crate : state.crates)
             drawBody(painter, crate);
+
+        for (auto& door : state.doors)
+            drawBody(painter, std::get<0>(door), Qt::yellow);
 
         drawParticleSystem(painter, state.system);
 
@@ -828,7 +816,18 @@ void GameWindowOpenGL::paintGL()
 
 void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
 {
-
+    if (event->key() == Qt::Key_T)
+    {
+        using std::get;
+        for (auto& door : state.doors)
+            get<1>(door)->SetMotorSpeed(-get<1>(door)->GetMotorSpeed());
+        return;
+    }
+    if (event->key() == Qt::Key_W)
+    {
+        is_zoom_out ^= 1;
+        return;
+    }
     if (event->key() == Qt::Key_A)
     {
         display_ui ^= 1;

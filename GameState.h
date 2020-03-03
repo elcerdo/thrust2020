@@ -3,6 +3,7 @@
 #include "Box2D/Dynamics/b2World.h"
 #include "Box2D/Dynamics/b2Body.h"
 #include "Box2D/Dynamics/Joints/b2DistanceJoint.h"
+#include "Box2D/Dynamics/Joints/b2PrismaticJoint.h"
 #include "Box2D/Particle/b2ParticleSystem.h"
 
 #include <memory>
@@ -20,6 +21,7 @@ struct GameState : public b2ContactListener
     void grab();
     void release();
     void addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle);
+    void addDoor(const b2Vec2 pos, const b2Vec2 size);
     void flop();
 
     void BeginContact(b2Contact* contact) override;
@@ -28,8 +30,10 @@ struct GameState : public b2ContactListener
     b2Body* ground;
     b2Body* ship;
     b2Body* ball;
+    b2Body* wall;
 
     std::vector<b2Body*> crates;
+    std::vector<std::tuple<b2Body*, b2PrismaticJoint*>> doors;
     b2DistanceJoint* joint;
 
     b2ParticleSystem* system;

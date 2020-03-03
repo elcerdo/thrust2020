@@ -150,12 +150,12 @@ GameState::GameState() :
         system_def.density = 5e-2;
         system_def.radius = .5; // FIXME 1.2;
         //system_def.elasticStrength = 1;
-        system_def.surfaceTensionPressureStrength = .6;
-        system_def.surfaceTensionNormalStrength = .6;
+        system_def.surfaceTensionPressureStrength = .4;
+        system_def.surfaceTensionNormalStrength = .4;
         system = world.CreateParticleSystem(&system_def);
 
         b2PolygonShape shape;
-        shape.SetAsBox(8, 20);
+        shape.SetAsBox(4, 22);
 
         b2ParticleGroupDef group_def;
         group_def.shape = &shape;
@@ -168,6 +168,7 @@ GameState::GameState() :
         system->CreateParticleGroup(group_def);
     }
 
+    addDoor({ 115, -170 }, {1, 10});
 
     world.SetContactListener(this);
 }
@@ -279,11 +280,51 @@ void GameState::BeginContact(b2Contact* contact)
     all_energy += aa_energy + bb_energy;
 }
 
+void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size)
+{
+    assert(ground);
+
+    b2Body* door = nullptr;
+    {
+        b2BodyDef def;
+        def.type = b2_dynamicBody;
+        def.position = pos;
+
+        b2PolygonShape shape;
+        shape.SetAsBox(size.x, size.y);
+
+        b2FixtureDef fixture;
+        fixture.shape = &shape;
+        fixture.friction = .8;
+
+        door = world.CreateBody(&def);
+        door->CreateFixture(&fixture);
+    }
+    assert(door);
+
+    b2PrismaticJoint* joint = nullptr;
+    {
+        b2PrismaticJointDef def;
+        def.Initialize(ground, door, door->GetWorldCenter(), b2Vec2 { 0, 1 });
+        def.lowerTranslation = -2*size.y;
+        def.upperTranslation = 0;
+        def.enableLimit = true;
+        def.maxMotorForce = 10000.0f;
+        def.motorSpeed = 4.f;
+        def.enableMotor = true;
+
+        joint = static_cast<b2PrismaticJoint*>(world.CreateJoint(&def));
+    }
+    assert(joint);
+
+    doors.push_back({ door, joint });
+}
+
 void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle)
 {
     b2BodyDef def;
     def.type = b2_dynamicBody;
-    def.position.Set(pos.x, pos.y);
+    def.position = pos;
     def.angle = angle;
 
     constexpr float zz = 1.2;
