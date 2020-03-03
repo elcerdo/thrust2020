@@ -27,8 +27,6 @@ struct GameState : public b2ContactListener
     b2World world;
     b2Body* ground;
     b2Body* ship;
-    b2Body* left_side;
-    b2Body* right_side;
     b2Body* ball;
 
     std::vector<b2Body*> crates;

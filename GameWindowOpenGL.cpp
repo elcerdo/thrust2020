@@ -547,8 +547,6 @@ void GameWindowOpenGL::paintGL()
         }
 
         drawOrigin(painter);
-        drawBody(painter, state.left_side);
-        drawBody(painter, state.right_side);
         drawBody(painter, state.ground);
 
         for (auto& crate : state.crates)

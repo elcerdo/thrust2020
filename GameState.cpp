@@ -18,7 +18,6 @@ GameState::GameState() :
     world(b2Vec2(0, -8)),
     ground(nullptr),
     ship(nullptr),
-    left_side(nullptr), right_side(nullptr),
     ball(nullptr),
     joint(nullptr),
     system(nullptr),
@@ -29,7 +28,8 @@ GameState::GameState() :
     ship_thrust_factor(1.),
     ship_accum_contact(0),
     all_accum_contact(0),
-    all_energy(0)
+    all_energy(0),
+    color_rng(0x12345678)
 {
     cout << "init game state" << endl;
 
@@ -80,42 +80,6 @@ GameState::GameState() :
         }
 
         ground = body;
-    }
-
-    { // left side
-        b2BodyDef def;
-        def.type = b2_staticBody;
-        def.position.Set(-90, 45);
-
-        b2PolygonShape shape;
-        shape.SetAsBox(10, 100);
-
-        b2FixtureDef fixture;
-        fixture.shape = &shape;
-        fixture.density = 0;
-        fixture.friction = .3;
-
-        auto body = world.CreateBody(&def);
-        body->CreateFixture(&fixture);
-        left_side = body;
-    }
-
-    { // right side
-        b2BodyDef def;
-        def.type = b2_staticBody;
-        def.position.Set(90, 45);
-
-        b2PolygonShape shape;
-        shape.SetAsBox(10, 100);
-
-        b2FixtureDef fixture;
-        fixture.shape = &shape;
-        fixture.density = 0;
-        fixture.friction = .3;
-
-        auto body = world.CreateBody(&def);
-        body->CreateFixture(&fixture);
-        right_side = body;
     }
 
     { // ship
@@ -295,14 +259,14 @@ void GameState::BeginContact(b2Contact* contact)
     assert(aa);
     const bool aa_is_ship = aa == ship;
     const bool aa_is_ball = aa == ball;
-    const bool aa_is_wall = aa == left_side || aa == right_side || aa == ground;
+    const bool aa_is_wall = aa == ground;
     const double aa_energy = .5 * aa->GetMass() * aa->GetLinearVelocity().LengthSquared();
 
     const auto* bb = contact->GetFixtureB()->GetBody();
     assert(bb);
     const bool bb_is_ship = bb == ship;
     const bool bb_is_ball = bb == ball;
-    const bool bb_is_wall = bb == left_side || bb == right_side || bb == ground;
+    const bool bb_is_wall = bb == ground;
     const double bb_energy = .5 * bb->GetMass() * bb->GetLinearVelocity().LengthSquared();
 
     const bool any_ship = aa_is_ship || bb_is_ship;
