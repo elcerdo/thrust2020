@@ -8,5 +8,7 @@
     <file>main_fragment.glsl</file>
     <file>base_vertex.glsl</file>
     <file>base_fragment.glsl</file>
+    <file>particle_vertex.glsl</file>
+    <file>particle_fragment.glsl</file>
 </qresource>
 </RCC>

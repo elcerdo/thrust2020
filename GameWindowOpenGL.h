@@ -72,11 +72,16 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         int main_pos_attr = -1;
         int main_col_attr = -1;
         int main_mat_unif = -1;
-        int main_dot_unif = -1;
 
         std::unique_ptr<QOpenGLShaderProgram> base_program = nullptr;
         int base_pos_attr = -1;
         int base_mat_unif = -1;
+
+        std::unique_ptr<QOpenGLShaderProgram> particle_program = nullptr;
+        int particle_pos_attr = -1;
+        int particle_mat_unif = -1;
+        int particle_color_unif = -1;
+        int particle_radius_unif = -1;
 
         GLuint vao = 0;
         std::array<GLuint, 8> vbos = { 0, 0, 0, 0, 0, 0, 0, 0 };
