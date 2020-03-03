@@ -482,7 +482,7 @@ void GameWindowOpenGL::paintGL()
 
         ImGui::Separator();
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::Text("Ball density %.2f", state.ball->GetFixtureList()->GetDensity());
+        ImGui::Text("Ship position %.2f %.2f", state.ship->GetPosition().x, state.ship->GetPosition().y);
     }
 
     /*
