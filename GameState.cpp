@@ -148,7 +148,7 @@ GameState::GameState() :
 
         b2ParticleSystemDef system_def;
         system_def.density = 5e-2;
-        system_def.radius = 1; // FIXME 1.2;
+        system_def.radius = .5; // FIXME 1.2;
         //system_def.elasticStrength = 1;
         system_def.surfaceTensionPressureStrength = .6;
         system_def.surfaceTensionNormalStrength = .6;
