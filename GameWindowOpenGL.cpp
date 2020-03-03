@@ -165,7 +165,7 @@ void GameWindowOpenGL::initializeGL()
         particle_col_attr = particle_program->attributeLocation("colAttr");
         particle_mat_unif = particle_program->uniformLocation("matrix");
         particle_color_unif = particle_program->uniformLocation("dotColor");
-        particle_radius_unif = particle_program->uniformLocation("dotRadius");
+        particle_radius_unif = particle_program->uniformLocation("radius");
         qDebug() << "particle_locations" << particle_pos_attr << particle_col_attr << particle_mat_unif << particle_color_unif << particle_radius_unif;
         assert(particle_pos_attr >= 0);
         assert(particle_col_attr >= 0);
@@ -722,7 +722,7 @@ void GameWindowOpenGL::paintGL()
             const auto kk_max = system->GetParticleCount();
             const auto radius = system->GetRadius();
 
-            particle_program->setUniformValue(particle_radius_unif, 0.2f);
+            particle_program->setUniformValue(particle_radius_unif, radius);
             const auto& color = QColor::fromRgb(255u, 255u, 0, 255u);
             particle_program->setUniformValue(particle_color_unif, color);
             particle_program->setUniformValue(particle_mat_unif, world_matrix);
