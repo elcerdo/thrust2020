@@ -45,6 +45,33 @@ double StraightMesure::findDist(const acd2d::Vector2d& n, const acd2d::Point2d& 
 
 ///////////////////////////////////////////////////////////////////////////////
 
+polygons::Poly
+polygons::ensure_cw(const polygons::Poly& vertices)
+{
+    if (vertices.size() < 3)
+        return vertices;
+
+    using Scalar = decltype(b2Vec2::x);
+
+    Scalar area = 0;
+    for (size_t kk=0, kk_max=vertices.size(); kk<kk_max; kk++)
+    {
+        const auto kk_next = (kk + 1) % kk_max;
+        const auto pp = vertices[kk];
+        const auto pp_next = vertices[kk_next];
+        area += b2Cross(pp, pp_next);
+    }
+
+    if (area >= 0)
+        return vertices;
+
+    Poly vertices_;
+    vertices_.reserve(vertices.size());
+    std::copy(std::crbegin(vertices), std::crend(vertices), std::back_inserter(vertices_));
+
+    return vertices_;
+}
+
 std::list<polygons::Poly>
 polygons::decompose(const polygons::Poly& vertices, const double margin)
 {

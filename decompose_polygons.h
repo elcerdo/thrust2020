@@ -10,5 +10,8 @@ namespace polygons
 std::list<Poly>
 decompose(const Poly& vertices, const double margin);
 
+Poly
+ensure_cw(const Poly& vertices);
+
 }
 

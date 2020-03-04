@@ -23,7 +23,13 @@ run_acd2d(const polygons::Poly& poly)
     for (const auto& point : poly)
         cout << "  " << point.x << " " << point.y << endl;
 
-    const auto& subpolys = polygons::decompose(poly, .1);
+    const auto& poly_ = polygons::ensure_cw(poly);
+
+    cout << "NN " << poly_.size() << endl;
+    for (const auto& point : poly_)
+        cout << "  " << point.x << " " << point.y << endl;
+
+    const auto& subpolys = polygons::decompose(poly_, 1e-3);
     for (const auto& subpoly : subpolys)
     {
         cout << "OO " << subpoly.size() << endl;
@@ -50,6 +56,13 @@ int main(int argc, char* argv[])
         { 1, -1 },
         { 1, 1 },
         { -1 , 1 }
+    });
+
+    run_acd2d(Poly {
+        { 1, -1 },
+        { -1, -1 },
+        { -1 , 1 },
+        { 1, 1 },
     });
 
     run_acd2d(Poly {

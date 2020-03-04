@@ -73,7 +73,7 @@ GameState::GameState() :
             if (polygons::colorDistance(poly_color.second, foreground_color) > 0)
                 continue;
 
-            const auto subpolys = polygons::decompose(poly_color.first, 1e-5);
+            const auto subpolys = polygons::decompose(polygons::ensure_cw(poly_color.first), 1e-5);
             cout << "foreground subpolys " << subpolys.size() << endl;
             for (const auto& subpoly : subpolys)
                 push_fixture(foreground_transform(subpoly));
