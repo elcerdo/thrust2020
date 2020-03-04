@@ -457,7 +457,7 @@ void GameWindowOpenGL::paintGL()
 
     if (display_ui)
     {
-        ImGui::SetNextWindowSize(ImVec2(200,100), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(350,400), ImGuiCond_FirstUseEver);
         ImGui::Begin("~.: THRUST :.~", &display_ui);
 
         //ImGui::Text("Hello, world!");
