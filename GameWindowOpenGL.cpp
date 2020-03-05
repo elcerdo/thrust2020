@@ -371,8 +371,8 @@ void GameWindowOpenGL::drawBody(QPainter& painter, const b2Body* body, const QCo
         painter.translate(world_center.x, world_center.y);
 
         painter.setBrush(Qt::NoBrush);
-        const QColor speed_color_ = QColor::fromRgbF(water_color[0], water_color[1], water_color[2], water_color[3]);
-        painter.setPen(QPen(speed_color_, 0));
+        const QColor color = QColor::fromRgbF(water_color[0], water_color[1], water_color[2], water_color[3]);
+        painter.setPen(QPen(color, 0));
         painter.drawLine(QPointF(0, 0), QPointF(linear_velocity.x, linear_velocity.y));
 
         painter.setBrush(is_awake ? Qt::blue : Qt::white);
