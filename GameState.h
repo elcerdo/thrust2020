@@ -21,7 +21,7 @@ struct GameState : public b2ContactListener
     void grab();
     void release();
     void addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle);
-    void addDoor(const b2Vec2 pos, const b2Vec2 size);
+    void addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 direction);
     void flop();
 
     void BeginContact(b2Contact* contact) override;
@@ -30,7 +30,6 @@ struct GameState : public b2ContactListener
     b2Body* ground;
     b2Body* ship;
     b2Body* ball;
-    b2Body* wall;
 
     std::vector<b2Body*> crates;
     std::vector<std::tuple<b2Body*, b2PrismaticJoint*>> doors;

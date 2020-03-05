@@ -7,12 +7,17 @@
 #include "Box2D/Particle/b2ParticleGroup.h"
 
 #include <iostream>
+#include <bitset>
 
 #include "extract_polygons.h"
 #include "decompose_polygons.h"
 
 using std::cout;
 using std::endl;
+
+constexpr uint16 ground_category = 1 << 0;
+constexpr uint16 object_category = 1 << 1;
+constexpr uint16 door_category = 1 << 2;
 
 GameState::GameState() :
     world(b2Vec2(0, -8)),
@@ -48,6 +53,8 @@ GameState::GameState() :
             fixture.shape = &shape;
             fixture.density = 0;
             fixture.friction = .9;
+            fixture.filter.categoryBits = ground_category;
+            fixture.filter.maskBits = object_category | door_category;
 
             body->CreateFixture(&fixture);
 
@@ -102,6 +109,8 @@ GameState::GameState() :
         fixture.density = .1;
         fixture.friction = .7;
         fixture.restitution = .1;
+        fixture.filter.categoryBits = object_category;
+        fixture.filter.maskBits = object_category | ground_category | door_category;
 
         auto body = world.CreateBody(&def);
         body->CreateFixture(&fixture);
@@ -123,6 +132,8 @@ GameState::GameState() :
         fixture.density = .1;
         fixture.friction = 1;
         fixture.restitution = 0.1;
+        fixture.filter.categoryBits = object_category;
+        fixture.filter.maskBits = object_category | ground_category | door_category;
 
         auto body = world.CreateBody(&def);
         body->CreateFixture(&fixture);
@@ -154,6 +165,7 @@ GameState::GameState() :
         system_def.surfaceTensionNormalStrength = .4;
         system = world.CreateParticleSystem(&system_def);
 
+        /*
         b2PolygonShape shape;
         shape.SetAsBox(4, 22);
 
@@ -166,9 +178,43 @@ GameState::GameState() :
         group_def.position.Set(-15, 30);
         group_def.color.Set(0, 0xffu, 0xffu, 127u);
         system->CreateParticleGroup(group_def);
+        */
     }
 
-    addDoor({ 115, -170 }, {1, 10});
+    addDoor({ 115, -170 }, {1, 10}, {0, -1});
+    addDoor({ 15, -230 }, {10, 1}, {1, 0});
+
+    const auto dump_filter_data = [](const b2Body& body) -> void
+    {
+        for (auto fixture=body.GetFixtureList(); fixture; fixture = fixture->GetNext())
+        {
+            const auto& filter = fixture->GetFilterData();
+            const std::bitset<8> category_bits(filter.categoryBits);
+            const std::bitset<8> mask_bits(filter.maskBits);
+            cout << "  " << category_bits.to_string() << " " << mask_bits.to_string() << endl;
+        }
+    };
+
+    cout << "ground" << endl;
+    dump_filter_data(*ground);
+
+    cout << "ship" << endl;
+    dump_filter_data(*ship);
+
+    cout << "ball" << endl;
+    dump_filter_data(*ball);
+
+    if (!doors.empty())
+    {
+        cout << "door" << endl;
+        dump_filter_data(*std::get<0>(doors.front()));
+    }
+
+    if (!crates.empty())
+    {
+        cout << "crate" << endl;
+        dump_filter_data(*crates.front());
+    }
 
     world.SetContactListener(this);
 }
@@ -280,7 +326,7 @@ void GameState::BeginContact(b2Contact* contact)
     all_energy += aa_energy + bb_energy;
 }
 
-void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size)
+void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 direction)
 {
     assert(ground);
 
@@ -296,6 +342,8 @@ void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size)
         b2FixtureDef fixture;
         fixture.shape = &shape;
         fixture.friction = .8;
+        fixture.filter.categoryBits = door_category;
+        fixture.filter.maskBits = object_category;
 
         door = world.CreateBody(&def);
         door->CreateFixture(&fixture);
@@ -305,12 +353,12 @@ void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size)
     b2PrismaticJoint* joint = nullptr;
     {
         b2PrismaticJointDef def;
-        def.Initialize(ground, door, door->GetWorldCenter(), b2Vec2 { 0, 1 });
-        def.lowerTranslation = -2*size.y;
-        def.upperTranslation = 0;
+        def.Initialize(ground, door, door->GetWorldCenter(), direction);
+        def.lowerTranslation = 0;
+        def.upperTranslation = 2*size.y;
         def.enableLimit = true;
-        def.maxMotorForce = 10000.0f;
-        def.motorSpeed = 4.f;
+        def.maxMotorForce = 1e9f;
+        def.motorSpeed = -10.f;
         def.enableMotor = true;
 
         joint = static_cast<b2PrismaticJoint*>(world.CreateJoint(&def));
@@ -318,6 +366,7 @@ void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size)
     assert(joint);
 
     doors.push_back({ door, joint });
+
 }
 
 void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle)
@@ -342,6 +391,8 @@ void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double a
     fixture.density = .01;
     fixture.friction = .8;
     fixture.restitution = .7;
+    fixture.filter.categoryBits = object_category;
+    fixture.filter.maskBits = object_category | ground_category | door_category;
 
     auto crate = world.CreateBody(&def);
     crate->CreateFixture(&fixture);
