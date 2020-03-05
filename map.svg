@@ -39,9 +39,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="3.959798"
-     inkscape:cx="420.81692"
-     inkscape:cy="373.98734"
+     inkscape:zoom="5.1313044"
+     inkscape:cx="204.15902"
+     inkscape:cy="488.67631"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -98,39 +98,51 @@
        id="path4603"
        inkscape:connector-curvature="0" />
     <path
-       style="fill:#00ff00;stroke:none;stroke-width:0.26458335px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 0,138.25001 h 89.958336 l -13.229167,37.04166 18.520833,17.19792 h 1.322916 l -3.96875,6.61458 v 14.55209 l 2.645834,2.64583 h 11.906248 l 1.32292,1.32292 v 5.29166 l -10.583334,0 -26.458334,-15.875 -5.291667,18.52084 18.520834,31.75 37.041671,-5.29167 5.29166,-6.61458 -2.64583,-11.90625 -10.58333,-10.58334 v -5.29166 l 1.28869,-1.32292 6.64881,0 2.64583,-2.64583 v -10.58334 l 22.48958,6.61459 -7.9375,7.9375 3.96875,10.58333 -5.29166,7.9375 v 14.55208 h 18.52083 v -15.875 l 3.87426,-7.74851 9.35491,-18.70982 18.52083,-9.26042 -2.64583,-18.52083 -23.8125,-10.58333 -64.822922,5.29166 14.552082,-15.875 18.52084,-34.39583 10.58333,18.52083 18.52083,-10.58333 13.22917,5.29167 h 39.6875 v 158.75 H 0 Z"
-       id="path4599"
+       style="fill:#00ff00;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 308.93945,286.96875 270,290 l -65,135 60,60 5,-25 100,60 h 40 v -20 l -5,-5 h -45 l -10,-10 v -55 l 15,-25 h -5 l -70,-65 z"
+       id="path855"
+       transform="matrix(0.26458334,0,0,0.26458334,0,85.333337)"
        inkscape:connector-curvature="0"
-       sodipodi:nodetypes="cccccccccccccccccccccccccccccccccccccccccccccc" />
+       sodipodi:nodetypes="cccccccccccccccc" />
     <path
-       style="fill:#0000ff;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-       d="M -13.172183,184.95827 0.63928837,164.09821 17.461235,186.1243 l -3.176816,91.23842 87.195271,-3.31333 15.66797,15.0116 -16.40819,19.2643 -97.0435526,3.55835 -19.2355364,-29.02358 z"
-       id="path10"
+       style="fill:#00ff00;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 490,150 -70,130 -55,60 245,-20 90,40 10,70 -70,35 -35.35742,70.71484 L 590,565 v 60 h -70 v -55 l 20,-30 -15,-40 30,-30 -85,-25 -7.39844,36.99414 L 460,495 H 434.87109 L 430,500 v 20 l 40,40 10,45 -20,25 -140,20 -70,-120 v -30 l -70,-75 75,-160 65,0 20,-65 H 0 V 800 H 800 V 200 H 650 l -50,-20 -70,40 z"
+       id="path4599"
+       transform="matrix(0.26458334,0,0,0.26458334,0,85.333337)"
        inkscape:connector-curvature="0"
-       sodipodi:nodetypes="cccccccccc" />
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ff00ff;fill-opacity:1;stroke:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none"
-       x="88.361481"
-       y="292.52087"
-       id="text838"><tspan
-         sodipodi:role="line"
-         id="tspan836"
-         x="88.361481"
+       sodipodi:nodetypes="ccccccccccccccccccccccccccccccccccccccc" />
+    <g
+       id="g841"
+       transform="translate(-112.06302,-43.195217)">
+      <path
+         sodipodi:nodetypes="cccccccccc"
+         inkscape:connector-curvature="0"
+         id="path10"
+         d="M -13.172183,184.95827 0.63928837,164.09821 17.461235,186.1243 l -3.176816,91.23842 87.195271,-3.31333 15.66797,15.0116 -16.40819,19.2643 -97.0435526,3.55835 -19.2355364,-29.02358 z"
+         style="fill:#0000ff;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <text
+         id="text838"
          y="292.52087"
-         style="fill:#ff00ff;fill-opacity:1;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none">X</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ff00ff;fill-opacity:1;stroke:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none"
-       x="-2.1184802"
-       y="188.93617"
-       id="text838-3"><tspan
-         sodipodi:role="line"
-         id="tspan836-6"
-         x="-2.1184802"
+         x="88.361481"
+         style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ff00ff;fill-opacity:1;stroke:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none"
+         xml:space="preserve"><tspan
+           style="fill:#ff00ff;fill-opacity:1;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none"
+           y="292.52087"
+           x="88.361481"
+           id="tspan836"
+           sodipodi:role="line">X</tspan></text>
+      <text
+         id="text838-3"
          y="188.93617"
-         style="fill:#ff00ff;fill-opacity:1;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none">Y</tspan></text>
+         x="-2.1184802"
+         style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#ff00ff;fill-opacity:1;stroke:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none"
+         xml:space="preserve"><tspan
+           style="fill:#ff00ff;fill-opacity:1;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none"
+           y="188.93617"
+           x="-2.1184802"
+           id="tspan836-6"
+           sodipodi:role="line">Y</tspan></text>
+    </g>
     <path
        style="fill:#ff0000;fill-opacity:1;stroke:#ffffff;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;filter:url(#filter4573)"
        d="m 21.166664,132.95834 v -9.26041 h 5.29167 v 9.26041 h 10.58333 v 5.29167 H 5.291663 v -5.29167 z"

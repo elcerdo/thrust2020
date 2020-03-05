@@ -181,8 +181,8 @@ GameState::GameState() :
         */
     }
 
-    addDoor({ 115, -170 }, {1, 10}, {0, -1});
-    addDoor({ 15, -230 }, {10, 1}, {1, 0});
+    addDoor({ 115, -170 }, {1, 10}, {0, -20});
+    addDoor({ 15, -230 }, {10, 1}, {20, 0});
 
     const auto dump_filter_data = [](const b2Body& body) -> void
     {
@@ -287,10 +287,19 @@ bool GameState::isGrabbed() const {
 
 void GameState::step(const float dt)
 {
+    using std::get;
     int velocityIterations = 6;
     int positionIterations = 2;
     const auto angle = ship->GetAngle();
     const auto thrust = ship_thrust_factor * (isGrabbed() ? 120. : 20.) * b2Rot(angle).GetYAxis();
+    for (auto& door : doors)
+    {
+        assert(get<2>(door) < get<1>(door).size());
+        const auto delta = get<1>(door)[get<2>(door)] - get<0>(door)->GetWorldCenter();
+        const auto delta_length = delta.Length();
+        const auto delta_norm = delta_length > 2 ? 2 * delta / delta_length : delta;
+        get<0>(door)->SetLinearVelocity(20 * delta_norm);
+    }
     if (ship_firing) ship->ApplyForceToCenter(thrust, true);
     ship_target_angle += ship_target_angular_velocity * dt;
     ship->SetAngularVelocity((ship_target_angle - angle) / .05);
@@ -326,14 +335,14 @@ void GameState::BeginContact(b2Contact* contact)
     all_energy += aa_energy + bb_energy;
 }
 
-void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 direction)
+void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 delta)
 {
     assert(ground);
 
     b2Body* door = nullptr;
     {
         b2BodyDef def;
-        def.type = b2_dynamicBody;
+        def.type = b2_kinematicBody;
         def.position = pos;
 
         b2PolygonShape shape;
@@ -341,6 +350,7 @@ void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 direct
 
         b2FixtureDef fixture;
         fixture.shape = &shape;
+        fixture.density = 0;
         fixture.friction = .8;
         fixture.filter.categoryBits = door_category;
         fixture.filter.maskBits = object_category;
@@ -350,6 +360,7 @@ void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 direct
     }
     assert(door);
 
+    /*
     b2PrismaticJoint* joint = nullptr;
     {
         b2PrismaticJointDef def;
@@ -364,8 +375,10 @@ void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 direct
         joint = static_cast<b2PrismaticJoint*>(world.CreateJoint(&def));
     }
     assert(joint);
+    */
 
-    doors.push_back({ door, joint });
+    const auto origin = door->GetWorldCenter();
+    doors.push_back({ door, { origin, origin + delta }, 0 });
 
 }
 

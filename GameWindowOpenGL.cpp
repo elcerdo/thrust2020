@@ -821,9 +821,10 @@ void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
         using std::get;
         for (auto& door : state.doors)
         {
-            const auto speed = get<1>(door)->GetMotorSpeed();
-            qDebug() << "speed" << speed;
-            get<1>(door)->SetMotorSpeed(-speed);
+            auto& target = get<2>(door);
+            target ++;
+            target %= get<1>(door).size();
+            qDebug() << "target" << target;
         }
         return;
     }
