@@ -61,11 +61,8 @@ int main(int argc, char* argv[])
         view_opengl.is_zoom_out = checked;
     });
 
-    view_opengl.addButton("reset ship", [&state]() -> void {
-                              assert(state.ship);
-                              state.ship->SetLinearVelocity({ 0, 0 });
-
-    });
+    view_opengl.addButton("reset ship", [&state]() -> void { state.resetShip(); });
+    view_opengl.addButton("reset ball", [&state]() -> void { state.resetBall(); });
 
     return app.exec();
 }

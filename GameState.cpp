@@ -89,56 +89,8 @@ GameState::GameState() :
         ground = body;
     }
 
-    { // ship
-        b2BodyDef def;
-        def.type = b2_dynamicBody;
-        def.position.Set(0, 0);
-        def.angle = M_PI / 4 - 2e-2;
-
-        constexpr float ww = 1.8;
-        b2PolygonShape shape;
-        static const b2Vec2 points[3] {
-            { -ww, 0 },
-            { ww, 0 },
-            { 0, 2*ww }
-        };
-        shape.Set(points, 3);
-
-        b2FixtureDef fixture;
-        fixture.shape = &shape;
-        fixture.density = .1;
-        fixture.friction = .7;
-        fixture.restitution = .1;
-        fixture.filter.categoryBits = object_category;
-        fixture.filter.maskBits = object_category | ground_category | door_category;
-
-        auto body = world.CreateBody(&def);
-        body->CreateFixture(&fixture);
-        ship = body;
-    }
-
-    { // ball
-        b2BodyDef def;
-        def.type = b2_dynamicBody;
-        def.position.Set(20, 0);
-        def.angle = 0;
-        def.angularVelocity = 0;
-
-        b2CircleShape shape;
-        shape.m_radius = 5.;
-
-        b2FixtureDef fixture;
-        fixture.shape = &shape;
-        fixture.density = .1;
-        fixture.friction = 1;
-        fixture.restitution = 0.1;
-        fixture.filter.categoryBits = object_category;
-        fixture.filter.maskBits = object_category | ground_category | door_category;
-
-        auto body = world.CreateBody(&def);
-        body->CreateFixture(&fixture);
-        ball = body;
-    }
+    resetShip();
+    resetBall();
 
     /*
     { // crate tower
@@ -217,6 +169,75 @@ GameState::GameState() :
     }
 
     world.SetContactListener(this);
+}
+
+void GameState::resetBall()
+{ // ball
+    if (ball)
+    {
+        world.DestroyBody(ball);
+        ball = nullptr;
+    }
+
+    assert(!ball);
+
+    b2BodyDef def;
+    def.type = b2_dynamicBody;
+    def.position.Set(20, 0);
+    def.angle = 0;
+    def.angularVelocity = 0;
+
+    b2CircleShape shape;
+    shape.m_radius = 5.;
+
+    b2FixtureDef fixture;
+    fixture.shape = &shape;
+    fixture.density = .1;
+    fixture.friction = 1;
+    fixture.restitution = 0.1;
+    fixture.filter.categoryBits = object_category;
+    fixture.filter.maskBits = object_category | ground_category | door_category;
+
+    auto body = world.CreateBody(&def);
+    body->CreateFixture(&fixture);
+    ball = body;
+}
+
+void GameState::resetShip()
+{ // ship
+    if (ship)
+    {
+        world.DestroyBody(ship);
+        ship = nullptr;
+    }
+
+    assert(!ship);
+
+    b2BodyDef def;
+    def.type = b2_dynamicBody;
+    def.position.Set(0, 0);
+    def.angle = M_PI / 4 - 2e-2;
+
+    constexpr float ww = 1.8;
+    b2PolygonShape shape;
+    static const b2Vec2 points[3] {
+        { -ww, 0 },
+        { ww, 0 },
+        { 0, 2*ww }
+    };
+    shape.Set(points, 3);
+
+    b2FixtureDef fixture;
+    fixture.shape = &shape;
+    fixture.density = .1;
+    fixture.friction = .7;
+    fixture.restitution = .1;
+    fixture.filter.categoryBits = object_category;
+    fixture.filter.maskBits = object_category | ground_category | door_category;
+
+    auto body = world.CreateBody(&def);
+    body->CreateFixture(&fixture);
+    ship = body;
 }
 
 void GameState::flop()
