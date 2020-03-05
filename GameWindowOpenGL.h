@@ -16,6 +16,10 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
 {
     Q_OBJECT
     public:
+        using VoidCallback = std::function<void(void)>;
+        using ButtonState = std::tuple<std::string, VoidCallback>;
+        using ButtonStates = std::vector<ButtonState>;
+
         using BoolCallback = std::function<void(bool)>;
         using BoolState = std::tuple<std::string, bool, BoolCallback>;
         using BoolStates = std::vector<BoolState>;
@@ -28,6 +32,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         void setAnimated(const bool value);
         void addSlider(const std::string& label, const float& min, const float& max, const float& value, const FloatCallback& callback);
         void addCheckbox(const std::string& label, const bool& value, const BoolCallback& callback);
+        void addButton(const std::string& label, const VoidCallback& callback);
         void setMuted(const bool muted);
 
     protected:
@@ -58,6 +63,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         //bool show_another_window = false;
         BoolStates bool_states;
         FloatStates float_states;
+        ButtonStates button_states;
 
         QOpenGLPaintDevice* device = nullptr;
         //QOpenGLContext* context = nullptr;

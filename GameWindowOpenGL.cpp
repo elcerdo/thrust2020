@@ -258,6 +258,11 @@ void GameWindowOpenGL::initializeGL()
 
 }
 
+void GameWindowOpenGL::addButton(const std::string& label, const VoidCallback& callback)
+{
+    button_states.emplace_back(ButtonState { label, callback });
+}
+
 void GameWindowOpenGL::addCheckbox(const std::string& label, const bool& value, const BoolCallback& callback)
 {
     auto state = std::make_tuple(label, value, callback);
@@ -480,9 +485,18 @@ void GameWindowOpenGL::paintGL()
             if (prev != std::get<1>(state)) std::get<2>(state)(std::get<1>(state));
         }
 
+        for (auto& state : button_states)
+        {
+            using std::get;
+            if (ImGui::Button(get<0>(state).c_str()))
+                get<1>(state)();
+
+        }
+
         ImGui::Separator();
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::Text("Ship position %.2f %.2f", state.ship->GetPosition().x, state.ship->GetPosition().y);
+
 
         ImGui::End();
     }
