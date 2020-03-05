@@ -14,7 +14,7 @@
    viewBox="0 0 211.66667 211.66667"
    version="1.1"
    id="svg8"
-   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
+   inkscape:version="0.91 r13725"
    sodipodi:docname="map.svg">
   <defs
      id="defs2">
@@ -39,16 +39,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="5.1313044"
-     inkscape:cx="204.15902"
-     inkscape:cy="488.67631"
+     inkscape:zoom="10.262609"
+     inkscape:cx="544.55679"
+     inkscape:cy="424.81461"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
-     inkscape:window-width="1920"
-     inkscape:window-height="1016"
+     inkscape:window-width="1440"
+     inkscape:window-height="856"
      inkscape:window-x="0"
-     inkscape:window-y="27"
+     inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:lockguides="false"
      showguides="true"
@@ -202,9 +202,9 @@
        sodipodi:nodetypes="ccccccc" />
     <path
        style="fill:#00ff00;stroke:none;stroke-width:0.26458335px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 152.13542,197.78125 -9.26042,-2.64583 v -7.93749 l 2.64584,-1e-5 z"
+       d="m 152.13542,197.78125 -9.26042,-2.64583 -0.0258,-8.68515 -1.33569,-1.36642 0.0146,-1.40932 3.57213,-0.0533 1.4003,8.39774 z"
        id="path884"
        inkscape:connector-curvature="0"
-       sodipodi:nodetypes="ccccc" />
+       sodipodi:nodetypes="cccccccc" />
   </g>
 </svg>

@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
 
     for (const auto& poly_color : get<1>(polys))
     {
-        if (polygons::colorDistance(poly_color.second, polygons::Color { 0, 1, 0, 1}) > 0)
+        if (!polygons::isForeground(poly_color.second))
             continue;
 
         const auto subpolys = polygons::decompose(poly_color.first, 1e-2);

@@ -77,7 +77,7 @@ GameState::GameState() :
 
         for (const auto& poly_color : std::get<1>(polys_to_colors))
         {
-            if (polygons::colorDistance(poly_color.second, foreground_color) > 0)
+            if (!polygons::isForeground(poly_color.second))
                 continue;
 
             const auto subpolys = polygons::decompose(polygons::ensure_cw(poly_color.first), 1e-5);

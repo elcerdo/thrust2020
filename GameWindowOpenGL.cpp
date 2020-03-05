@@ -58,6 +58,7 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
         const auto load_ok = renderer.load(QString(":map.svg"));
         //qDebug() << "renderer" << renderer.isValid() << load_ok;
         assert(renderer.isValid());
+        assert(load_ok);
     }
 }
 
@@ -498,6 +499,11 @@ void GameWindowOpenGL::paintGL()
         ImGui::Text("Ship position %.2f %.2f", state.ship->GetPosition().x, state.ship->GetPosition().y);
 
 
+        if (state.system) ImGui::Text("particles %d", state.system->GetParticleCount());
+        ImGui::Text("crates %d", static_cast<int>(state.crates.size()));
+        ImGui::Text("contact %d", state.all_accum_contact);
+        if (state.ship_touched_wall) ImGui::Text("!!!!BOOOM!!!!");
+
         ImGui::End();
     }
 
@@ -547,7 +553,8 @@ void GameWindowOpenGL::paintGL()
         }
 
         drawOrigin(painter);
-        drawBody(painter, state.ground);
+        if (draw_debug)
+            drawBody(painter, state.ground);
 
         for (auto& crate : state.crates)
             drawBody(painter, crate);
@@ -576,26 +583,7 @@ void GameWindowOpenGL::paintGL()
         painter.restore();
     }
 
-    { // overlay
-        painter.save();
-        painter.translate(QPointF(0, height()));
-        painter.setPen(QPen(Qt::red, 1));
-        const auto print = [&painter](const QString& text) -> void
-        {
-            painter.translate(QPointF(0, -12));
-            painter.drawText(0, 0, text);
-        };
 
-        constexpr QChar fill(' ');
-
-        if (state.system) print(QString("particles %1").arg(state.system->GetParticleCount(), 4, 10, fill));
-        print(QString("  creates %1").arg(state.crates.size(), 4, 10, fill));
-        print(QString("   thrust %1%").arg(state.ship_thrust_factor * 100, 4, 'f', 0, fill));
-        print(QString("  contact %1").arg(state.all_accum_contact, 4, 10, fill));
-        if (state.ship_touched_wall) print("!!!!BOOOM!!!!");
-
-        painter.restore();
-    }
 
     const auto world_matrix = [this]() -> QMatrix4x4
     {

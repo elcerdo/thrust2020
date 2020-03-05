@@ -63,6 +63,7 @@ int main(int argc, char* argv[])
 
     view_opengl.addButton("reset ship", [&state]() -> void { state.resetShip(); });
     view_opengl.addButton("reset ball", [&state]() -> void { state.resetBall(); });
+    view_opengl.addButton("flop", [&state]() -> void { state.flop(); });
 
     return app.exec();
 }

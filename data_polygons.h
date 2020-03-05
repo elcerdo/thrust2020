@@ -13,7 +13,8 @@ namespace polygons
 
 using Color = b2Vec4;
 
-float colorDistance(const Color& aa, const Color& bb);
+bool isForeground(const Color& aa);
+//float colorDistance(const Color& aa, const Color& bb);
 
 using Poly = std::vector<b2Vec2>;
 
