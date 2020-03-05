@@ -52,11 +52,12 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
     public:
         GameState state;
         std::default_random_engine rng;
-        std::array<float, 4> speed_color = { 0, 0, 1, 1 };
+        std::array<float, 4> water_color = { 108 / 255., 195 / 255., 246 / 255., 1 };
         bool is_animated = false;
         bool draw_debug = false;
         bool display_ui = true;
         bool is_zoom_out = true;
+        int shader_selection = 2;
 
     protected:
         //bool show_test_window = true;
@@ -91,6 +92,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         int particle_mat_unif = -1;
         int particle_color_unif = -1;
         int particle_radius_unif = -1;
+        int particle_mode_unif = -1;
 
         GLuint vao = 0;
         std::array<GLuint, 8> vbos = { 0, 0, 0, 0, 0, 0, 0, 0 };

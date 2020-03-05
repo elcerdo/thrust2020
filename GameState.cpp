@@ -134,7 +134,9 @@ GameState::GameState() :
     }
 
     addDoor({ 115, -170 }, {1, 10}, {0, -20});
-    addDoor({ 15, -230 }, {10, 1}, {20, 0});
+    addDoor({ 15, -230 }, {1, 10}, {20, 0});
+    addDoor({ -86, -65 }, {1, 10}, {-8, -15});
+
 
     const auto dump_filter_data = [](const b2Body& body) -> void
     {
@@ -365,6 +367,7 @@ void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 delta)
         b2BodyDef def;
         def.type = b2_kinematicBody;
         def.position = pos;
+        def.angle = atan2(delta.y, delta.x) + M_PI / 2.f;
 
         b2PolygonShape shape;
         shape.SetAsBox(size.x, size.y);

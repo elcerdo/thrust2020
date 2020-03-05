@@ -17,6 +17,9 @@
 #include <random>
 #include <iostream>
 
+const float camera_world_zoom = 1.5;
+const QVector2D camera_world_center { 0, -120 };
+
 GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
     : QOpenGLWindow(QOpenGLWindow::NoPartialUpdate, parent)
 {
@@ -167,12 +170,14 @@ void GameWindowOpenGL::initializeGL()
         particle_mat_unif = particle_program->uniformLocation("matrix");
         particle_color_unif = particle_program->uniformLocation("dotColor");
         particle_radius_unif = particle_program->uniformLocation("radius");
-        qDebug() << "particle_locations" << particle_pos_attr << particle_col_attr << particle_mat_unif << particle_color_unif << particle_radius_unif;
+        particle_mode_unif = particle_program->uniformLocation("mode");
+        qDebug() << "particle_locations" << particle_pos_attr << particle_col_attr << particle_mat_unif << particle_color_unif << particle_radius_unif << particle_mode_unif;
         assert(particle_pos_attr >= 0);
         assert(particle_col_attr >= 0);
         assert(particle_mat_unif >= 0);
         assert(particle_color_unif >= 0);
         assert(particle_radius_unif >= 0);
+        assert(particle_mode_unif >= 0);
         assert(glGetError() == GL_NO_ERROR);
     }
 
@@ -366,7 +371,7 @@ void GameWindowOpenGL::drawBody(QPainter& painter, const b2Body* body, const QCo
         painter.translate(world_center.x, world_center.y);
 
         painter.setBrush(Qt::NoBrush);
-        const QColor speed_color_ = QColor::fromRgbF(speed_color[0], speed_color[1], speed_color[2], speed_color[3]);
+        const QColor speed_color_ = QColor::fromRgbF(water_color[0], water_color[1], water_color[2], water_color[3]);
         painter.setPen(QPen(speed_color_, 0));
         painter.drawLine(QPointF(0, 0), QPointF(linear_velocity.x, linear_velocity.y));
 
@@ -461,16 +466,14 @@ void GameWindowOpenGL::paintGL()
 
     QtImGui::newFrame();
 
+
+
     if (display_ui)
     {
-        ImGui::SetNextWindowSize(ImVec2(350,400), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(350, 400), ImGuiCond_Once);
+        ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiCond_Once);
+        //ImGui::SetNextWindowSize(ImVec2(350,400), ImGuiCond_FirstUseEver);
         ImGui::Begin("~.: THRUST :.~", &display_ui);
-
-        //ImGui::Text("Hello, world!");
-        //ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-        ImGui::ColorEdit3("speed color", speed_color.data());
-        //if (ImGui::Button("Test Window")) show_test_window ^= 1;
-        //if (ImGui::Button("Another Window")) show_another_window ^= 1;
 
         for (auto& state : float_states)
         {
@@ -503,6 +506,27 @@ void GameWindowOpenGL::paintGL()
         ImGui::Text("crates %d", static_cast<int>(state.crates.size()));
         ImGui::Text("contact %d", state.all_accum_contact);
         if (state.ship_touched_wall) ImGui::Text("!!!!BOOOM!!!!");
+
+        ImGui::End();
+    }
+
+
+    if (display_ui)
+    {
+        ImGui::SetNextWindowSize(ImVec2(330,60), ImGuiCond_Always);
+        ImGui::SetNextWindowPos(ImVec2(width() - 330 - 5, 5), ImGuiCond_Once);
+        ImGui::Begin("Shading", &display_ui, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
+
+        //ImGui::Text("Hello, world!");
+        //ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+        ImGui::ColorEdit3("water color", water_color.data());
+        //if (ImGui::Button("Test Window")) show_test_window ^= 1;
+        //if (ImGui::Button("Another Window")) show_another_window ^= 1;
+
+        {
+            const char* shader_names[3] = { "AAAA", "BBBB", "CCCC", };
+            ImGui::Combo("shader", &shader_selection, shader_names,IM_ARRAYSIZE(shader_names));
+        }
 
         ImGui::End();
     }
@@ -542,7 +566,10 @@ void GameWindowOpenGL::paintGL()
             painter.translate(-pos.x, -std::min(20.f, pos.y));
         }
         else
-            painter.translate(0, 150);
+        {
+            painter.scale(camera_world_zoom, camera_world_zoom);
+            painter.translate(-camera_world_center.toPoint());
+        }
 
         { // svg
             constexpr double scale = 600;
@@ -608,8 +635,8 @@ void GameWindowOpenGL::paintGL()
         else
         {
             const int side = qMin(width(), height());
-            matrix.scale(1./side, 1./side, 1);
-            matrix.translate(0, 150);
+            matrix.scale(camera_world_zoom/side, camera_world_zoom/side, camera_world_zoom);
+            matrix.translate(-camera_world_center);
         }
 
         return matrix;
@@ -713,7 +740,10 @@ void GameWindowOpenGL::paintGL()
             const auto radius = system->GetRadius();
 
             particle_program->setUniformValue(particle_radius_unif, radius);
-            const auto& color = QColor::fromRgb(255u, 255u, 0, 255u);
+            particle_program->setUniformValue(particle_mode_unif, shader_selection);
+
+//            const auto& color = QColor::fromRgb(0x6cu, 0xc3u, 0xf6u, 0xffu);
+            const auto& color = QColor::fromRgbF(water_color[0], water_color[1], water_color[2], water_color[3]);
             particle_program->setUniformValue(particle_color_unif, color);
             particle_program->setUniformValue(particle_mat_unif, world_matrix);
             assert(glGetError() == GL_NO_ERROR);
