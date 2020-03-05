@@ -8,7 +8,9 @@
 #include <QSoundEffect>
 #include <QOpenGLShaderProgram>
 #include <QSvgRenderer>
+
 #include <random>
+#include <array>
 
 class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
 {

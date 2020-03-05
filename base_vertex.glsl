@@ -1,5 +1,9 @@
-attribute highp vec4 posAttr;
-varying lowp vec4 col;
+#version 330
+
+in highp vec4 posAttr;
+
+out lowp vec4 col;
+
 uniform highp mat4 matrix;
 
 void main()
