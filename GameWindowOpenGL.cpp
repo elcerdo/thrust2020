@@ -473,7 +473,7 @@ void GameWindowOpenGL::paintGL()
         ImGui::SetNextWindowSize(ImVec2(350, 400), ImGuiCond_Once);
         ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiCond_Once);
         //ImGui::SetNextWindowSize(ImVec2(350,400), ImGuiCond_FirstUseEver);
-        ImGui::Begin("~.: THRUST :.~", &display_ui);
+        ImGui::Begin("~.: THRUST :.~", &display_ui, ImGuiWindowFlags_NoBackground);
 
         for (auto& state : float_states)
         {
@@ -513,9 +513,9 @@ void GameWindowOpenGL::paintGL()
 
     if (display_ui)
     {
-        ImGui::SetNextWindowSize(ImVec2(330,60), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(330,100), ImGuiCond_Always);
         ImGui::SetNextWindowPos(ImVec2(width() - 330 - 5, 5), ImGuiCond_Once);
-        ImGui::Begin("Shading", &display_ui, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
+        ImGui::Begin("Shading", &display_ui, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
 
         //ImGui::Text("Hello, world!");
         //ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
