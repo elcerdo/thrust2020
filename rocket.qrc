@@ -3,7 +3,10 @@
     <file>engine.wav</file>
     <file>click00.wav</file>
     <file>click01.wav</file>
+
+    <file>level1.json</file>
     <file>map.svg</file>
+
     <file>main_vertex.glsl</file>
     <file>main_fragment.glsl</file>
     <file>base_vertex.glsl</file>

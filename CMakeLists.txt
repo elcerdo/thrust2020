@@ -29,6 +29,16 @@ target_include_directories(acd2d
     acd2d/src/edge_visibility
     )
 
+add_executable(test_level
+    test_level.cpp
+    rocket.qrc
+    )
+target_link_libraries(test_level
+    Qt5::Widgets
+    Qt5::OpenGL
+    )
+
+
 add_executable(test_imgui
     imgui/imgui.cpp
     imgui/imgui_draw.cpp
