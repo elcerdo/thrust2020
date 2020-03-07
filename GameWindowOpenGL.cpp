@@ -568,6 +568,36 @@ void GameWindowOpenGL::paintGL()
         painter.fillRect(0, 0, width(), height(), linearGrad);
     }
 
+    const auto world_matrix = [this]() -> QMatrix4x4
+    {
+        QMatrix4x4 matrix;
+        const auto ratio = static_cast<double>(width()) / height();
+        const auto norm_width = ratio;
+        const double norm_height = 1;
+        matrix.ortho(-norm_width, norm_width, -norm_height, norm_height, 0, 100);
+        //matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
+
+        matrix.translate(0, 0, -50);
+        matrix.scale(2, 2, 2);
+
+        if (!is_zoom_out)
+        {
+            const auto& pos = state.ship->GetPosition();
+            const auto side = std::min(ratio, 1.);
+            const double ship_height = 75 * std::max(1., pos.y / 40.);
+            matrix.scale(side / ship_height, side / ship_height, 1);
+            matrix.translate(-pos.x, -std::min(20.f, pos.y), 0);
+        }
+        else
+        {
+            const int side = qMin(width(), height());
+            matrix.scale(camera_world_zoom/side, camera_world_zoom/side, camera_world_zoom);
+            matrix.translate(-camera_world_center);
+        }
+
+        return matrix;
+    }();
+
     { // world
         painter.save();
         painter.translate(width() / 2, height() / 2);
@@ -586,6 +616,8 @@ void GameWindowOpenGL::paintGL()
             painter.scale(camera_world_zoom, camera_world_zoom);
             painter.translate(-camera_world_center.toPoint());
         }
+
+        qDebug() << painter.worldTransform()/*.getMatrix()*/ << world_matrix;
 
         { // svg
             constexpr double scale = 600;
@@ -627,36 +659,6 @@ void GameWindowOpenGL::paintGL()
     }
 
 
-
-    const auto world_matrix = [this]() -> QMatrix4x4
-    {
-        QMatrix4x4 matrix;
-        const auto ratio = static_cast<double>(width()) / height();
-        const auto norm_width = ratio;
-        const double norm_height = 1;
-        matrix.ortho(-norm_width, norm_width, -norm_height, norm_height, 0, 100);
-        //matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
-
-        matrix.translate(0, 0, -50);
-        matrix.scale(2, 2, 2);
-
-        if (!is_zoom_out)
-        {
-            const auto& pos = state.ship->GetPosition();
-            const auto side = std::min(ratio, 1.);
-            const double ship_height = 75 * std::max(1., pos.y / 40.);
-            matrix.scale(side / ship_height, side / ship_height, 1);
-            matrix.translate(-pos.x, -std::min(20.f, pos.y), 0);
-        }
-        else
-        {
-            const int side = qMin(width(), height());
-            matrix.scale(camera_world_zoom/side, camera_world_zoom/side, camera_world_zoom);
-            matrix.translate(-camera_world_center);
-        }
-
-        return matrix;
-    }();
 
     { // draw with main program
         glBindVertexArray(vao);
