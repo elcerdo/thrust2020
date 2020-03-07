@@ -177,6 +177,9 @@ void GameState::resetBall()
 { // ball
     if (ball)
     {
+        if (isGrabbed())
+            release();
+
         world.DestroyBody(ball);
         ball = nullptr;
     }
@@ -209,6 +212,9 @@ void GameState::resetShip()
 { // ship
     if (ship)
     {
+        if (isGrabbed())
+            release();
+
         world.DestroyBody(ship);
         ship = nullptr;
     }
