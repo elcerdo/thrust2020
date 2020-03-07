@@ -617,7 +617,18 @@ void GameWindowOpenGL::paintGL()
             painter.translate(-camera_world_center.toPoint());
         }
 
-        qDebug() << painter.worldTransform()/*.getMatrix()*/ << world_matrix;
+        /*
+        {
+            const QTransform tt = painter.worldTransform();
+            const std::array<float, 9> tt_values {
+                static_cast<float>(tt.m11()), static_cast<float>(tt.m21()), static_cast<float>(tt.m31()),
+                static_cast<float>(tt.m12()), static_cast<float>(tt.m22()), static_cast<float>(tt.m32()),
+                static_cast<float>(tt.m13()), static_cast<float>(tt.m23()), static_cast<float>(tt.m33())
+            };
+            const QMatrix3x3 foo(tt_values.data());
+            qDebug() << foo << world_matrix;
+        }
+        */
 
         { // svg
             constexpr double scale = 600;
