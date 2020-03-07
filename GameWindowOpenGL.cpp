@@ -16,6 +16,7 @@
 
 #include <random>
 #include <iostream>
+#include <sstream>
 
 const float camera_world_zoom = 1.5;
 const QVector2D camera_world_center { 0, -120 };
@@ -264,9 +265,10 @@ void GameWindowOpenGL::initializeGL()
 
 }
 
-void GameWindowOpenGL::addButton(const std::string& label, const VoidCallback& callback)
+void GameWindowOpenGL::addButton(const std::string& label, const int key, const VoidCallback& callback)
 {
-    button_states.emplace_back(ButtonState { label, callback });
+    assert(button_states.find(key) == std::cend(button_states));
+    button_states.emplace(key, ButtonState { label, callback });
 }
 
 void GameWindowOpenGL::addCheckbox(const std::string& label, const bool& value, const BoolCallback& callback)
@@ -489,10 +491,14 @@ void GameWindowOpenGL::paintGL()
             if (prev != std::get<1>(state)) std::get<2>(state)(std::get<1>(state));
         }
 
-        for (auto& state : button_states)
+        for (auto& pair : button_states)
         {
             using std::get;
-            if (ImGui::Button(get<0>(state).c_str()))
+            std::stringstream ss;
+            ButtonState& state = pair.second;
+            const std::string key_name = QKeySequence(pair.first).toString().toStdString();
+            ss << get<0>(state) << " (" << key_name << ")";
+            if (ImGui::Button(ss.str().c_str()))
                 get<1>(state)();
 
         }
@@ -848,26 +854,25 @@ void GameWindowOpenGL::paintGL()
 
 void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
 {
-    if (event->key() == Qt::Key_T)
+    if (event->key() == Qt::Key_A)
+    {
+        display_ui ^= 1;
+        return;
+    }
+    for (auto& pair : button_states)
     {
         using std::get;
-        for (auto& door : state.doors)
+        std::stringstream ss;
+        ButtonState& state = pair.second;
+        if (event->key() == pair.first)
         {
-            auto& target = get<2>(door);
-            target ++;
-            target %= get<1>(door).size();
-            qDebug() << "target" << target;
+            get<1>(state)();
+            return;
         }
-        return;
     }
     if (event->key() == Qt::Key_W)
     {
         is_zoom_out ^= 1;
-        return;
-    }
-    if (event->key() == Qt::Key_A)
-    {
-        display_ui ^= 1;
         return;
     }
     if (event->key() == Qt::Key_Space)

@@ -11,6 +11,7 @@
 
 #include <random>
 #include <array>
+#include <unordered_map>
 
 class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
 {
@@ -18,7 +19,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
     public:
         using VoidCallback = std::function<void(void)>;
         using ButtonState = std::tuple<std::string, VoidCallback>;
-        using ButtonStates = std::vector<ButtonState>;
+        using ButtonStates = std::unordered_map<int, ButtonState>;
 
         using BoolCallback = std::function<void(bool)>;
         using BoolState = std::tuple<std::string, bool, BoolCallback>;
@@ -32,7 +33,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         void setAnimated(const bool value);
         void addSlider(const std::string& label, const float& min, const float& max, const float& value, const FloatCallback& callback);
         void addCheckbox(const std::string& label, const bool& value, const BoolCallback& callback);
-        void addButton(const std::string& label, const VoidCallback& callback);
+        void addButton(const std::string& label, const int key, const VoidCallback& callback);
         void setMuted(const bool muted);
 
     protected:

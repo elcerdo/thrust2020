@@ -61,9 +61,20 @@ int main(int argc, char* argv[])
         view_opengl.is_zoom_out = checked;
     });
 
-    view_opengl.addButton("reset ship", [&state]() -> void { state.resetShip(); });
-    view_opengl.addButton("reset ball", [&state]() -> void { state.resetBall(); });
-    view_opengl.addButton("flop", [&state]() -> void { state.flop(); });
+    view_opengl.addButton("reset ship", Qt::Key_S, [&state]() -> void { state.resetShip(); });
+    view_opengl.addButton("reset ball", Qt::Key_B, [&state]() -> void { state.resetBall(); });
+    view_opengl.addButton("flop", Qt::Key_F, [&state]() -> void { state.flop(); });
+    view_opengl.addButton("adv doors", Qt::Key_T, [&state]() -> void {
+        using std::get;
+        for (auto& door : state.doors)
+        {
+            auto& target = get<2>(door);
+            target ++;
+            target %= get<1>(door).size();
+            qDebug() << "target" << target;
+        }
+        return;
+    });
 
     return app.exec();
 }
