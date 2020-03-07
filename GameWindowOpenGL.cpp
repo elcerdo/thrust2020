@@ -586,36 +586,6 @@ void GameWindowOpenGL::paintGL()
         painter.fillRect(0, 0, width(), height(), linearGrad);
     }
 
-    const auto world_matrix = [this]() -> QMatrix4x4
-    {
-        QMatrix4x4 matrix;
-        const auto ratio = static_cast<double>(width()) / height();
-        const auto norm_width = ratio;
-        const double norm_height = 1;
-        matrix.ortho(-norm_width, norm_width, -norm_height, norm_height, 0, 100);
-        //matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
-
-        matrix.translate(0, 0, -50);
-        matrix.scale(2, 2, 2);
-
-        if (!is_zoom_out)
-        {
-            const auto& pos = state.ship->GetPosition();
-            const auto side = std::min(ratio, 1.);
-            const double ship_height = 75 * std::max(1., pos.y / 40.);
-            matrix.scale(side / ship_height, side / ship_height, 1);
-            matrix.translate(-pos.x, -std::min(20.f, pos.y), 0);
-        }
-        else
-        {
-            const int side = qMin(width(), height());
-            matrix.scale(camera_world_zoom/side, camera_world_zoom/side, camera_world_zoom);
-            matrix.translate(-camera_world_center);
-        }
-
-        return matrix;
-    }();
-
     { // world
         painter.save();
         painter.translate(width() / 2, height() / 2);
@@ -666,7 +636,7 @@ void GameWindowOpenGL::paintGL()
         for (auto& door : state.doors)
             drawBody(painter, std::get<0>(door), Qt::yellow);
 
-        drawParticleSystem(painter, state.system);
+        //drawParticleSystem(painter, state.system);
 
         if (state.joint)
         { // joint line
@@ -687,6 +657,94 @@ void GameWindowOpenGL::paintGL()
         painter.restore();
     }
 
+    const auto world_matrix = [this]() -> QMatrix4x4
+    {
+        QMatrix4x4 matrix;
+        const auto ratio = static_cast<double>(width()) / height();
+        const auto norm_width = ratio;
+        const double norm_height = 1;
+        matrix.ortho(-norm_width, norm_width, -norm_height, norm_height, 0, 100);
+        //matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
+
+        matrix.translate(0, 0, -50);
+        matrix.scale(2, 2, 2);
+
+        if (!is_zoom_out)
+        {
+            const auto& pos = state.ship->GetPosition();
+            const auto side = std::min(ratio, 1.);
+            const double ship_height = 75 * std::max(1., pos.y / 40.);
+            matrix.scale(side / ship_height, side / ship_height, 1);
+            matrix.translate(-pos.x, -std::min(20.f, pos.y), 0);
+        }
+        else
+        {
+            const int side = qMin(width(), height());
+            matrix.scale(camera_world_zoom/side, camera_world_zoom/side, camera_world_zoom);
+            matrix.translate(-camera_world_center);
+        }
+
+        return matrix;
+    }();
+
+
+    { // draw with particle program
+        glBindVertexArray(vao);
+
+        assert(particle_program);
+        particle_program->bind();
+        assert(glGetError() == GL_NO_ERROR);
+
+        glDepthFunc(GL_LESS);
+        glEnable(GL_DEPTH_TEST);
+
+        { // particle system
+            const auto* system = state.system;
+            assert(system);
+
+            const b2Vec2* positions = system->GetPositionBuffer();
+            const b2ParticleColor* colors = system->GetColorBuffer();
+            const auto kk_max = system->GetParticleCount();
+            const auto radius = system->GetRadius();
+
+            particle_program->setUniformValue(particle_radius_unif, radius);
+            particle_program->setUniformValue(particle_mode_unif, shader_selection);
+
+            //            const auto& color = QColor::fromRgb(0x6cu, 0xc3u, 0xf6u, 0xffu);
+            const auto& color = QColor::fromRgbF(water_color[0], water_color[1], water_color[2], water_color[3]);
+            particle_program->setUniformValue(particle_color_unif, color);
+            particle_program->setUniformValue(particle_mat_unif, world_matrix);
+            assert(glGetError() == GL_NO_ERROR);
+
+            glBindBuffer(GL_ARRAY_BUFFER, vbos[4]);
+            glBufferData(GL_ARRAY_BUFFER, kk_max * 2 * sizeof(GLfloat), positions, GL_DYNAMIC_DRAW);
+            glVertexAttribPointer(particle_pos_attr, 2, GL_FLOAT, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(particle_pos_attr);
+            assert(glGetError() == GL_NO_ERROR);
+
+            static_assert(std::is_same<GLubyte, decltype(b2ParticleColor::r)>::value, "mismatching color types");
+
+            glBindBuffer(GL_ARRAY_BUFFER, vbos[5]);
+            glBufferData(GL_ARRAY_BUFFER, kk_max * 4 * sizeof(GLubyte), colors, GL_DYNAMIC_DRAW);
+            glVertexAttribPointer(particle_col_attr, 4,  GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(particle_col_attr);
+            assert(glGetError() == GL_NO_ERROR);
+
+            glDrawArrays(GL_POINTS, 0, kk_max);
+            assert(glGetError() == GL_NO_ERROR);
+
+            //glDisableVertexAttribArray(particle_col_attr);
+            glDisableVertexAttribArray(particle_pos_attr);
+            assert(glGetError() == GL_NO_ERROR);
+        }
+
+        glDisable(GL_DEPTH_TEST);
+
+        particle_program->release();
+
+        glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
 
 
     { // draw with main program
@@ -767,60 +825,6 @@ void GameWindowOpenGL::paintGL()
         main_program->release();
     }
 
-    { // draw with particle program
-        glBindVertexArray(vao);
-
-        assert(particle_program);
-        particle_program->bind();
-        assert(glGetError() == GL_NO_ERROR);
-
-        glDepthFunc(GL_LESS);
-        glEnable(GL_DEPTH_TEST);
-
-        { // particle system
-            const auto* system = state.system;
-            assert(system);
-
-            const b2Vec2* positions = system->GetPositionBuffer();
-            const b2ParticleColor* colors = system->GetColorBuffer();
-            const auto kk_max = system->GetParticleCount();
-            const auto radius = system->GetRadius();
-
-            particle_program->setUniformValue(particle_radius_unif, radius);
-            particle_program->setUniformValue(particle_mode_unif, shader_selection);
-
-//            const auto& color = QColor::fromRgb(0x6cu, 0xc3u, 0xf6u, 0xffu);
-            const auto& color = QColor::fromRgbF(water_color[0], water_color[1], water_color[2], water_color[3]);
-            particle_program->setUniformValue(particle_color_unif, color);
-            particle_program->setUniformValue(particle_mat_unif, world_matrix);
-            assert(glGetError() == GL_NO_ERROR);
-
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[4]);
-            glBufferData(GL_ARRAY_BUFFER, kk_max * 2 * sizeof(GLfloat), positions, GL_DYNAMIC_DRAW);
-            glVertexAttribPointer(particle_pos_attr, 2, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(particle_pos_attr);
-            assert(glGetError() == GL_NO_ERROR);
-
-            static_assert(std::is_same<GLubyte, decltype(b2ParticleColor::r)>::value, "mismatching color types");
-
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[5]);
-            glBufferData(GL_ARRAY_BUFFER, kk_max * 4 * sizeof(GLubyte), colors, GL_DYNAMIC_DRAW);
-            glVertexAttribPointer(particle_col_attr, 4,  GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(particle_col_attr);
-            assert(glGetError() == GL_NO_ERROR);
-
-            glDrawArrays(GL_POINTS, 0, kk_max);
-            assert(glGetError() == GL_NO_ERROR);
-
-            //glDisableVertexAttribArray(particle_col_attr);
-            glDisableVertexAttribArray(particle_pos_attr);
-            assert(glGetError() == GL_NO_ERROR);
-        }
-
-        glDisable(GL_DEPTH_TEST);
-
-        particle_program->release();
-    }
 
     { // draw with base program
         glBindVertexArray(vao);
