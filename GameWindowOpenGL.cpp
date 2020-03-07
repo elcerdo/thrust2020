@@ -479,7 +479,7 @@ void GameWindowOpenGL::paintGL()
 
     if (display_ui)
     {
-        ImGui::SetNextWindowSize(ImVec2(350, 400), ImGuiCond_Once);
+        ImGui::SetNextWindowSize(ImVec2(350, 415), ImGuiCond_Once);
         ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiCond_Once);
         //ImGui::SetNextWindowSize(ImVec2(350,400), ImGuiCond_FirstUseEver);
         ImGui::Begin("~.: THRUST :.~", &display_ui, ImGuiWindowFlags_NoBackground);
@@ -516,14 +516,12 @@ void GameWindowOpenGL::paintGL()
         }
 
         ImGui::Separator();
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::Text("Ship position %.2f %.2f", state.ship->GetPosition().x, state.ship->GetPosition().y);
-
-
+        ImGui::Text("application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::Text("ship %.2f %.2f", state.ship->GetPosition().x, state.ship->GetPosition().y);
         if (state.system) ImGui::Text("particles %d", state.system->GetParticleCount());
         ImGui::Text("crates %d", static_cast<int>(state.crates.size()));
         ImGui::Text("contact %d", state.all_accum_contact);
-        if (state.ship_touched_wall) ImGui::Text("!!!!BOOOM!!!!");
+        ImGui::Text(state.ship_touched_wall ? "!!!!BOOOM!!!!" : "<3<3<3<3");
 
         ImGui::End();
     }
