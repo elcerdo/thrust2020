@@ -60,6 +60,7 @@ GameState::GameState() :
 
         };
 
+        cout << "========== map loading" << endl;
         const auto polys_to_colors = polygons::extract(":map.svg");
         const polygons::Color foreground_color { 0, 1, 0, 1};
 
@@ -75,16 +76,22 @@ GameState::GameState() :
             return poly_;
         };
 
+        cout << "foreground";
+        cout.flush();
         for (const auto& poly_color : std::get<1>(polys_to_colors))
         {
             if (!polygons::isForeground(poly_color.second))
                 continue;
 
             const auto subpolys = polygons::decompose(polygons::ensure_cw(poly_color.first), 1e-5);
-            cout << "foreground subpolys " << subpolys.size() << endl;
+
+            cout << " " << subpolys.size();
+            cout.flush();
+
             for (const auto& subpoly : subpolys)
                 push_fixture(foreground_transform(subpoly));
         }
+        cout << endl;
 
         ground = body;
     }
@@ -137,18 +144,21 @@ GameState::GameState() :
     addDoor({ 15, -230 }, {1, 10}, {20, 0});
     addDoor({ -86, -65 }, {1, 10}, {-8, -15});
 
-
     const auto dump_filter_data = [](const b2Body& body) -> void
     {
-        for (auto fixture=body.GetFixtureList(); fixture; fixture = fixture->GetNext())
+        size_t count = 5;
+        for (auto fixture=body.GetFixtureList(); fixture && count; fixture = fixture->GetNext())
         {
             const auto& filter = fixture->GetFilterData();
             const std::bitset<8> category_bits(filter.categoryBits);
             const std::bitset<8> mask_bits(filter.maskBits);
             cout << "  " << category_bits.to_string() << " " << mask_bits.to_string() << endl;
+            count--;
         }
+        if (!count) cout << "  ...." << endl;
     };
 
+    cout << "========== category & collision mask" << endl;
     cout << "ground" << endl;
     dump_filter_data(*ground);
 

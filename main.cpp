@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
     view_opengl.addCheckbox("draw debug", Qt::Key_D, false, [&view_opengl](const bool checked) -> void {
         const auto before = view_opengl.draw_debug;
         view_opengl.draw_debug = checked;
-        qDebug() << "draw debug" << before << checked << &view_opengl << view_opengl.draw_debug;
+        qDebug() << "draw debug" << checked;
     });
     view_opengl.addCheckbox("mute sfx", Qt::Key_M, true, [&view_opengl](const bool checked) -> void {
         view_opengl.setMuted(checked);

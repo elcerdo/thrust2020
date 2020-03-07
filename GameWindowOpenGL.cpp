@@ -17,6 +17,7 @@
 #include <random>
 #include <iostream>
 #include <sstream>
+#include <unordered_set>
 
 const float camera_world_zoom = 1.5;
 const QVector2D camera_world_center { 0, -120 };
@@ -84,6 +85,7 @@ void GameWindowOpenGL::setAnimated(const bool value)
 
 std::unique_ptr<QOpenGLShaderProgram> GameWindowOpenGL::loadAndCompileProgram(const QString& vertex_filename, const QString& fragment_filename, const QString& geometry_filename)
 {
+    qDebug() << "========== shader";
     auto program = std::make_unique<QOpenGLShaderProgram>();
 
     const auto load_shader = [&program, &vertex_filename](const QOpenGLShader::ShaderType type, const QString& filename) -> bool
@@ -126,7 +128,7 @@ void GameWindowOpenGL::initializeGL()
     assert(context);
     context->makeCurrent(this);
     */
-    qDebug() << "currentContext" << QOpenGLContext::currentContext();
+    qDebug() << "currentVersion" << QOpenGLContext::currentContext()->format().version();
 
     initializeOpenGLFunctions();
     QtImGui::initialize(this);
@@ -187,34 +189,41 @@ void GameWindowOpenGL::initializeGL()
         using std::endl;
 
         glGenVertexArrays(1, &vao);
-        qDebug() << "vao" << vao;
+        qDebug() << "========== vao" << vao;
         glBindVertexArray(vao);
 
         glGenBuffers(vbos.size(), vbos.data());
-        cout << "vbos";
-        for (const auto& vbo : vbos) cout << " " << vbo;
-        cout << endl;
+        std::unordered_set<size_t> reserved_vbos;
 
-        const auto load_buffer3 = [this](const size_t kk, const std::vector<b2Vec3>& vertices) -> void
+        const auto is_available = [this, &reserved_vbos](const size_t kk) -> bool
         {
-            assert(vbos.size() > kk);
+            if (kk >= vbos.size()) return false;
+            if (reserved_vbos.find(kk) != std::cend(reserved_vbos)) return false;
+            return true;
+        };
+
+        const auto load_buffer3 = [this, &reserved_vbos, &is_available](const size_t kk, const std::vector<b2Vec3>& vertices) -> void
+        {
+            assert(is_available(kk));
             glBindBuffer(GL_ARRAY_BUFFER, vbos[kk]);
             glBufferData(GL_ARRAY_BUFFER, vertices.size() * 3 * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
+            reserved_vbos.emplace(kk);
         };
 
-        const auto load_buffer4 = [this](const size_t kk, const std::vector<b2Vec4>& vertices) -> void
+        const auto load_buffer4 = [this, &reserved_vbos, &is_available](const size_t kk, const std::vector<b2Vec4>& vertices) -> void
         {
-            assert(vbos.size() > kk);
+            assert(is_available(kk));
             glBindBuffer(GL_ARRAY_BUFFER, vbos[kk]);
             glBufferData(GL_ARRAY_BUFFER, vertices.size() * 4 * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
+            reserved_vbos.emplace(kk);
         };
 
-        const auto load_indices = [this](const size_t kk, const std::vector<GLuint>& indices) -> void
+        const auto load_indices = [this, &reserved_vbos, &is_available](const size_t kk, const std::vector<GLuint>& indices) -> void
         {
-            assert(vbos.size() > kk);
+            assert(is_available(kk));
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[kk]);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
-
+            reserved_vbos.emplace(kk);
         };
 
         // ship
@@ -261,6 +270,15 @@ void GameWindowOpenGL::initializeGL()
         }
 
         // buffers 4 & 5 are free
+
+        cout << "vbos";
+        size_t kk = 0;
+        for (const auto& vbo : vbos)
+        {
+            cout << " " << vbo;
+            if (reserved_vbos.find(kk++) != std::cend(reserved_vbos)) cout << "*";
+        }
+        cout << endl;
     }
 
 }
