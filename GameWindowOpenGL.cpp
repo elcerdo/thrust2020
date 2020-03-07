@@ -265,16 +265,25 @@ void GameWindowOpenGL::initializeGL()
 
 }
 
+bool GameWindowOpenGL::isKeyFree(const int key) const
+{
+    if (key == Qt::Key_A) return false;
+    if (button_states.find(key) != std::cend(button_states)) return false;
+    if (checkbox_states.find(key) != std::cend(checkbox_states)) return false;
+    return true;
+}
+
 void GameWindowOpenGL::addButton(const std::string& label, const int key, const VoidCallback& callback)
 {
-    assert(button_states.find(key) == std::cend(button_states));
+    assert(isKeyFree(key));
     button_states.emplace(key, ButtonState { label, callback });
 }
 
-void GameWindowOpenGL::addCheckbox(const std::string& label, const bool& value, const BoolCallback& callback)
+void GameWindowOpenGL::addCheckbox(const std::string& label, const int key, const bool& value, const BoolCallback& callback)
 {
+    assert(isKeyFree(key));
     auto state = std::make_tuple(label, value, callback);
-    bool_states.emplace_back(state);
+    checkbox_states.emplace(key, state);
     std::get<2>(state)(std::get<1>(state));
 }
 
@@ -468,8 +477,6 @@ void GameWindowOpenGL::paintGL()
 
     QtImGui::newFrame();
 
-
-
     if (display_ui)
     {
         ImGui::SetNextWindowSize(ImVec2(350, 400), ImGuiCond_Once);
@@ -484,19 +491,24 @@ void GameWindowOpenGL::paintGL()
             if (prev != std::get<3>(state)) std::get<4>(state)(std::get<3>(state));
         }
 
-        for (auto& state : bool_states)
+        for (auto& pair : checkbox_states)
         {
+            using std::get;
+            auto& state = pair.second;
             const auto prev = std::get<1>(state);
-            ImGui::Checkbox(std::get<0>(state).c_str(), &std::get<1>(state));
+            const std::string key_name = QKeySequence(pair.first).toString().toStdString();
+            std::stringstream ss;
+            ss << get<0>(state) << " (" << key_name << ")";
+            ImGui::Checkbox(ss.str().c_str(), &std::get<1>(state));
             if (prev != std::get<1>(state)) std::get<2>(state)(std::get<1>(state));
         }
 
-        for (auto& pair : button_states)
+        for (const auto& pair : button_states)
         {
             using std::get;
-            std::stringstream ss;
-            ButtonState& state = pair.second;
+            const ButtonState& state = pair.second;
             const std::string key_name = QKeySequence(pair.first).toString().toStdString();
+            std::stringstream ss;
             ss << get<0>(state) << " (" << key_name << ")";
             if (ImGui::Button(ss.str().c_str()))
                 get<1>(state)();
@@ -859,21 +871,26 @@ void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
         display_ui ^= 1;
         return;
     }
-    for (auto& pair : button_states)
+    for (auto& pair : checkbox_states)
     {
         using std::get;
-        std::stringstream ss;
-        ButtonState& state = pair.second;
+        auto& state = pair.second;
+        if (event->key() == pair.first)
+        {
+            get<1>(state) ^= 1;
+            get<2>(state)(get<1>(state));
+            return;
+        }
+    }
+    for (const auto& pair : button_states)
+    {
+        using std::get;
+        const auto& state = pair.second;
         if (event->key() == pair.first)
         {
             get<1>(state)();
             return;
         }
-    }
-    if (event->key() == Qt::Key_W)
-    {
-        is_zoom_out ^= 1;
-        return;
     }
     if (event->key() == Qt::Key_Space)
     {
@@ -881,21 +898,7 @@ void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
         else if (state.canGrab()) state.grab();
         return;
     }
-    if (event->key() == Qt::Key_Z)
-    {
-        std::uniform_real_distribution<double> dist_angle(0, 2 * M_PI);
-        const auto angle = dist_angle(rng);
 
-        std::normal_distribution<double> dist_normal(0, 10);
-        const b2Vec2 velocity(dist_normal(rng), dist_normal(rng));
-        state.addCrate({ 0, 10 }, velocity, angle);
-        return;
-    }
-    if (event->key() == Qt::Key_E)
-    {
-        state.flop();
-        return;
-    }
     if (event->key() == Qt::Key_Up)
     {
         engine_sfx.setMuted(is_muted);

@@ -42,29 +42,25 @@ int main(int argc, char* argv[])
         state.system->SetDamping(1 - value);
     });
 
-    view_opengl.addCheckbox("gravity", true, [&state](const bool checked) -> void {
+    view_opengl.addCheckbox("gravity", Qt::Key_G, true, [&state](const bool checked) -> void {
         qDebug() << "gravity" << checked;
         state.world.SetGravity(checked ? b2Vec2 { 0, -10 } : b2Vec2 {0, 0});
     });
-
-    view_opengl.addCheckbox("draw debug", false, [&view_opengl](const bool checked) -> void {
+    view_opengl.addCheckbox("draw debug", Qt::Key_D, false, [&view_opengl](const bool checked) -> void {
         const auto before = view_opengl.draw_debug;
         view_opengl.draw_debug = checked;
         qDebug() << "draw debug" << before << checked << &view_opengl << view_opengl.draw_debug;
     });
-
-    view_opengl.addCheckbox("mute sfx", true, [&view_opengl](const bool checked) -> void {
+    view_opengl.addCheckbox("mute sfx", Qt::Key_M, true, [&view_opengl](const bool checked) -> void {
         view_opengl.setMuted(checked);
     });
-
-    view_opengl.addCheckbox("world view", false, [&view_opengl](const bool checked) -> void {
+    view_opengl.addCheckbox("world view", Qt::Key_W, false, [&view_opengl](const bool checked) -> void {
         view_opengl.is_zoom_out = checked;
     });
 
     view_opengl.addButton("reset ship", Qt::Key_S, [&state]() -> void { state.resetShip(); });
     view_opengl.addButton("reset ball", Qt::Key_B, [&state]() -> void { state.resetBall(); });
-    view_opengl.addButton("flop", Qt::Key_F, [&state]() -> void { state.flop(); });
-    view_opengl.addButton("adv doors", Qt::Key_T, [&state]() -> void {
+    view_opengl.addButton("tog doors", Qt::Key_T, [&state]() -> void {
         using std::get;
         for (auto& door : state.doors)
         {
@@ -73,6 +69,16 @@ int main(int argc, char* argv[])
             target %= get<1>(door).size();
             qDebug() << "target" << target;
         }
+        return;
+    });
+    view_opengl.addButton("flop", Qt::Key_E, [&state]() -> void { state.flop(); });
+    std::default_random_engine rng;
+    view_opengl.addButton("prout", Qt::Key_Z, [&state, &rng]() -> void {
+        std::uniform_real_distribution<double> dist_angle(0, 2 * M_PI);
+        const auto angle = dist_angle(rng);
+        std::normal_distribution<double> dist_normal(0, 10);
+        const b2Vec2 velocity(dist_normal(rng), dist_normal(rng));
+        state.addCrate({ 0, 10 }, velocity, angle);
         return;
     });
 
