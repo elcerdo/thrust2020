@@ -134,6 +134,18 @@ void GameWindowOpenGL::initializeGL()
     QtImGui::initialize(this);
     assert(glGetError() == GL_NO_ERROR);
 
+    {
+        assert(!base_program);
+        base_program = loadAndCompileProgram(":base_vertex.glsl", ":base_fragment.glsl");
+
+        assert(base_program);
+        base_pos_attr = base_program->attributeLocation("posAttr");
+        base_mat_unif = base_program->uniformLocation("matrix");
+        qDebug() << "base_locations" << base_pos_attr << base_mat_unif;
+        assert(base_pos_attr >= 0);
+        assert(base_mat_unif >= 0);
+        assert(glGetError() == GL_NO_ERROR);
+    }
 
     {
         assert(!main_program);
@@ -151,15 +163,17 @@ void GameWindowOpenGL::initializeGL()
     }
 
     {
-        assert(!base_program);
-        base_program = loadAndCompileProgram(":base_vertex.glsl", ":base_fragment.glsl");
+        assert(!ball_program);
+        ball_program = loadAndCompileProgram(":ball_vertex.glsl", ":ball_fragment.glsl");
 
-        assert(base_program);
-        base_pos_attr = base_program->attributeLocation("posAttr");
-        base_mat_unif = base_program->uniformLocation("matrix");
-        qDebug() << "base_locations" << base_pos_attr << base_mat_unif;
-        assert(base_pos_attr >= 0);
-        assert(base_mat_unif >= 0);
+        assert(ball_program);
+        ball_pos_attr = ball_program->attributeLocation("posAttr");
+        ball_mat_unif = ball_program->uniformLocation("matrix");
+        ball_angular_speed_unif = ball_program->uniformLocation("circularSpeed");
+        qDebug() << "ball_locations" << ball_pos_attr << ball_mat_unif << ball_angular_speed_unif;
+        assert(ball_pos_attr >= 0);
+        assert(ball_mat_unif >= 0);
+        assert(ball_angular_speed_unif >= 0);
         assert(glGetError() == GL_NO_ERROR);
     }
 
@@ -649,9 +663,13 @@ void GameWindowOpenGL::paintGL()
             painter.restore();
         }
 
-        assert(state.ball);
-        const bool is_fast = state.ball->GetLinearVelocity().Length() > 30;
-        drawBody(painter, state.ball, is_fast ? QColor(0xfd, 0xa0, 0x85) : Qt::black);
+        if (draw_debug)
+        {
+            assert(state.ball);
+            const bool is_fast = state.ball->GetLinearVelocity().Length() > 30;
+            drawBody(painter, state.ball, is_fast ? QColor(0xfd, 0xa0, 0x85) : Qt::black);
+        }
+
         drawShip(painter);
 
         painter.restore();
@@ -687,6 +705,48 @@ void GameWindowOpenGL::paintGL()
         return matrix;
     }();
 
+    { // draw with base program
+        glBindVertexArray(vao);
+
+        assert(base_program);
+        base_program->bind();
+        assert(glGetError() == GL_NO_ERROR);
+
+        glDepthFunc(GL_LESS);
+        glEnable(GL_DEPTH_TEST);
+
+        const auto blit_cube = [this]() -> void
+        {
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[7]);
+            assert(glGetError() == GL_NO_ERROR);
+
+            glBindBuffer(GL_ARRAY_BUFFER, vbos[6]);
+            glVertexAttribPointer(base_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(base_pos_attr);
+            assert(glGetError() == GL_NO_ERROR);
+
+            //glEnable(GL_CULL_FACE);
+            glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
+            glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(8 * sizeof(unsigned int)));
+            //glDisable(GL_CULL_FACE);
+            assert(glGetError() == GL_NO_ERROR);
+
+            glDisableVertexAttribArray(base_pos_attr);
+            assert(glGetError() == GL_NO_ERROR);
+        };
+
+        {
+            auto matrix = world_matrix;
+            matrix.translate(0, 10);
+            matrix.scale(3, 3, 3);
+            matrix.rotate(frame_counter, 1, 1, 1);
+            base_program->setUniformValue(base_mat_unif, matrix);
+
+            blit_cube();
+        }
+
+        base_program->release();
+    }
 
     { // draw with particle program
         glBindVertexArray(vao);
@@ -745,7 +805,6 @@ void GameWindowOpenGL::paintGL()
         glBindVertexArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
-
 
     { // draw with main program
         glBindVertexArray(vao);
@@ -825,50 +884,54 @@ void GameWindowOpenGL::paintGL()
         main_program->release();
     }
 
-
-    { // draw with base program
+    { // draw with ball program
         glBindVertexArray(vao);
 
-        assert(base_program);
-        base_program->bind();
+        assert(ball_program);
+        ball_program->bind();
         assert(glGetError() == GL_NO_ERROR);
 
         glDepthFunc(GL_LESS);
         glEnable(GL_DEPTH_TEST);
 
-        const auto blit_cube = [this]() -> void
+        const auto blit_square = [this]() -> void
         {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[7]);
+            glBindBuffer(GL_ARRAY_BUFFER, vbos[2]);
+            glVertexAttribPointer(main_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(main_pos_attr);
             assert(glGetError() == GL_NO_ERROR);
 
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[6]);
-            glVertexAttribPointer(base_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(base_pos_attr);
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
             assert(glGetError() == GL_NO_ERROR);
 
-
-            //glEnable(GL_CULL_FACE);
-            glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
-            glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(8 * sizeof(unsigned int)));
-            //glDisable(GL_CULL_FACE);
-            assert(glGetError() == GL_NO_ERROR);
-
-            glDisableVertexAttribArray(base_pos_attr);
+            glDisableVertexAttribArray(main_pos_attr);
             assert(glGetError() == GL_NO_ERROR);
         };
 
         {
-            auto matrix = world_matrix;
-            matrix.translate(0, 10);
-            matrix.scale(3, 3, 3);
-            matrix.rotate(frame_counter, 1, 1, 1);
-            base_program->setUniformValue(base_mat_unif, matrix);
+            assert(state.ball);
+            assert(state.ball->GetFixtureList());
+            assert(state.ball->GetFixtureList()->GetShape());
+            const auto& shape = static_cast<const b2CircleShape&>(*state.ball->GetFixtureList()->GetShape());
 
-            blit_cube();
+            auto matrix = world_matrix;
+            const auto& pos = state.ball->GetWorldCenter();
+            const auto& angle = state.ball->GetAngle();
+            matrix.translate(pos.x, pos.y);
+            matrix.rotate(qRadiansToDegrees(angle), 0, 0, 1);
+            matrix.scale(shape.m_radius, shape.m_radius, shape.m_radius);
+            //matrix.rotate(frame_counter, 1, 1, 1);
+            ball_program->setUniformValue(ball_mat_unif, matrix);
+            
+            const auto& angular_speed = state.ball->GetAngularVelocity();
+            ball_program->setUniformValue(ball_angular_speed_unif, angular_speed);
+
+            blit_square();
         }
 
-        base_program->release();
+        ball_program->release();
     }
+
 
     { // sfx
         if (state.ship_accum_contact > 0)

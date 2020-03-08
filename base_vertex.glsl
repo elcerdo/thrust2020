@@ -2,13 +2,13 @@
 
 in highp vec4 posAttr;
 
-out lowp vec4 col;
+out lowp vec4 pos;
 
 uniform highp mat4 matrix;
 
 void main()
 {
-   col = posAttr;
+   pos = posAttr;
    gl_Position = matrix * posAttr;
 }
 

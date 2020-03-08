@@ -79,14 +79,19 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
 
         bool is_muted = false;
 
+        std::unique_ptr<QOpenGLShaderProgram> base_program = nullptr;
+        int base_pos_attr = -1;
+        int base_mat_unif = -1;
+
         std::unique_ptr<QOpenGLShaderProgram> main_program = nullptr;
         int main_pos_attr = -1;
         int main_col_attr = -1;
         int main_mat_unif = -1;
 
-        std::unique_ptr<QOpenGLShaderProgram> base_program = nullptr;
-        int base_pos_attr = -1;
-        int base_mat_unif = -1;
+        std::unique_ptr<QOpenGLShaderProgram> ball_program = nullptr;
+        int ball_pos_attr = -1;
+        int ball_mat_unif = -1;
+        int ball_angular_speed_unif = -1;
 
         std::unique_ptr<QOpenGLShaderProgram> particle_program = nullptr;
         int particle_pos_attr = -1;

@@ -234,7 +234,8 @@ void GameState::resetShip()
     b2BodyDef def;
     def.type = b2_dynamicBody;
     def.position.Set(0, 0);
-    def.angle = M_PI / 4 - 2e-2;
+    def.angularVelocity = 0;
+    def.angle = 0;
 
     constexpr float ww = 1.8;
     b2PolygonShape shape;
@@ -256,6 +257,9 @@ void GameState::resetShip()
     auto body = world.CreateBody(&def);
     body->CreateFixture(&fixture);
     ship = body;
+
+    ship_target_angle = 0;
+    ship_touched_wall = false;
 }
 
 void GameState::flop()
