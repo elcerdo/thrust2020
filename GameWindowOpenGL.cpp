@@ -300,6 +300,7 @@ void GameWindowOpenGL::initializeGL()
 bool GameWindowOpenGL::isKeyFree(const int key) const
 {
     if (key == Qt::Key_A) return false;
+    if (key == Qt::Key_Q) return false;
     if (button_states.find(key) != std::cend(button_states)) return false;
     if (checkbox_states.find(key) != std::cend(checkbox_states)) return false;
     return true;
@@ -558,7 +559,6 @@ void GameWindowOpenGL::paintGL()
         ImGui::End();
     }
 
-
     if (display_ui)
     {
         ImGui::SetNextWindowSize(ImVec2(330,100), ImGuiCond_Always);
@@ -572,8 +572,9 @@ void GameWindowOpenGL::paintGL()
         //if (ImGui::Button("Another Window")) show_another_window ^= 1;
 
         {
-            const char* shader_names[3] = { "AAAA", "BBBB", "CCCC", };
-            ImGui::Combo("shader", &shader_selection, shader_names,IM_ARRAYSIZE(shader_names));
+            const char* shader_names[] = { "grprng + dot", "grprng", "uniform", };
+            shader_selection %= IM_ARRAYSIZE(shader_names);
+            ImGui::Combo("shader", &shader_selection, shader_names, IM_ARRAYSIZE(shader_names));
         }
 
         ImGui::End();
@@ -922,7 +923,7 @@ void GameWindowOpenGL::paintGL()
             matrix.scale(shape.m_radius, shape.m_radius, shape.m_radius);
             //matrix.rotate(frame_counter, 1, 1, 1);
             ball_program->setUniformValue(ball_mat_unif, matrix);
-            
+
             const auto& angular_speed = state.ball->GetAngularVelocity();
             ball_program->setUniformValue(ball_angular_speed_unif, angular_speed);
 
@@ -962,6 +963,11 @@ void GameWindowOpenGL::paintGL()
 
 void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
 {
+    if (event->key() == Qt::Key_Q)
+    {
+        shader_selection++;
+        return;
+    }
     if (event->key() == Qt::Key_A)
     {
         display_ui ^= 1;
