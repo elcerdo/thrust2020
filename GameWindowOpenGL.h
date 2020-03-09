@@ -44,8 +44,8 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         void keyReleaseEvent(QKeyEvent* event) override;
 
         void drawOrigin(QPainter& painter) const;
-        void drawBody(QPainter& painter, const b2Body* body, const QColor& color = Qt::black) const;
-        void drawParticleSystem(QPainter& painter, const b2ParticleSystem* system, const QColor& color = Qt::black) const;
+        void drawBody(QPainter& painter, const b2Body& body, const QColor& color = Qt::black) const;
+        void drawParticleSystem(QPainter& painter, const b2ParticleSystem& system, const QColor& color = Qt::black) const;
         void drawShip(QPainter& painter);
         void drawFlame(QPainter& painter);
 

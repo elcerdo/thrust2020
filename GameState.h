@@ -9,6 +9,7 @@
 #include <memory>
 #include <vector>
 #include <random>
+#include <functional>
 
 struct GameState : public b2ContactListener
 {
@@ -16,25 +17,32 @@ struct GameState : public b2ContactListener
     ~GameState();
 
     void step(const float dt);
+
     bool canGrab() const;
     bool isGrabbed() const;
     void grab();
     void release();
+
     void addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle);
-    void addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 delta);
+    void clearCrates();
+
     void addWater(const b2Vec2 pos, const b2Vec2 size, const size_t seed);
     void clearWater();
+
+    void addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 delta);
     void resetShip();
     void resetBall();
 
     void BeginContact(b2Contact* contact) override;
+
+    using UniqueBody = std::unique_ptr<b2Body, std::function<void(b2Body*)>>;
 
     b2World world;
     b2Body* ground;
     b2Body* ship;
     b2Body* ball;
 
-    std::vector<b2Body*> crates;
+    std::vector<UniqueBody> crates;
     std::vector<std::tuple<b2Body*, std::vector<b2Vec2>, size_t>> doors;
     b2DistanceJoint* joint;
 

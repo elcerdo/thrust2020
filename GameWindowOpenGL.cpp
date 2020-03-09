@@ -341,16 +341,14 @@ void GameWindowOpenGL::drawOrigin(QPainter& painter) const
     painter.restore();
 }
 
-void GameWindowOpenGL::drawParticleSystem(QPainter& painter, const b2ParticleSystem* system, const QColor& color) const
+void GameWindowOpenGL::drawParticleSystem(QPainter& painter, const b2ParticleSystem& system, const QColor& color) const
 {
     if (!draw_debug)
         return;
 
-    assert(system);
-
-    const b2Vec2* positions = system->GetPositionBuffer();
-    const auto kk_max = system->GetParticleCount();
-    const auto radius = system->GetRadius();
+    const b2Vec2* positions = system.GetPositionBuffer();
+    const auto kk_max = system.GetParticleCount();
+    const auto radius = system.GetRadius();
 
     painter.setBrush(color);
     painter.setPen(QPen(Qt::white, 0));
@@ -364,13 +362,11 @@ void GameWindowOpenGL::drawParticleSystem(QPainter& painter, const b2ParticleSys
     }
 }
 
-void GameWindowOpenGL::drawBody(QPainter& painter, const b2Body* body, const QColor& color) const
+void GameWindowOpenGL::drawBody(QPainter& painter, const b2Body& body, const QColor& color) const
 {
-    assert(body);
-
     { // shape and origin
-        const auto& position = body->GetPosition();
-        const auto& angle = body->GetAngle();
+        const auto& position = body.GetPosition();
+        const auto& angle = body.GetAngle();
 
         painter.save();
 
@@ -379,7 +375,7 @@ void GameWindowOpenGL::drawBody(QPainter& painter, const b2Body* body, const QCo
 
         painter.setBrush(color);
         painter.setPen(QPen(Qt::white, 0));
-        const auto* fixture = body->GetFixtureList();
+        const auto* fixture = body.GetFixtureList();
         while (fixture)
         {
             const auto* shape = fixture->GetShape();
@@ -406,9 +402,9 @@ void GameWindowOpenGL::drawBody(QPainter& painter, const b2Body* body, const QCo
 
     if (draw_debug)
     { // center of mass and velocity
-        const auto& world_center = body->GetWorldCenter();
-        const auto& linear_velocity = body->GetLinearVelocityFromWorldPoint(world_center);
-        const auto& is_awake = body->IsAwake();
+        const auto& world_center = body.GetWorldCenter();
+        const auto& linear_velocity = body.GetLinearVelocityFromWorldPoint(world_center);
+        const auto& is_awake = body.IsAwake();
 
         painter.save();
 
@@ -465,13 +461,13 @@ void GameWindowOpenGL::drawFlame(QPainter& painter)
 
 void GameWindowOpenGL::drawShip(QPainter& painter)
 {
-    const auto* body = state.ship;
+    const auto body = state.ship;
     assert(body);
 
     if (state.ship_firing) drawFlame(painter);
 
     if (draw_debug)
-        drawBody(painter, body, Qt::black);
+        drawBody(painter, *body, Qt::black);
 
     if (state.canGrab() && frame_counter % 2 == 0)
     {
@@ -673,13 +669,13 @@ void GameWindowOpenGL::paintGL()
 
         drawOrigin(painter);
         if (draw_debug)
-            drawBody(painter, state.ground);
+            drawBody(painter, *state.ground);
 
         for (auto& crate : state.crates)
-            drawBody(painter, crate);
+            drawBody(painter, *crate);
 
         for (auto& door : state.doors)
-            drawBody(painter, std::get<0>(door), Qt::yellow);
+            drawBody(painter, *std::get<0>(door), Qt::yellow);
 
         //drawParticleSystem(painter, state.system);
 
@@ -698,7 +694,7 @@ void GameWindowOpenGL::paintGL()
         {
             assert(state.ball);
             const bool is_fast = state.ball->GetLinearVelocity().Length() > 30;
-            drawBody(painter, state.ball, is_fast ? QColor(0xfd, 0xa0, 0x85) : Qt::black);
+            drawBody(painter, *state.ball, is_fast ? QColor(0xfd, 0xa0, 0x85) : Qt::black);
         }
 
         drawShip(painter);

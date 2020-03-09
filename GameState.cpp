@@ -433,7 +433,6 @@ void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 delta)
 
     const auto origin = door->GetWorldCenter();
     doors.push_back({ door, { origin, origin + delta }, 0 });
-
 }
 
 void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle)
@@ -465,14 +464,18 @@ void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double a
     crate->CreateFixture(&fixture);
     crate->SetLinearVelocity(velocity);
 
-    crates.push_back(crate);
+    auto foo = UniqueBody(crate, [this](b2Body* body) -> void { world.DestroyBody(body); });
+    crates.emplace_back(std::move(foo));
 }
 
+void GameState::clearCrates()
+{
+    crates.clear();
+}
 
 GameState::~GameState()
 {
     world.SetContactListener(nullptr);
     //world.DestroyBody(ship);
     //world.DestroyBody(ground);
-    //if (joint) world.DestroyJoint(joint);
 }
