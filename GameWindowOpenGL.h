@@ -36,6 +36,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         void addButton(const std::string& label, const int key, const VoidCallback& callback);
         void setMuted(const bool muted);
         bool isKeyFree(const int key) const;
+				void loadBackground(const std::string& map_filename);
 
     protected:
         void initializeGL() override;

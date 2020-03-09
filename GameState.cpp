@@ -19,7 +19,7 @@ constexpr uint16 ground_category = 1 << 0;
 constexpr uint16 object_category = 1 << 1;
 constexpr uint16 door_category = 1 << 2;
 
-GameState::GameState(const std::string& map_filename) :
+GameState::GameState() :
     world(b2Vec2(0, -8)),
     ground(nullptr),
     ship(nullptr),
@@ -35,66 +35,9 @@ GameState::GameState(const std::string& map_filename) :
     all_accum_contact(0),
     all_energy(0)
 {
-    { // ground
-        b2BodyDef def;
-        def.type = b2_staticBody;
-        def.position.Set(0, 0);
-        auto body = world.CreateBody(&def);
-
-        const auto push_fixture = [&body](const polygons::Poly& poly)
-        {
-            b2PolygonShape shape;
-            shape.Set(poly.data(), poly.size());
-
-            b2FixtureDef fixture;
-            fixture.shape = &shape;
-            fixture.density = 0;
-            fixture.friction = .9;
-            fixture.filter.categoryBits = ground_category;
-            fixture.filter.maskBits = object_category | door_category;
-
-            body->CreateFixture(&fixture);
-
-        };
-
-        cout << "========== svg map loading" << endl;
-        const auto polys_to_colors = polygons::extract(map_filename);
-        const polygons::Color foreground_color { 0, 1, 0, 1};
-
-        const auto foreground_transform = [](const polygons::Poly& poly) -> polygons::Poly
-        {
-            polygons::Poly poly_;
-            poly_.reserve(poly.size());
-            for (const auto& point : poly)
-            {
-                const b2Vec2 point_ { point.x - .5f , .25f - point.y };
-                poly_.emplace_back(600 * point_);
-            }
-            return poly_;
-        };
-
-        cout << "foreground";
-        cout.flush();
-        for (const auto& poly_color : std::get<1>(polys_to_colors))
-        {
-            if (!polygons::isForeground(poly_color.second))
-                continue;
-
-            const auto subpolys = polygons::decompose(polygons::ensure_cw(poly_color.first), 1e-5);
-
-            cout << " " << subpolys.size();
-            cout.flush();
-
-            for (const auto& subpoly : subpolys)
-                push_fixture(foreground_transform(subpoly));
-        }
-        cout << endl;
-
-        ground = UniqueBody(body, [this](b2Body* body) -> void { world.DestroyBody(body); });
-    }
-
     resetShip();
     resetBall();
+    resetParticleSystem();
 
     /*
     { // crate tower
@@ -110,40 +53,95 @@ GameState::GameState(const std::string& map_filename) :
     }
     */
 
-    { // particle system
-        //const uint32 particle_type = b2_powderParticle;
-
-        b2ParticleSystemDef system_def;
-        system_def.density = 5e-2;
-        system_def.radius = .5; // FIXME 1.2;
-        //system_def.elasticStrength = 1;
-        system_def.surfaceTensionPressureStrength = .4;
-        system_def.surfaceTensionNormalStrength = .4;
-        auto system_ = world.CreateParticleSystem(&system_def);
-
-        system = UniqueSystem(system_, [this](b2ParticleSystem* system_) -> void { world.DestroyParticleSystem(system_); });
-
-        /*
-        b2PolygonShape shape;
-        shape.SetAsBox(4, 22);
-
-        b2ParticleGroupDef group_def;
-        group_def.shape = &shape;
-        //group_def.flags = b2_powderParticle;
-        //group_def.flags = b2_elasticParticle;
-        group_def.groupFlags = b2_rigidParticleGroup | b2_solidParticleGroup;
-        //group_def.groupFlags = b2_solidParticleGroup;
-        group_def.position.Set(-15, 30);
-        group_def.color.Set(0, 0xffu, 0xffu, 127u);
-        system->CreateParticleGroup(group_def);
-        */
-    }
-
-    addDoor({ 115, -170 }, {1, 10}, {0, -20});
-    addDoor({ 15, -230 }, {1, 10}, {20, 0});
-    addDoor({ -86, -65 }, {1, 10}, {-8, -15});
 
     world.SetContactListener(this);
+}
+
+void GameState::resetGround(const std::string& map_filename)
+{
+    b2BodyDef def;
+    def.type = b2_staticBody;
+    def.position.Set(0, 0);
+    auto body = world.CreateBody(&def);
+
+    const auto push_fixture = [&body](const polygons::Poly& poly)
+    {
+        b2PolygonShape shape;
+        shape.Set(poly.data(), poly.size());
+
+        b2FixtureDef fixture;
+        fixture.shape = &shape;
+        fixture.density = 0;
+        fixture.friction = .9;
+        fixture.filter.categoryBits = ground_category;
+        fixture.filter.maskBits = object_category | door_category;
+
+        body->CreateFixture(&fixture);
+
+    };
+
+    cout << "========== svg map loading" << endl;
+    const auto polys_to_colors = polygons::extract(map_filename);
+    const polygons::Color foreground_color { 0, 1, 0, 1};
+
+    const auto foreground_transform = [](const polygons::Poly& poly) -> polygons::Poly
+    {
+        polygons::Poly poly_;
+        poly_.reserve(poly.size());
+        for (const auto& point : poly)
+        {
+            const b2Vec2 point_ { point.x - .5f , .25f - point.y };
+            poly_.emplace_back(600 * point_);
+        }
+        return poly_;
+    };
+
+    cout << "foreground";
+    cout.flush();
+    for (const auto& poly_color : std::get<1>(polys_to_colors))
+    {
+        if (!polygons::isForeground(poly_color.second))
+            continue;
+
+        const auto subpolys = polygons::decompose(polygons::ensure_cw(poly_color.first), 1e-5);
+
+        cout << " " << subpolys.size();
+        cout.flush();
+
+        for (const auto& subpoly : subpolys)
+            push_fixture(foreground_transform(subpoly));
+    }
+    cout << endl;
+
+    ground = UniqueBody(body, [this](b2Body* body) -> void { world.DestroyBody(body); });
+}
+
+void GameState::resetParticleSystem()
+{
+    b2ParticleSystemDef system_def;
+    system_def.density = 5e-2;
+    system_def.radius = .5;
+    //system_def.elasticStrength = 1;
+    system_def.surfaceTensionPressureStrength = .4;
+    system_def.surfaceTensionNormalStrength = .4;
+    auto system_ = world.CreateParticleSystem(&system_def);
+
+    system = UniqueSystem(system_, [this](b2ParticleSystem* system_) -> void { world.DestroyParticleSystem(system_); });
+
+    /*
+       b2PolygonShape shape;
+       shape.SetAsBox(4, 22);
+
+       b2ParticleGroupDef group_def;
+       group_def.shape = &shape;
+    //group_def.flags = b2_powderParticle;
+    //group_def.flags = b2_elasticParticle;
+    group_def.groupFlags = b2_rigidParticleGroup | b2_solidParticleGroup;
+    //group_def.groupFlags = b2_solidParticleGroup;
+    group_def.position.Set(-15, 30);
+    group_def.color.Set(0, 0xffu, 0xffu, 127u);
+    system->CreateParticleGroup(group_def);
+    */
 }
 
 void GameState::dumpCollisionData() const
@@ -446,6 +444,11 @@ void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 delta)
 
     const auto origin = door->GetWorldCenter();
     doors.emplace_back(std::move(door), std::vector<b2Vec2> { origin, origin + delta }, 0);
+}
+
+void GameState::clearDoors()
+{
+    doors.clear();
 }
 
 void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle)

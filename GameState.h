@@ -13,7 +13,7 @@
 
 struct GameState : public b2ContactListener
 {
-    explicit GameState(const std::string& map_filename);
+    GameState();
     ~GameState();
 
     void step(const float dt);
@@ -31,8 +31,12 @@ struct GameState : public b2ContactListener
     void clearWater();
 
     void addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 delta);
+    void clearDoors();
+
     void resetShip();
     void resetBall();
+    void resetParticleSystem();
+    void resetGround(const std::string& map_filename);
 
     void BeginContact(b2Contact* contact) override;
 

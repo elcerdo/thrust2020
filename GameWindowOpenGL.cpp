@@ -58,13 +58,15 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
         sfx.stop();
     }*/
 
-    {
-        auto& renderer = map_renderer;
-        const auto load_ok = renderer.load(QString(":map.svg"));
-        //qDebug() << "renderer" << renderer.isValid() << load_ok;
-        assert(renderer.isValid());
-        assert(load_ok);
-    }
+}
+
+void GameWindowOpenGL::loadBackground(const std::string& map_filename)
+{
+    auto& renderer = map_renderer;
+    const auto load_ok = renderer.load(QString::fromStdString(map_filename));
+    //qDebug() << "renderer" << renderer.isValid() << load_ok;
+    assert(renderer.isValid());
+    assert(load_ok);
 }
 
 void GameWindowOpenGL::setMuted(const bool muted)
