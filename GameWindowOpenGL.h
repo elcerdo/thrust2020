@@ -18,7 +18,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
     Q_OBJECT
     public:
         using VoidCallback = std::function<void(void)>;
-        using ButtonState = std::tuple<std::string, VoidCallback>;
+        using ButtonState = std::tuple<size_t, std::string, VoidCallback>;
         using ButtonStates = std::unordered_map<int, ButtonState>;
 
         using BoolCallback = std::function<void(bool)>;

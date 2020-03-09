@@ -276,7 +276,7 @@ bool GameWindowOpenGL::isKeyFree(const int key) const
 void GameWindowOpenGL::addButton(const std::string& label, const int key, const VoidCallback& callback)
 {
     assert(isKeyFree(key));
-    button_states.emplace(key, ButtonState { label, callback });
+    button_states.emplace(key, ButtonState { button_states.size(), label, callback });
 }
 
 void GameWindowOpenGL::addCheckbox(const std::string& label, const int key, const bool& value, const BoolCallback& callback)
@@ -479,7 +479,7 @@ void GameWindowOpenGL::paintGL()
 
     if (display_ui)
     {
-        ImGui::SetNextWindowSize(ImVec2(350, 415), ImGuiCond_Once);
+        ImGui::SetNextWindowSize(ImVec2(350, 440), ImGuiCond_Once);
         ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiCond_Once);
         //ImGui::SetNextWindowSize(ImVec2(350,400), ImGuiCond_FirstUseEver);
         ImGui::Begin("~.: THRUST :.~", &display_ui, ImGuiWindowFlags_NoBackground);
@@ -503,16 +503,36 @@ void GameWindowOpenGL::paintGL()
             if (prev != std::get<1>(state)) std::get<2>(state)(std::get<1>(state));
         }
 
-        for (const auto& pair : button_states)
         {
             using std::get;
-            const ButtonState& state = pair.second;
-            const std::string key_name = QKeySequence(pair.first).toString().toStdString();
-            std::stringstream ss;
-            ss << get<0>(state) << " (" << key_name << ")";
-            if (ImGui::Button(ss.str().c_str()))
-                get<1>(state)();
 
+            size_t kk = 0;
+            using Pair = std::tuple<size_t, int>;
+            std::vector<Pair> pairs;
+            for (const auto& pair : button_states)
+                pairs.emplace_back(get<0>(pair.second), pair.first);
+
+            std::sort(std::begin(pairs), std::end(pairs), [](const Pair& aa, const Pair& bb) -> bool {
+                return get<0>(aa) < get<0>(bb);
+            });
+
+
+            for (const auto& pair_ : pairs)
+            {
+                const auto& pair = button_states.find(get<1>(pair_));
+                assert(pair != std::cend(button_states));
+                const auto& state = pair->second;
+                assert(get<1>(pair_) == pair->first);
+                assert(get<0>(pair_) == get<0>(pair->second));
+                const std::string key_name = QKeySequence(pair->first).toString().toStdString();
+                std::stringstream ss;
+                ss << get<1>(state) << " (" << key_name << ")";
+                if (ImGui::Button(ss.str().c_str(), { 163, 19 }))
+                    get<2>(state)();
+
+                if (kk % 2 != 1) ImGui::SameLine();
+                kk++;
+            }
         }
 
         ImGui::Separator();
@@ -625,8 +645,6 @@ void GameWindowOpenGL::paintGL()
 
         painter.restore();
     }
-
-
 
     const auto world_matrix = [this]() -> QMatrix4x4
     {
@@ -886,7 +904,7 @@ void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
         const auto& state = pair.second;
         if (event->key() == pair.first)
         {
-            get<1>(state)();
+            get<2>(state)();
             return;
         }
     }

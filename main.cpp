@@ -59,8 +59,10 @@ int main(int argc, char* argv[])
     });
 
     std::default_random_engine rng;
-    view_opengl.addButton("reset ship", Qt::Key_S, [&state]() -> void { state.resetShip(); });
-    view_opengl.addButton("reset ball", Qt::Key_B, [&state]() -> void { state.resetBall(); });
+    view_opengl.addButton("drop water", Qt::Key_E, [&state, &rng]() -> void {
+        state.addWater({ 0, 70 }, { 10, 10 }, rng());
+    });
+    view_opengl.addButton("clear water", Qt::Key_D, [&state]() -> void { state.clearWater(); });
     view_opengl.addButton("tog doors", Qt::Key_T, [&state]() -> void {
         using std::get;
         for (auto& door : state.doors)
@@ -72,12 +74,6 @@ int main(int argc, char* argv[])
         }
         return;
     });
-    view_opengl.addButton("drop water", Qt::Key_E, [&state, &rng]() -> void {
-        state.addWater({ 0, 70 }, { 10, 10 }, rng());
-    });
-    view_opengl.addButton("clear water", Qt::Key_D, [&state]() -> void {
-        state.clearWater();
-    });
     view_opengl.addButton("drop crate", Qt::Key_Z, [&state, &rng]() -> void {
         std::uniform_real_distribution<double> dist_angle(0, 2 * M_PI);
         const auto angle = dist_angle(rng);
@@ -86,6 +82,8 @@ int main(int argc, char* argv[])
         state.addCrate({ 0, 10 }, velocity, angle);
         return;
     });
+    view_opengl.addButton("reset ship", Qt::Key_S, [&state]() -> void { state.resetShip(); });
+    view_opengl.addButton("reset ball", Qt::Key_B, [&state]() -> void { state.resetBall(); });
 
     return app.exec();
 }
