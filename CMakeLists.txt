@@ -30,12 +30,12 @@ target_include_directories(acd2d
     )
 
 add_executable(test_level
+    load_levels.cpp
     test_level.cpp
     rocket.qrc
     )
 target_link_libraries(test_level
-    Qt5::Widgets
-    Qt5::OpenGL
+    Qt5::Core
     )
 
 
