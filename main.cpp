@@ -72,7 +72,9 @@ int main(int argc, char* argv[])
         }
         return;
     });
-    view_opengl.addButton("drop water", Qt::Key_E, [&state, &rng]() -> void { state.flop(rng()); });
+    view_opengl.addButton("drop water", Qt::Key_E, [&state, &rng]() -> void {
+        state.addWater({ 0, 70 }, { 10, 10 }, rng());
+    });
     view_opengl.addButton("drop crate", Qt::Key_Z, [&state, &rng]() -> void {
         std::uniform_real_distribution<double> dist_angle(0, 2 * M_PI);
         const auto angle = dist_angle(rng);

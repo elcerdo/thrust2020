@@ -247,7 +247,7 @@ void GameState::resetShip()
     ship = body;
 }
 
-void GameState::flop(const size_t seed)
+void GameState::addWater(const b2Vec2 position, const b2Vec2 size, const size_t seed)
 {
     cout << "flop ";
     std::default_random_engine rng(seed);
@@ -262,14 +262,14 @@ void GameState::flop(const size_t seed)
     assert(system);
 
     b2PolygonShape shape;
-    shape.SetAsBox(10, 10);
+    shape.SetAsBox(size.x, size.y);
 
     b2ParticleGroupDef group_def;
     group_def.shape = &shape;
     group_def.flags = b2_tensileParticle | b2_viscousParticle; //b2_powderParticle;
     //group_def.flags = b2_elasticParticle;
     //group_def.groupFlags = b2_solidParticleGroup;
-    group_def.position.Set(0, 70);
+    group_def.position.Set(position.x, position.y);
     group_def.color.Set(rr, gg, bb, 255u);
     system->CreateParticleGroup(group_def);
 }
