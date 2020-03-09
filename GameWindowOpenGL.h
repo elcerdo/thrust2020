@@ -52,8 +52,8 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         std::unique_ptr<QOpenGLShaderProgram> loadAndCompileProgram(const QString& vertex_filename, const QString& fragment_filename, const QString& geometry_filename = QString());
 
     public:
-        GameState state;
-        std::default_random_engine rng;
+        std::unique_ptr<GameState> state = nullptr;
+        std::default_random_engine flame_rng;
         std::array<float, 4> water_color = { 108 / 255., 195 / 255., 246 / 255., 1 };
         bool is_animated = false;
         bool draw_debug = false;

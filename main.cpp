@@ -15,20 +15,22 @@ int main(int argc, char* argv[])
 
     QApplication app(argc, argv);
 
-    GameWindowOpenGL view_opengl;
-    view_opengl.setAnimated(true);
-    view_opengl.resize(1280, 720);
-    view_opengl.show();
+    GameWindowOpenGL view;
+    view.state = std::make_unique<GameState>();
 
-    GameState& state = view_opengl.state;
+    view.setAnimated(true);
+    view.resize(1280, 720);
+    view.show();
 
-    view_opengl.addSlider("thrust", .5, 3, 1.5, [&state](const float value) -> void {
+    view.addSlider("thrust", .5, 3, 1.5, [&view](const float value) -> void {
+        assert(view.state);
         qDebug() << "change thrust" << value;
-        state.ship_thrust_factor = value;
+        view.state->ship_thrust_factor = value;
     });
 
-    view_opengl.addSlider("ball density", .01, .1, .04, [&state](const float value) -> void {
-        const auto& body = state.ball;
+    view.addSlider("ball density", .01, .1, .04, [&view](const float value) -> void {
+        assert(view.state);
+        const auto& body = view.state->ball;
         assert(body);
         const auto fixture = body->GetFixtureList();
         assert(fixture);
@@ -36,45 +38,63 @@ int main(int argc, char* argv[])
         fixture->SetDensity(value);
         body->ResetMassData();
     });
-    view_opengl.addSlider("liquid damping", 0, 1, .5, [&state](const float value) -> void {
-        assert(state.system);
-        state.system->SetDamping(1 - value);
+    view.addSlider("liquid damping", 0, 1, .5, [&view](const float value) -> void {
+        assert(view.state);
+        assert(view.state->system);
+        view.state->system->SetDamping(1 - value);
     });
 
-    view_opengl.addCheckbox("gravity", Qt::Key_G, true, [&state](const bool checked) -> void {
-        qDebug() << "gravity" << checked;
-        state.world.SetGravity(checked ? b2Vec2 { 0, -10 } : b2Vec2 {0, 0});
+    view.addCheckbox("gravity", Qt::Key_G, true, [&view](const bool checked) -> void {
+        assert(view.state);
+        view.state->world.SetGravity(checked ? b2Vec2 { 0, -10 } : b2Vec2 {0, 0});
     });
-    view_opengl.addCheckbox("draw debug", Qt::Key_P, false, [&view_opengl](const bool checked) -> void {
-        view_opengl.draw_debug = checked;
-        qDebug() << "draw debug" << checked;
+    view.addCheckbox("draw debug", Qt::Key_P, false, [&view](const bool checked) -> void {
+        view.draw_debug = checked;
     });
-    view_opengl.addCheckbox("mute sfx", Qt::Key_M, true, [&view_opengl](const bool checked) -> void {
-        view_opengl.setMuted(checked);
+    view.addCheckbox("mute sfx", Qt::Key_M, true, [&view](const bool checked) -> void {
+        view.setMuted(checked);
     });
-    view_opengl.addCheckbox("world view", Qt::Key_W, false, [&view_opengl](const bool checked) -> void {
-        view_opengl.is_zoom_out = checked;
+    view.addCheckbox("world view", Qt::Key_W, false, [&view](const bool checked) -> void {
+        view.is_zoom_out = checked;
     });
 
     std::default_random_engine rng;
-    view_opengl.addButton("drop water", Qt::Key_E, [&state, &rng]() -> void {
-        state.addWater({ 0, 70 }, { 10, 10 }, rng());
+    view.addButton("drop water", Qt::Key_E, [&view, &rng]() -> void {
+        assert(view.state);
+        view.state->addWater({ 0, 70 }, { 10, 10 }, rng());
     });
-    view_opengl.addButton("clear water", Qt::Key_D, [&state]() -> void { state.clearWater(); });
-    view_opengl.addButton("drop crate", Qt::Key_R, [&state, &rng]() -> void {
+    view.addButton("clear water", Qt::Key_D, [&view]() -> void {
+        assert(view.state);
+        view.state->clearWater();
+    });
+    view.addButton("drop crate", Qt::Key_R, [&view, &rng]() -> void {
+        assert(view.state);
         std::uniform_real_distribution<double> dist_angle(0, 2 * M_PI);
         const auto angle = dist_angle(rng);
         std::normal_distribution<double> dist_normal(0, 10);
         const b2Vec2 velocity(dist_normal(rng), dist_normal(rng));
-        state.addCrate({ 0, 10 }, velocity, angle);
+        view.state->addCrate({ 0, 10 }, velocity, angle);
         return;
     });
-    view_opengl.addButton("clear crates", Qt::Key_F, [&state]() -> void { state.clearCrates(); });
-    view_opengl.addButton("reset ship", Qt::Key_S, [&state]() -> void { state.resetShip(); });
-    view_opengl.addButton("reset ball", Qt::Key_B, [&state]() -> void { state.resetBall(); });
-    view_opengl.addButton("toggle doors", Qt::Key_T, [&state]() -> void {
+    view.addButton("clear crates", Qt::Key_F, [&view]() -> void {
+        assert(view.state);
+        view.state->clearCrates();
+    });
+    view.addButton("reset ship", Qt::Key_S, [&view]() -> void {
+        assert(view.state);
+        view.state->resetShip();
+    });
+    view.addButton("reset ball", Qt::Key_B, [&view]() -> void {
+        assert(view.state);
+        view.state->resetBall();
+    });
+    view.addButton("reset world", Qt::Key_O, [&view]() -> void {
+        view.state = std::make_unique<GameState>();
+    });
+    view.addButton("toggle doors", Qt::Key_T, [&view]() -> void {
+        assert(view.state);
         using std::get;
-        for (auto& door : state.doors)
+        for (auto& door : view.state->doors)
         {
             auto& target = get<2>(door);
             target ++;

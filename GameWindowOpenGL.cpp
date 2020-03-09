@@ -425,13 +425,15 @@ void GameWindowOpenGL::drawBody(QPainter& painter, const b2Body& body, const QCo
 
 void GameWindowOpenGL::drawFlame(QPainter& painter)
 {
+    assert(state);
+
     std::bernoulli_distribution dist_flicker;
     std::normal_distribution<float> dist_noise(0, .2);
     const auto randomPoint = [this, &dist_noise]() -> QPointF {
-        return { dist_noise(rng), dist_noise(rng) };
+        return { dist_noise(flame_rng), dist_noise(flame_rng) };
     };
 
-    const auto& body = state.ship;
+    const auto& body = state->ship;
     assert(body);
 
     painter.save();
@@ -449,9 +451,9 @@ void GameWindowOpenGL::drawFlame(QPainter& painter)
     painter.setBrush(grad);
     QPolygonF poly;
     poly << QPointF(0, 0) << QPointF(1, -3) + randomPoint();
-    if (dist_flicker(rng)) poly << QPointF(.5, -2.5) + randomPoint();
+    if (dist_flicker(flame_rng)) poly << QPointF(.5, -2.5) + randomPoint();
     poly << QPointF(0, -4) + randomPoint();
-    if (dist_flicker(rng)) poly << QPointF(-.5, -2.5) + randomPoint();
+    if (dist_flicker(flame_rng)) poly << QPointF(-.5, -2.5) + randomPoint();
     poly << QPointF(-1, -3) + randomPoint();
     painter.scale(.8, .8);
     painter.translate(0, 1.5);
@@ -461,15 +463,18 @@ void GameWindowOpenGL::drawFlame(QPainter& painter)
 
 void GameWindowOpenGL::drawShip(QPainter& painter)
 {
-    const auto& body = state.ship;
+    assert(state);
+
+    const auto& body = state->ship;
     assert(body);
 
-    if (state.ship_firing) drawFlame(painter);
+    if (state->ship_firing)
+        drawFlame(painter);
 
     if (draw_debug)
         drawBody(painter, *body, Qt::black);
 
-    if (state.canGrab() && frame_counter % 2 == 0)
+    if (state->canGrab() && frame_counter % 2 == 0)
     {
         painter.save();
         const auto& world_center = body->GetWorldCenter();
@@ -487,7 +492,7 @@ void GameWindowOpenGL::drawShip(QPainter& painter)
         painter.translate(world_center.x, world_center.y);
         painter.setBrush(Qt::NoBrush);
         painter.setPen(QPen(Qt::blue, 0));
-        painter.drawLine(QPointF(0, 0), QPointF(-sin(state.ship_target_angle), cos(state.ship_target_angle)));
+        painter.drawLine(QPointF(0, 0), QPointF(-sin(state->ship_target_angle), cos(state->ship_target_angle)));
         painter.restore();
     }
 }
@@ -495,7 +500,7 @@ void GameWindowOpenGL::drawShip(QPainter& painter)
 void GameWindowOpenGL::paintGL()
 {
     const double dt_ = std::min(50e-3, 1. / ImGui::GetIO().Framerate);
-    state.step(dt_);
+    state->step(dt_);
 
     glClearColor(1, 0, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -574,13 +579,14 @@ void GameWindowOpenGL::paintGL()
             }
         }
 
+        assert(state);
         ImGui::Separator();
         ImGui::Text("application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::Text("ship %.2f %.2f", state.ship->GetPosition().x, state.ship->GetPosition().y);
-        if (state.system) ImGui::Text("particles %d", state.system->GetParticleCount());
-        ImGui::Text("crates %d", static_cast<int>(state.crates.size()));
-        ImGui::Text("contact %d", state.all_accum_contact);
-        ImGui::Text(state.ship_touched_wall ? "!!!!BOOOM!!!!" : "<3<3<3<3");
+        ImGui::Text("ship %.2f %.2f", state->ship->GetPosition().x, state->ship->GetPosition().y);
+        if (state->system) ImGui::Text("particles %d", state->system->GetParticleCount());
+        ImGui::Text("crates %d", static_cast<int>(state->crates.size()));
+        ImGui::Text("contact %d", state->all_accum_contact);
+        ImGui::Text(state->ship_touched_wall ? "!!!!BOOOM!!!!" : "<3<3<3<3");
 
         ImGui::End();
     }
@@ -634,7 +640,7 @@ void GameWindowOpenGL::paintGL()
 
         if (!is_zoom_out)
         {
-            const auto& pos = state.ship->GetPosition();
+            const auto& pos = state->ship->GetPosition();
             const int side = qMin(width(), height());
             const double ship_height =  75 * std::max(1., pos.y / 40.);
             painter.scale(side / ship_height, side / ship_height);
@@ -669,22 +675,22 @@ void GameWindowOpenGL::paintGL()
 
         drawOrigin(painter);
         if (draw_debug)
-            drawBody(painter, *state.ground);
+            drawBody(painter, *state->ground);
 
-        for (auto& crate : state.crates)
+        for (auto& crate : state->crates)
             drawBody(painter, *crate);
 
-        for (auto& door : state.doors)
+        for (auto& door : state->doors)
             drawBody(painter, *std::get<0>(door), Qt::yellow);
 
-        //drawParticleSystem(painter, state.system);
+        //drawParticleSystem(painter, state->system);
 
-        if (state.link)
+        if (state->link)
         { // joint line
-            assert(state.link);
+            assert(state->link);
             painter.save();
-            const auto& anchor_aa = state.link->GetAnchorA();
-            const auto& anchor_bb = state.link->GetAnchorB();
+            const auto& anchor_aa = state->link->GetAnchorA();
+            const auto& anchor_bb = state->link->GetAnchorB();
             painter.setBrush(Qt::NoBrush);
             painter.setPen(QPen(Qt::white, 0));
             painter.drawLine(QPointF(anchor_aa.x, anchor_aa.y), QPointF(anchor_bb.x, anchor_bb.y));
@@ -693,9 +699,9 @@ void GameWindowOpenGL::paintGL()
 
         if (draw_debug)
         {
-            assert(state.ball);
-            const bool is_fast = state.ball->GetLinearVelocity().Length() > 30;
-            drawBody(painter, *state.ball, is_fast ? QColor(0xfd, 0xa0, 0x85) : Qt::black);
+            assert(state->ball);
+            const bool is_fast = state->ball->GetLinearVelocity().Length() > 30;
+            drawBody(painter, *state->ball, is_fast ? QColor(0xfd, 0xa0, 0x85) : Qt::black);
         }
 
         drawShip(painter);
@@ -717,7 +723,7 @@ void GameWindowOpenGL::paintGL()
 
         if (!is_zoom_out)
         {
-            const auto& pos = state.ship->GetPosition();
+            const auto& pos = state->ship->GetPosition();
             const auto side = std::min(ratio, 1.);
             const double ship_height = 75 * std::max(1., pos.y / 40.);
             matrix.scale(side / ship_height, side / ship_height, 1);
@@ -787,7 +793,7 @@ void GameWindowOpenGL::paintGL()
         glEnable(GL_DEPTH_TEST);
 
         { // particle system
-            const auto& system = state.system;
+            const auto& system = state->system;
             assert(system);
 
             const b2Vec2* positions = system->GetPositionBuffer();
@@ -889,10 +895,10 @@ void GameWindowOpenGL::paintGL()
         { // ship
             QMatrix4x4 matrix = world_matrix;
 
-            const auto& pos = state.ship->GetPosition();
+            const auto& pos = state->ship->GetPosition();
             matrix.translate(pos.x, pos.y);
 
-            matrix.rotate(180. * state.ship->GetAngle() / M_PI, 0, 0, 1);
+            matrix.rotate(180. * state->ship->GetAngle() / M_PI, 0, 0, 1);
             matrix.rotate(frame_counter, 0, 1, 0);
 
             main_program->setUniformValue(main_mat_unif, matrix);
@@ -939,21 +945,21 @@ void GameWindowOpenGL::paintGL()
         };
 
         {
-            assert(state.ball);
-            assert(state.ball->GetFixtureList());
-            assert(state.ball->GetFixtureList()->GetShape());
-            const auto& shape = static_cast<const b2CircleShape&>(*state.ball->GetFixtureList()->GetShape());
+            assert(state->ball);
+            assert(state->ball->GetFixtureList());
+            assert(state->ball->GetFixtureList()->GetShape());
+            const auto& shape = static_cast<const b2CircleShape&>(*state->ball->GetFixtureList()->GetShape());
 
             auto matrix = world_matrix;
-            const auto& pos = state.ball->GetWorldCenter();
-            const auto& angle = state.ball->GetAngle();
+            const auto& pos = state->ball->GetWorldCenter();
+            const auto& angle = state->ball->GetAngle();
             matrix.translate(pos.x, pos.y);
             matrix.rotate(qRadiansToDegrees(angle), 0, 0, 1);
             matrix.scale(shape.m_radius, shape.m_radius, shape.m_radius);
             //matrix.rotate(frame_counter, 1, 1, 1);
             ball_program->setUniformValue(ball_mat_unif, matrix);
 
-            const auto& angular_speed = state.ball->GetAngularVelocity();
+            const auto& angular_speed = state->ball->GetAngularVelocity();
             ball_program->setUniformValue(ball_angular_speed_unif, angular_speed);
 
             blit_square();
@@ -964,20 +970,20 @@ void GameWindowOpenGL::paintGL()
 
 
     { // sfx
-        if (state.ship_accum_contact > 0)
+        if (state->ship_accum_contact > 0)
             ship_click_sfx.play();
 
         /*
         back_click_sfx.setVolume(volume);
-        if (state.all_accum_contact > 0)
+        if (state->all_accum_contact > 0)
             back_click_sfx.play();
             */
     }
 
     { // reset
-        state.ship_accum_contact = 0;
-        state.all_accum_contact = 0;
-        state.all_energy = 0;
+        state->ship_accum_contact = 0;
+        state->all_accum_contact = 0;
+        state->all_energy = 0;
     }
 
     ImGui::Render();
@@ -1025,20 +1031,23 @@ void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
     }
     if (event->key() == Qt::Key_Space)
     {
-        if (state.link) state.release();
-        else if (state.canGrab()) state.grab();
+        assert(state);
+        if (state->link) state->release();
+        else if (state->canGrab()) state->grab();
         return;
     }
 
     if (event->key() == Qt::Key_Up)
     {
+        assert(state);
         engine_sfx.setMuted(is_muted);
-        state.ship_firing = true;
+        state->ship_firing = true;
         return;
     }
     if (event->key() == Qt::Key_Left || event->key() == Qt::Key_Right)
     {
-        state.ship_target_angular_velocity = (state.isGrabbed() ? 2. : 2.6) * M_PI / 2. * (event->key() == Qt::Key_Left ? 1. : -1.);
+        assert(state);
+        state->ship_target_angular_velocity = (state->isGrabbed() ? 2. : 2.6) * M_PI / 2. * (event->key() == Qt::Key_Left ? 1. : -1.);
         return;
     }
 }
@@ -1047,13 +1056,15 @@ void GameWindowOpenGL::keyReleaseEvent(QKeyEvent* event)
 {
     if (event->key() == Qt::Key_Up)
     {
+        assert(state);
         engine_sfx.setMuted(true);
-        state.ship_firing = false;
+        state->ship_firing = false;
         return;
     }
     if (event->key() == Qt::Key_Left || event->key() == Qt::Key_Right)
     {
-        state.ship_target_angular_velocity = 0;
+        assert(state);
+        state->ship_target_angular_velocity = 0;
         return;
     }
 }
