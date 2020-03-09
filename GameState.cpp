@@ -33,8 +33,7 @@ GameState::GameState() :
     ship_thrust_factor(1.),
     ship_accum_contact(0),
     all_accum_contact(0),
-    all_energy(0),
-    color_rng(0x12345678)
+    all_energy(0)
 {
     cout << "init game state" << endl;
 
@@ -248,13 +247,14 @@ void GameState::resetShip()
     ship = body;
 }
 
-void GameState::flop()
+void GameState::flop(const size_t seed)
 {
     cout << "flop ";
+    std::default_random_engine rng(seed);
     std::uniform_real_distribution<float32> dist(0, 255u);
-    const float32 rr = dist(color_rng);
-    const float32 gg = dist(color_rng);
-    const float32 bb = 127u; //dist(color_rng);
+    const float32 rr = dist(rng);
+    const float32 gg = dist(rng);
+    const float32 bb = dist(rng);
     cout << rr << " ";
     cout << gg << " ";
     cout << bb << endl;

@@ -58,6 +58,7 @@ int main(int argc, char* argv[])
         view_opengl.is_zoom_out = checked;
     });
 
+    std::default_random_engine rng;
     view_opengl.addButton("reset ship", Qt::Key_S, [&state]() -> void { state.resetShip(); });
     view_opengl.addButton("reset ball", Qt::Key_B, [&state]() -> void { state.resetBall(); });
     view_opengl.addButton("tog doors", Qt::Key_T, [&state]() -> void {
@@ -71,9 +72,8 @@ int main(int argc, char* argv[])
         }
         return;
     });
-    view_opengl.addButton("flop", Qt::Key_E, [&state]() -> void { state.flop(); });
-    std::default_random_engine rng;
-    view_opengl.addButton("prout", Qt::Key_Z, [&state, &rng]() -> void {
+    view_opengl.addButton("drop water", Qt::Key_E, [&state, &rng]() -> void { state.flop(rng()); });
+    view_opengl.addButton("drop crate", Qt::Key_Z, [&state, &rng]() -> void {
         std::uniform_real_distribution<double> dist_angle(0, 2 * M_PI);
         const auto angle = dist_angle(rng);
         std::normal_distribution<double> dist_normal(0, 10);

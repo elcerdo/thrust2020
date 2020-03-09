@@ -22,7 +22,7 @@ struct GameState : public b2ContactListener
     void release();
     void addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle);
     void addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 delta);
-    void flop();
+    void flop(const size_t seed);
     void resetShip();
     void resetBall();
 
@@ -47,7 +47,5 @@ struct GameState : public b2ContactListener
     int ship_accum_contact;
     int all_accum_contact;
     double all_energy;
-
-    std::default_random_engine color_rng;
 };
 
