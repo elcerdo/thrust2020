@@ -38,9 +38,9 @@ struct GameState : public b2ContactListener
     using UniqueBody = std::unique_ptr<b2Body, std::function<void(b2Body*)>>;
 
     b2World world;
-    b2Body* ground;
-    b2Body* ship;
-    b2Body* ball;
+    UniqueBody ground;
+    UniqueBody ship;
+    UniqueBody ball;
 
     std::vector<UniqueBody> crates;
     std::vector<std::tuple<b2Body*, std::vector<b2Vec2>, size_t>> doors;

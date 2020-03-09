@@ -88,7 +88,7 @@ std::unique_ptr<QOpenGLShaderProgram> GameWindowOpenGL::loadAndCompileProgram(co
     qDebug() << "========== shader";
     auto program = std::make_unique<QOpenGLShaderProgram>();
 
-    const auto load_shader = [&program, &vertex_filename](const QOpenGLShader::ShaderType type, const QString& filename) -> bool
+    const auto load_shader = [&program](const QOpenGLShader::ShaderType type, const QString& filename) -> bool
     {
         qDebug() << "compiling" << filename;
         QFile handle(filename);
@@ -431,7 +431,7 @@ void GameWindowOpenGL::drawFlame(QPainter& painter)
         return { dist_noise(rng), dist_noise(rng) };
     };
 
-    const auto* body = state.ship;
+    const auto& body = state.ship;
     assert(body);
 
     painter.save();
@@ -461,7 +461,7 @@ void GameWindowOpenGL::drawFlame(QPainter& painter)
 
 void GameWindowOpenGL::drawShip(QPainter& painter)
 {
-    const auto body = state.ship;
+    const auto& body = state.ship;
     assert(body);
 
     if (state.ship_firing) drawFlame(painter);
@@ -529,7 +529,6 @@ void GameWindowOpenGL::paintGL()
                 pairs.emplace_back(get<0>(pair.second), pair.first);
             std::sort(std::begin(pairs), std::end(pairs), [](const Pair& aa, const Pair& bb) -> bool { return get<0>(aa) < get<0>(bb); });
 
-            size_t kk = 0;
             for (auto& pair_ : pairs)
             {
                 auto pair = checkbox_states.find(get<1>(pair_));
@@ -556,6 +555,7 @@ void GameWindowOpenGL::paintGL()
             std::sort(std::begin(pairs), std::end(pairs), [](const Pair& aa, const Pair& bb) -> bool { return get<0>(aa) < get<0>(bb); });
 
             size_t kk = 0;
+            const size_t kk_max = pairs.size();
             for (const auto& pair_ : pairs)
             {
                 const auto& pair = button_states.find(get<1>(pair_));
@@ -569,7 +569,7 @@ void GameWindowOpenGL::paintGL()
                 if (ImGui::Button(ss.str().c_str(), { 163, 19 }))
                     get<2>(state)();
 
-                if (kk % 2 != 1) ImGui::SameLine();
+                if (kk % 2 != 1 && kk != kk_max - 1) ImGui::SameLine();
                 kk++;
             }
         }

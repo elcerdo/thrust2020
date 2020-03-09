@@ -28,8 +28,7 @@ int main(int argc, char* argv[])
     });
 
     view_opengl.addSlider("ball density", .01, .1, .04, [&state](const float value) -> void {
-        b2MassData mass_data;
-        const auto body = state.ball;
+        const auto& body = state.ball;
         assert(body);
         const auto fixture = body->GetFixtureList();
         assert(fixture);

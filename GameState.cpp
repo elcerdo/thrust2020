@@ -92,7 +92,7 @@ GameState::GameState() :
         }
         cout << endl;
 
-        ground = body;
+        ground = UniqueBody(body, [this](b2Body* body) -> void { world.DestroyBody(body); });
     }
 
     resetShip();
@@ -189,7 +189,6 @@ void GameState::resetBall()
         if (isGrabbed())
             release();
 
-        world.DestroyBody(ball);
         ball = nullptr;
     }
 
@@ -214,7 +213,8 @@ void GameState::resetBall()
 
     auto body = world.CreateBody(&def);
     body->CreateFixture(&fixture);
-    ball = body;
+
+    ball = UniqueBody(body, [this](b2Body* body) -> void { world.DestroyBody(body); });
 }
 
 void GameState::resetShip()
@@ -224,7 +224,6 @@ void GameState::resetShip()
         if (isGrabbed())
             release();
 
-        world.DestroyBody(ship);
         ship = nullptr;
     }
 
@@ -255,8 +254,8 @@ void GameState::resetShip()
 
     auto body = world.CreateBody(&def);
     body->CreateFixture(&fixture);
-    ship = body;
 
+    ship = UniqueBody(body, [this](b2Body* body) -> void { world.DestroyBody(body); });
     ship_target_angle = 0;
     ship_touched_wall = false;
 }
@@ -305,7 +304,7 @@ void GameState::grab()
     assert(ball);
 
     b2DistanceJointDef def;
-    def.Initialize(ship, ball, ship->GetWorldCenter(), ball->GetWorldCenter());
+    def.Initialize(ship.get(), ball.get(), ship->GetWorldCenter(), ball->GetWorldCenter());
     def.frequencyHz = 25.;
     def.dampingRatio = .0;
     def.collideConnected = true;
@@ -366,16 +365,16 @@ void GameState::BeginContact(b2Contact* contact)
 
     const auto* aa = contact->GetFixtureA()->GetBody();
     assert(aa);
-    const bool aa_is_ship = aa == ship;
-    const bool aa_is_ball = aa == ball;
-    const bool aa_is_wall = aa == ground;
+    const bool aa_is_ship = aa == ship.get();
+    const bool aa_is_ball = aa == ball.get();
+    const bool aa_is_wall = aa == ground.get();
     const double aa_energy = .5 * aa->GetMass() * aa->GetLinearVelocity().LengthSquared();
 
     const auto* bb = contact->GetFixtureB()->GetBody();
     assert(bb);
-    const bool bb_is_ship = bb == ship;
-    const bool bb_is_ball = bb == ball;
-    const bool bb_is_wall = bb == ground;
+    const bool bb_is_ship = bb == ship.get();
+    const bool bb_is_ball = bb == ball.get();
+    const bool bb_is_wall = bb == ground.get();
     const double bb_energy = .5 * bb->GetMass() * bb->GetLinearVelocity().LengthSquared();
 
     const bool any_ship = aa_is_ship || bb_is_ship;
@@ -476,6 +475,4 @@ void GameState::clearCrates()
 GameState::~GameState()
 {
     world.SetContactListener(nullptr);
-    //world.DestroyBody(ship);
-    //world.DestroyBody(ground);
 }
