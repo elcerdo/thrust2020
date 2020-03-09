@@ -1,11 +1,11 @@
 #version 330
 
-in lowp vec4 col;
+in lowp vec4 pos;
 
 out lowp vec4 finalColor;
 
 void main()
 {
-  finalColor = col;
+  finalColor = pos;
 }
 
