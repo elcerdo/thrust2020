@@ -4,7 +4,7 @@
     <file>click00.wav</file>
     <file>click01.wav</file>
 
-    <file>level1.json</file>
+    <file>levels.json</file>
     <file>map.svg</file>
 
     <file>main_vertex.glsl</file>
