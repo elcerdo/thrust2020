@@ -679,11 +679,12 @@ void GameWindowOpenGL::paintGL()
 
         //drawParticleSystem(painter, state.system);
 
-        if (state.joint)
+        if (state.link)
         { // joint line
+            assert(state.link);
             painter.save();
-            const auto& anchor_aa = state.joint->GetAnchorA();
-            const auto& anchor_bb = state.joint->GetAnchorB();
+            const auto& anchor_aa = state.link->GetAnchorA();
+            const auto& anchor_bb = state.link->GetAnchorB();
             painter.setBrush(Qt::NoBrush);
             painter.setPen(QPen(Qt::white, 0));
             painter.drawLine(QPointF(anchor_aa.x, anchor_aa.y), QPointF(anchor_bb.x, anchor_bb.y));
@@ -786,7 +787,7 @@ void GameWindowOpenGL::paintGL()
         glEnable(GL_DEPTH_TEST);
 
         { // particle system
-            const auto* system = state.system;
+            const auto& system = state.system;
             assert(system);
 
             const b2Vec2* positions = system->GetPositionBuffer();
@@ -1024,7 +1025,7 @@ void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
     }
     if (event->key() == Qt::Key_Space)
     {
-        if (state.joint) state.release();
+        if (state.link) state.release();
         else if (state.canGrab()) state.grab();
         return;
     }

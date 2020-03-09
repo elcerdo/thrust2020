@@ -36,6 +36,8 @@ struct GameState : public b2ContactListener
     void BeginContact(b2Contact* contact) override;
 
     using UniqueBody = std::unique_ptr<b2Body, std::function<void(b2Body*)>>;
+    using UniqueDistanceJoint = std::unique_ptr<b2DistanceJoint, std::function<void(b2Joint*)>>;
+    using UniqueSystem = std::unique_ptr<b2ParticleSystem, std::function<void(b2ParticleSystem*)>>;
 
     b2World world;
     UniqueBody ground;
@@ -43,10 +45,10 @@ struct GameState : public b2ContactListener
     UniqueBody ball;
 
     std::vector<UniqueBody> crates;
-    std::vector<std::tuple<b2Body*, std::vector<b2Vec2>, size_t>> doors;
-    b2DistanceJoint* joint;
+    std::vector<std::tuple<UniqueBody, std::vector<b2Vec2>, size_t>> doors;
+    UniqueDistanceJoint link;
 
-    b2ParticleSystem* system;
+    UniqueSystem system;
 
     bool ship_firing;
     double ship_target_angular_velocity;

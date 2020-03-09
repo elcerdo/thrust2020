@@ -24,7 +24,7 @@ GameState::GameState() :
     ground(nullptr),
     ship(nullptr),
     ball(nullptr),
-    joint(nullptr),
+    link(nullptr),
     system(nullptr),
     ship_firing(false),
     ship_target_angular_velocity(0),
@@ -121,7 +121,9 @@ GameState::GameState() :
         //system_def.elasticStrength = 1;
         system_def.surfaceTensionPressureStrength = .4;
         system_def.surfaceTensionNormalStrength = .4;
-        system = world.CreateParticleSystem(&system_def);
+        auto system_ = world.CreateParticleSystem(&system_def);
+
+        system = UniqueSystem(system_, [this](b2ParticleSystem* system_) -> void { world.DestroyParticleSystem(system_); });
 
         /*
         b2PolygonShape shape;
@@ -306,10 +308,11 @@ void GameState::grab()
     b2DistanceJointDef def;
     def.Initialize(ship.get(), ball.get(), ship->GetWorldCenter(), ball->GetWorldCenter());
     def.frequencyHz = 25.;
-    def.dampingRatio = .0;
+    def.dampingRatio = .2;
     def.collideConnected = true;
 
-    joint = static_cast<b2DistanceJoint*>(world.CreateJoint(&def));
+    auto joint = static_cast<b2DistanceJoint*>(world.CreateJoint(&def));
+    link = UniqueDistanceJoint(joint, [this](b2Joint* joint) -> void { world.DestroyJoint(joint); });
 }
 
 void GameState::release()
@@ -317,8 +320,7 @@ void GameState::release()
     assert(isGrabbed());
     assert(ship);
     assert(ball);
-    world.DestroyJoint(joint);
-    joint = nullptr;
+    link = nullptr;
 }
 
 bool GameState::canGrab() const
@@ -334,7 +336,7 @@ bool GameState::canGrab() const
 }
 
 bool GameState::isGrabbed() const {
-    return joint != nullptr;
+    return static_cast<bool>(link);
 }
 
 void GameState::step(const float dt)
@@ -366,19 +368,19 @@ void GameState::BeginContact(b2Contact* contact)
     const auto* aa = contact->GetFixtureA()->GetBody();
     assert(aa);
     const bool aa_is_ship = aa == ship.get();
-    const bool aa_is_ball = aa == ball.get();
+    //const bool aa_is_ball = aa == ball.get();
     const bool aa_is_wall = aa == ground.get();
     const double aa_energy = .5 * aa->GetMass() * aa->GetLinearVelocity().LengthSquared();
 
     const auto* bb = contact->GetFixtureB()->GetBody();
     assert(bb);
     const bool bb_is_ship = bb == ship.get();
-    const bool bb_is_ball = bb == ball.get();
+    //const bool bb_is_ball = bb == ball.get();
     const bool bb_is_wall = bb == ground.get();
     const double bb_energy = .5 * bb->GetMass() * bb->GetLinearVelocity().LengthSquared();
 
     const bool any_ship = aa_is_ship || bb_is_ship;
-    const bool any_ball = aa_is_ball || bb_is_ball;
+    //const bool any_ball = aa_is_ball || bb_is_ball;
     const bool any_wall = aa_is_wall || bb_is_wall;
 
     ship_touched_wall |= any_ship && any_wall;
@@ -389,9 +391,7 @@ void GameState::BeginContact(b2Contact* contact)
 
 void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 delta)
 {
-    assert(ground);
-
-    b2Body* door = nullptr;
+    UniqueBody door = nullptr;
     {
         b2BodyDef def;
         def.type = b2_kinematicBody;
@@ -408,14 +408,17 @@ void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 delta)
         fixture.filter.categoryBits = door_category;
         fixture.filter.maskBits = object_category;
 
-        door = world.CreateBody(&def);
-        door->CreateFixture(&fixture);
+        auto body = world.CreateBody(&def);
+        body->CreateFixture(&fixture);
+
+        door = UniqueBody(body, [this](b2Body* body) { world.DestroyBody(body); });
     }
     assert(door);
 
     /*
     b2PrismaticJoint* joint = nullptr;
     {
+        assert(ground);
         b2PrismaticJointDef def;
         def.Initialize(ground, door, door->GetWorldCenter(), direction);
         def.lowerTranslation = 0;
@@ -431,7 +434,7 @@ void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 delta)
     */
 
     const auto origin = door->GetWorldCenter();
-    doors.push_back({ door, { origin, origin + delta }, 0 });
+    doors.emplace_back(std::move(door), std::vector<b2Vec2> { origin, origin + delta }, 0);
 }
 
 void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle)

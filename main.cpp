@@ -46,7 +46,6 @@ int main(int argc, char* argv[])
         state.world.SetGravity(checked ? b2Vec2 { 0, -10 } : b2Vec2 {0, 0});
     });
     view_opengl.addCheckbox("draw debug", Qt::Key_P, false, [&view_opengl](const bool checked) -> void {
-        const auto before = view_opengl.draw_debug;
         view_opengl.draw_debug = checked;
         qDebug() << "draw debug" << checked;
     });
