@@ -282,9 +282,9 @@ void GameWindowOpenGL::addButton(const std::string& label, const int key, const 
 void GameWindowOpenGL::addCheckbox(const std::string& label, const int key, const bool& value, const BoolCallback& callback)
 {
     assert(isKeyFree(key));
-    auto state = std::make_tuple(label, value, callback);
+    auto state = std::make_tuple(checkbox_states.size(), label, value, callback);
     checkbox_states.emplace(key, state);
-    std::get<2>(state)(std::get<1>(state));
+    std::get<3>(state)(std::get<2>(state));
 }
 
 void GameWindowOpenGL::addSlider(const std::string& label, const float& min, const float& max, const float& value, const FloatCallback& callback)
@@ -491,32 +491,42 @@ void GameWindowOpenGL::paintGL()
             if (prev != std::get<3>(state)) std::get<4>(state)(std::get<3>(state));
         }
 
-        for (auto& pair : checkbox_states)
         {
             using std::get;
-            auto& state = pair.second;
-            const auto prev = std::get<1>(state);
-            const std::string key_name = QKeySequence(pair.first).toString().toStdString();
-            std::stringstream ss;
-            ss << get<0>(state) << " (" << key_name << ")";
-            ImGui::Checkbox(ss.str().c_str(), &std::get<1>(state));
-            if (prev != std::get<1>(state)) std::get<2>(state)(std::get<1>(state));
+
+            using Pair = std::tuple<size_t, int>;
+            std::vector<Pair> pairs;
+            for (const auto& pair : checkbox_states)
+                pairs.emplace_back(get<0>(pair.second), pair.first);
+            std::sort(std::begin(pairs), std::end(pairs), [](const Pair& aa, const Pair& bb) -> bool { return get<0>(aa) < get<0>(bb); });
+
+            size_t kk = 0;
+            for (auto& pair_ : pairs)
+            {
+                auto pair = checkbox_states.find(get<1>(pair_));
+                assert(pair != std::end(checkbox_states));
+                auto& state = pair->second;
+                assert(get<1>(pair_) == pair->first);
+                assert(get<0>(pair_) == get<0>(pair->second));
+                const auto prev = get<2>(state);
+                const std::string key_name = QKeySequence(pair->first).toString().toStdString();
+                std::stringstream ss;
+                ss << get<1>(state) << " (" << key_name << ")";
+                ImGui::Checkbox(ss.str().c_str(), &get<2>(state));
+                if (prev != std::get<2>(state)) std::get<3>(state)(std::get<2>(state));
+            }
         }
 
         {
             using std::get;
 
-            size_t kk = 0;
             using Pair = std::tuple<size_t, int>;
             std::vector<Pair> pairs;
             for (const auto& pair : button_states)
                 pairs.emplace_back(get<0>(pair.second), pair.first);
+            std::sort(std::begin(pairs), std::end(pairs), [](const Pair& aa, const Pair& bb) -> bool { return get<0>(aa) < get<0>(bb); });
 
-            std::sort(std::begin(pairs), std::end(pairs), [](const Pair& aa, const Pair& bb) -> bool {
-                return get<0>(aa) < get<0>(bb);
-            });
-
-
+            size_t kk = 0;
             for (const auto& pair_ : pairs)
             {
                 const auto& pair = button_states.find(get<1>(pair_));
@@ -893,8 +903,8 @@ void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
         auto& state = pair.second;
         if (event->key() == pair.first)
         {
-            get<1>(state) ^= 1;
-            get<2>(state)(get<1>(state));
+            get<2>(state) ^= 1;
+            get<3>(state)(get<2>(state));
             return;
         }
     }

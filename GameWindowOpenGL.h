@@ -22,7 +22,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         using ButtonStates = std::unordered_map<int, ButtonState>;
 
         using BoolCallback = std::function<void(bool)>;
-        using BoolState = std::tuple<std::string, bool, BoolCallback>;
+        using BoolState = std::tuple<size_t, std::string, bool, BoolCallback>;
         using BoolStates = std::unordered_map<int, BoolState>;
 
         using FloatCallback = std::function<void(float)>;
