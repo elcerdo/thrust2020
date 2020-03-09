@@ -837,6 +837,8 @@ void GameWindowOpenGL::paintGL()
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
+    glClear(GL_DEPTH_BUFFER_BIT);
+
     { // draw with main program
         glBindVertexArray(vao);
 
