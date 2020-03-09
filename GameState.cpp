@@ -19,7 +19,7 @@ constexpr uint16 ground_category = 1 << 0;
 constexpr uint16 object_category = 1 << 1;
 constexpr uint16 door_category = 1 << 2;
 
-GameState::GameState() :
+GameState::GameState(const std::string& map_filename) :
     world(b2Vec2(0, -8)),
     ground(nullptr),
     ship(nullptr),
@@ -35,8 +35,6 @@ GameState::GameState() :
     all_accum_contact(0),
     all_energy(0)
 {
-    cout << "init game state" << endl;
-
     { // ground
         b2BodyDef def;
         def.type = b2_staticBody;
@@ -59,8 +57,8 @@ GameState::GameState() :
 
         };
 
-        cout << "========== map loading" << endl;
-        const auto polys_to_colors = polygons::extract(":map.svg");
+        cout << "========== svg map loading" << endl;
+        const auto polys_to_colors = polygons::extract(map_filename);
         const polygons::Color foreground_color { 0, 1, 0, 1};
 
         const auto foreground_transform = [](const polygons::Poly& poly) -> polygons::Poly
@@ -145,6 +143,11 @@ GameState::GameState() :
     addDoor({ 15, -230 }, {1, 10}, {20, 0});
     addDoor({ -86, -65 }, {1, 10}, {-8, -15});
 
+    world.SetContactListener(this);
+}
+
+void GameState::dumpCollisionData() const
+{
     const auto dump_filter_data = [](const b2Body& body) -> void
     {
         size_t count = 5;
@@ -160,14 +163,24 @@ GameState::GameState() :
     };
 
     cout << "========== category & collision mask" << endl;
-    cout << "ground" << endl;
-    dump_filter_data(*ground);
 
-    cout << "ship" << endl;
-    dump_filter_data(*ship);
+    if (ground)
+    {
+        cout << "ground" << endl;
+        dump_filter_data(*ground);
+    }
 
-    cout << "ball" << endl;
-    dump_filter_data(*ball);
+    if (ship)
+    {
+        cout << "ship" << endl;
+        dump_filter_data(*ship);
+    }
+
+    if (ball)
+    {
+        cout << "ball" << endl;
+        dump_filter_data(*ball);
+    }
 
     if (!doors.empty())
     {
@@ -180,8 +193,6 @@ GameState::GameState() :
         cout << "crate" << endl;
         dump_filter_data(*crates.front());
     }
-
-    world.SetContactListener(this);
 }
 
 void GameState::resetBall()

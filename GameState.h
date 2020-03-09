@@ -13,10 +13,11 @@
 
 struct GameState : public b2ContactListener
 {
-    GameState();
+    explicit GameState(const std::string& map_filename);
     ~GameState();
 
     void step(const float dt);
+    void dumpCollisionData() const;
 
     bool canGrab() const;
     bool isGrabbed() const;

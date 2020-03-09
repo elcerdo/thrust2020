@@ -16,7 +16,8 @@ int main(int argc, char* argv[])
     QApplication app(argc, argv);
 
     GameWindowOpenGL view;
-    view.state = std::make_unique<GameState>();
+    view.state = std::make_unique<GameState>(":map.svg");
+    view.state->dumpCollisionData();
 
     view.setAnimated(true);
     view.resize(1280, 720);
@@ -89,7 +90,7 @@ int main(int argc, char* argv[])
         view.state->resetBall();
     });
     view.addButton("reset world", Qt::Key_O, [&view]() -> void {
-        view.state = std::make_unique<GameState>();
+        view.state = std::make_unique<GameState>(":map.svg");
     });
     view.addButton("toggle doors", Qt::Key_T, [&view]() -> void {
         assert(view.state);
