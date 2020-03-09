@@ -274,6 +274,16 @@ void GameState::addWater(const b2Vec2 position, const b2Vec2 size, const size_t 
     system->CreateParticleGroup(group_def);
 }
 
+void GameState::clearWater()
+{
+    assert(system);
+    for (auto* group = system->GetParticleGroupList(); group; group = group->GetNext())
+    {
+        group->SetGroupFlags(group->GetGroupFlags() & ~b2_particleGroupCanBeEmpty);
+        group->DestroyParticles(false);
+    }
+}
+
 void GameState::grab()
 {
     assert(!isGrabbed());

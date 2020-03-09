@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
         qDebug() << "gravity" << checked;
         state.world.SetGravity(checked ? b2Vec2 { 0, -10 } : b2Vec2 {0, 0});
     });
-    view_opengl.addCheckbox("draw debug", Qt::Key_D, false, [&view_opengl](const bool checked) -> void {
+    view_opengl.addCheckbox("draw debug", Qt::Key_P, false, [&view_opengl](const bool checked) -> void {
         const auto before = view_opengl.draw_debug;
         view_opengl.draw_debug = checked;
         qDebug() << "draw debug" << before << checked << &view_opengl << view_opengl.draw_debug;
@@ -74,6 +74,9 @@ int main(int argc, char* argv[])
     });
     view_opengl.addButton("drop water", Qt::Key_E, [&state, &rng]() -> void {
         state.addWater({ 0, 70 }, { 10, 10 }, rng());
+    });
+    view_opengl.addButton("clear water", Qt::Key_D, [&state]() -> void {
+        state.clearWater();
     });
     view_opengl.addButton("drop crate", Qt::Key_Z, [&state, &rng]() -> void {
         std::uniform_real_distribution<double> dist_angle(0, 2 * M_PI);
