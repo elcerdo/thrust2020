@@ -1,5 +1,6 @@
 #pragma once
 
+#include "load_levels.h"
 #include "GameState.h"
 
 #include <QOpenGLWindow>
@@ -36,7 +37,8 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         void addButton(const std::string& label, const int key, const VoidCallback& callback);
         void setMuted(const bool muted);
         bool isKeyFree(const int key) const;
-				void loadBackground(const std::string& map_filename);
+        void loadBackground(const std::string& map_filename);
+        void resetLevel(const int level);
 
     protected:
         void initializeGL() override;
@@ -53,6 +55,8 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         std::unique_ptr<QOpenGLShaderProgram> loadAndCompileProgram(const QString& vertex_filename, const QString& fragment_filename, const QString& geometry_filename = QString());
 
     public:
+        int level_current = -1;
+        levels::LevelDatas level_datas;
         std::unique_ptr<GameState> state = nullptr;
         std::default_random_engine flame_rng;
         std::array<float, 4> water_color = { 108 / 255., 195 / 255., 246 / 255., 1 };

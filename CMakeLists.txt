@@ -76,6 +76,7 @@ target_link_libraries(test_extract_polygons
     )
 
 add_executable(rocket
+    load_levels.cpp
     data_polygons.cpp
     extract_polygons.cpp
     decompose_polygons.cpp

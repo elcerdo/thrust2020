@@ -25,6 +25,14 @@ const QVector2D camera_world_center { 0, -120 };
 GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
     : QOpenGLWindow(QOpenGLWindow::NoPartialUpdate, parent)
 {
+    qDebug() << "========== levels";
+    level_datas = levels::load(":levels.json");
+    qDebug() << level_datas.size() << "levels";
+    for (const auto& level_data : level_datas)
+        qDebug() << "level" << QString::fromStdString(level_data.name) << QString::fromStdString(level_data.map_filename) << level_data.doors.size();
+
+    resetLevel(0);
+
     {
         auto& sfx = engine_sfx;
         const auto sound = QUrl::fromLocalFile(":engine.wav");
@@ -57,7 +65,39 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
         sfx.setMuted(false);
         sfx.stop();
     }*/
+}
 
+void GameWindowOpenGL::resetLevel(const int level)
+{
+    using std::get;
+    qDebug() << "reset level" << level << level_current;
+
+    if (level == level_current)
+        return;
+
+    if (level < 0)
+    {
+        state = std::make_unique<GameState>();
+        state->dumpCollisionData();
+        level_current = level;
+        return;
+    }
+
+    assert(level >= 0 );
+    assert(level < level_datas.size());
+    const auto& level_data = level_datas[level];
+
+    qDebug() << "loading" << QString::fromStdString(level_data.name);
+
+    state = std::make_unique<GameState>();
+    state->resetGround(level_data.map_filename);
+    loadBackground(level_data.map_filename);
+
+    for (const auto& door : level_data.doors)
+        state->addDoor(get<0>(door), get<1>(door), get<2>(door));
+
+    state->dumpCollisionData();
+    level_current = level;
 }
 
 void GameWindowOpenGL::loadBackground(const std::string& map_filename)
@@ -519,6 +559,18 @@ void GameWindowOpenGL::paintGL()
         ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiCond_Once);
         //ImGui::SetNextWindowSize(ImVec2(350,400), ImGuiCond_FirstUseEver);
         ImGui::Begin("~.: THRUST :.~", &display_ui, ImGuiWindowFlags_NoBackground);
+
+        {
+            std::vector<const char*> level_names;
+            for (const auto& level_data : level_datas)
+                level_names.emplace_back(level_data.name.c_str());
+
+            int level_current_ = level_current;
+            ImGui::Combo("level", &level_current_, level_names.data(), level_names.size());
+            if (level_current_ != level_current)
+                resetLevel(level_current_);
+        }
+        ImGui::Separator();
 
         for (auto& state : float_states)
         {
