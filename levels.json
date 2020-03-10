@@ -1,7 +1,7 @@
 [
   {
     "name": "level1",
-    "map": ":map.svg",
+    "map": ":map1.svg",
     "doors": [
       { "cx": 115, "cy": -170, "dx": 0, "dy": -20},
       { "cx": 15, "cy": -230, "dx": 20, "dy": 0},
@@ -10,6 +10,11 @@
   },
   {
     "name": "level2",
-    "map": ":map.svg"
+    "map": ":map2.svg",
+    "doors": [
+      { "cx": -65, "cy": -160, "dx": 15, "dy": 0},
+      { "cx": -90, "cy": 100, "dx": -15, "dy": 0},
+      { "cx": 80, "cy": -250, "dx": -160, "dy": 0, "ww": 30, "hh": 5}
+    ]
   }
 ]

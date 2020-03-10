@@ -5,6 +5,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QCoreApplication>
+#include <QDebug>
 
 QJsonArray load_json_array(const std::string& json_filename)
 {
@@ -15,6 +16,8 @@ QJsonArray load_json_array(const std::string& json_filename)
 
     QJsonParseError error;
     QJsonDocument doc = QJsonDocument::fromJson(data, &error);
+    if (doc.isNull())
+        qDebug() << error.errorString();
     assert(!doc.isNull());
 
     return doc.array();

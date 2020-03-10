@@ -5,7 +5,8 @@
     <file>click01.wav</file>
 
     <file>levels.json</file>
-    <file>map.svg</file>
+    <file>map1.svg</file>
+    <file>map2.svg</file>
 
     <file>main_vertex.glsl</file>
     <file>main_fragment.glsl</file>
