@@ -230,13 +230,15 @@ void GameWindowOpenGL::initializeGL()
         particle_color_unif = particle_program->uniformLocation("dotColor");
         particle_radius_unif = particle_program->uniformLocation("radius");
         particle_mode_unif = particle_program->uniformLocation("mode");
-        qDebug() << "particle_locations" << particle_pos_attr << particle_col_attr << particle_mat_unif << particle_color_unif << particle_radius_unif << particle_mode_unif;
+        particle_poly_unif = particle_program->uniformLocation("poly");
+        qDebug() << "particle_locations" << particle_pos_attr << particle_col_attr << particle_mat_unif << particle_color_unif << particle_radius_unif << particle_mode_unif << particle_poly_unif;
         assert(particle_pos_attr >= 0);
         assert(particle_col_attr >= 0);
         assert(particle_mat_unif >= 0);
         assert(particle_color_unif >= 0);
         assert(particle_radius_unif >= 0);
         assert(particle_mode_unif >= 0);
+        assert(particle_poly_unif >= 0);
         assert(glGetError() == GL_NO_ERROR);
     }
 
@@ -663,6 +665,12 @@ void GameWindowOpenGL::paintGL()
             ImGui::Combo("shader", &shader_selection, shader_names, IM_ARRAYSIZE(shader_names));
         }
 
+        {
+            const char* poly_names[] = { "octogon", "hexagon", "square", "triangle" };
+            poly_selection %= IM_ARRAYSIZE(poly_names);
+            ImGui::Combo("poly", &poly_selection, poly_names, IM_ARRAYSIZE(poly_names));
+        }
+
         ImGui::End();
     }
 
@@ -857,6 +865,7 @@ void GameWindowOpenGL::paintGL()
 
             particle_program->setUniformValue(particle_radius_unif, radius);
             particle_program->setUniformValue(particle_mode_unif, shader_selection);
+            particle_program->setUniformValue(particle_poly_unif, poly_selection);
 
             //            const auto& color = QColor::fromRgb(0x6cu, 0xc3u, 0xf6u, 0xffu);
             const auto& color = QColor::fromRgbF(water_color[0], water_color[1], water_color[2], water_color[3]);
