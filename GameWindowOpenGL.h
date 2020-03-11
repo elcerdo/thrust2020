@@ -66,6 +66,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         bool is_zoom_out = true;
         int shader_selection = 2;
         int poly_selection = 0;
+        float radius_factor = 1. / 3;
 
     protected:
         //bool show_test_window = true;
@@ -105,6 +106,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         int particle_mat_unif = -1;
         int particle_color_unif = -1;
         int particle_radius_unif = -1;
+        int particle_radius_factor_unif = -1;
         int particle_mode_unif = -1;
         int particle_poly_unif = -1;
 

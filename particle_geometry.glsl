@@ -17,18 +17,18 @@ void main() {
 
   if (poly == 3)
   { // triangle
-    float ww = radius / 2;
-    const float ss = sqrt(3);
+    float ww = 6 / sqrt(3) * radius;
+    const float ss = sqrt(3) / 2;
 
-    pos = ww * vec4(-2, -ss, 0, 0);
+    pos = ww * vec4(-ss, -.5, 0, 0);
     gl_Position = matrix * ( gl_in[0].gl_Position + pos );
     EmitVertex();
 
-    pos = ww * vec4(2, -ss, 0, 0);
+    pos = ww * vec4(ss, -.5, 0, 0);
     gl_Position = matrix * ( gl_in[0].gl_Position + pos );
     EmitVertex();
 
-    pos = ww * vec4(0, ss, 0, 0);
+    pos = ww * vec4(0, 1, 0, 0);
     gl_Position = matrix * ( gl_in[0].gl_Position + pos );
     EmitVertex();
   }

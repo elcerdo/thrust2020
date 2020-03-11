@@ -229,14 +229,16 @@ void GameWindowOpenGL::initializeGL()
         particle_mat_unif = particle_program->uniformLocation("matrix");
         particle_color_unif = particle_program->uniformLocation("dotColor");
         particle_radius_unif = particle_program->uniformLocation("radius");
+        particle_radius_factor_unif = particle_program->uniformLocation("radiusFactor");
         particle_mode_unif = particle_program->uniformLocation("mode");
         particle_poly_unif = particle_program->uniformLocation("poly");
-        qDebug() << "particle_locations" << particle_pos_attr << particle_col_attr << particle_mat_unif << particle_color_unif << particle_radius_unif << particle_mode_unif << particle_poly_unif;
+        qDebug() << "particle_locations" << particle_pos_attr << particle_col_attr << particle_mat_unif << particle_color_unif << particle_radius_unif << particle_radius_factor_unif << particle_mode_unif << particle_poly_unif;
         assert(particle_pos_attr >= 0);
         assert(particle_col_attr >= 0);
         assert(particle_mat_unif >= 0);
         assert(particle_color_unif >= 0);
         assert(particle_radius_unif >= 0);
+        assert(particle_radius_factor_unif >= 0);
         assert(particle_mode_unif >= 0);
         assert(particle_poly_unif >= 0);
         assert(glGetError() == GL_NO_ERROR);
@@ -555,12 +557,14 @@ void GameWindowOpenGL::paintGL()
 
     QtImGui::newFrame();
 
+    constexpr auto ui_window_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
+
     if (display_ui)
     {
-        ImGui::SetNextWindowSize(ImVec2(350, 440), ImGuiCond_Once);
+        //ImGui::SetNextWindowSize(ImVec2(350, 440), ImGuiCond_Once);
         ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiCond_Once);
         //ImGui::SetNextWindowSize(ImVec2(350,400), ImGuiCond_FirstUseEver);
-        ImGui::Begin("~.: THRUST :.~", &display_ui, ImGuiWindowFlags_NoBackground);
+        ImGui::Begin("~.: THRUST :.~", &display_ui, ui_window_flags);
 
         {
             std::vector<const char*> level_names;
@@ -649,18 +653,17 @@ void GameWindowOpenGL::paintGL()
 
     if (display_ui)
     {
-        ImGui::SetNextWindowSize(ImVec2(330,100), ImGuiCond_Always);
+        //ImGui::SetNextWindowSize(ImVec2(330,100), ImGuiCond_Always);
         ImGui::SetNextWindowPos(ImVec2(width() - 330 - 5, 5), ImGuiCond_Once);
-        ImGui::Begin("Shading", &display_ui, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
+        ImGui::Begin("Shading", &display_ui, ui_window_flags);
 
         //ImGui::Text("Hello, world!");
-        //ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
         ImGui::ColorEdit3("water color", water_color.data());
         //if (ImGui::Button("Test Window")) show_test_window ^= 1;
         //if (ImGui::Button("Another Window")) show_another_window ^= 1;
 
         {
-            const char* shader_names[] = { "grprng + dot", "grprng", "uniform", };
+            const char* shader_names[] = { "grprng + dot", "grprng", "uniform", "uniform dot" };
             shader_selection %= IM_ARRAYSIZE(shader_names);
             ImGui::Combo("shader", &shader_selection, shader_names, IM_ARRAYSIZE(shader_names));
         }
@@ -670,6 +673,8 @@ void GameWindowOpenGL::paintGL()
             poly_selection %= IM_ARRAYSIZE(poly_names);
             ImGui::Combo("poly", &poly_selection, poly_names, IM_ARRAYSIZE(poly_names));
         }
+
+        ImGui::SliderFloat("radius factor", &radius_factor, 0.0f, 1.0f);
 
         ImGui::End();
     }
@@ -864,6 +869,7 @@ void GameWindowOpenGL::paintGL()
             const auto radius = system->GetRadius();
 
             particle_program->setUniformValue(particle_radius_unif, radius);
+            particle_program->setUniformValue(particle_radius_factor_unif, radius_factor);
             particle_program->setUniformValue(particle_mode_unif, shader_selection);
             particle_program->setUniformValue(particle_poly_unif, poly_selection);
 
