@@ -663,7 +663,7 @@ void GameWindowOpenGL::paintGL()
         //if (ImGui::Button("Another Window")) show_another_window ^= 1;
 
         {
-            const char* shader_names[] = { "grprng + dot", "grprng", "uniform", "uniform dot" };
+            const char* shader_names[] = { "full grprng + center dot", "full grprng", "full uniform", "dot grprng", "dot uniform" };
             shader_selection %= IM_ARRAYSIZE(shader_names);
             ImGui::Combo("shader", &shader_selection, shader_names, IM_ARRAYSIZE(shader_names));
         }

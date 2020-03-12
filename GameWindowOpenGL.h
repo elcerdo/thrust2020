@@ -64,8 +64,8 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         bool draw_debug = false;
         bool display_ui = true;
         bool is_zoom_out = true;
-        int shader_selection = 2;
-        int poly_selection = 0;
+        int shader_selection = 3;
+        int poly_selection = 3;
         float radius_factor = 1. / 3;
 
     protected:
