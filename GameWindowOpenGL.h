@@ -60,13 +60,16 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         std::unique_ptr<GameState> state = nullptr;
         std::default_random_engine flame_rng;
         std::array<float, 4> water_color = { 108 / 255., 195 / 255., 246 / 255., 1 };
+        std::array<float, 4> foam_color = { 1, 1, 1, 1 };
         bool is_animated = false;
         bool draw_debug = false;
         bool display_ui = true;
         bool is_zoom_out = true;
-        int shader_selection = 3;
+        int shader_selection = 5;
         int poly_selection = 3;
-        float radius_factor = 1. / 3;
+        float radius_factor = 1;
+        float shading_max_speed = 20;
+        float shading_alpha = 2;
 
     protected:
         //bool show_test_window = true;
@@ -103,15 +106,19 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         std::unique_ptr<QOpenGLShaderProgram> particle_program = nullptr;
         int particle_pos_attr = -1;
         int particle_col_attr = -1;
+        int particle_speed_attr = -1;
         int particle_mat_unif = -1;
-        int particle_color_unif = -1;
+        int particle_water_color_unif = -1;
+        int particle_foam_color_unif = -1;
         int particle_radius_unif = -1;
         int particle_radius_factor_unif = -1;
         int particle_mode_unif = -1;
         int particle_poly_unif = -1;
+        int particle_max_speed_unif = -1;
+        int particle_alpha_unif = -1;
 
         GLuint vao = 0;
-        std::array<GLuint, 8> vbos = { 0, 0, 0, 0, 0, 0, 0, 0 };
+        std::array<GLuint, 9> vbos = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 };
 
 

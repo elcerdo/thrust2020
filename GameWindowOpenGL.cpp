@@ -226,21 +226,30 @@ void GameWindowOpenGL::initializeGL()
         assert(particle_program);
         particle_pos_attr = particle_program->attributeLocation("posAttr");
         particle_col_attr = particle_program->attributeLocation("colAttr");
+        particle_speed_attr = particle_program->attributeLocation("speedAttr");
         particle_mat_unif = particle_program->uniformLocation("matrix");
-        particle_color_unif = particle_program->uniformLocation("dotColor");
+        particle_water_color_unif = particle_program->uniformLocation("waterColor");
+        particle_foam_color_unif = particle_program->uniformLocation("foamColor");
         particle_radius_unif = particle_program->uniformLocation("radius");
         particle_radius_factor_unif = particle_program->uniformLocation("radiusFactor");
         particle_mode_unif = particle_program->uniformLocation("mode");
         particle_poly_unif = particle_program->uniformLocation("poly");
-        qDebug() << "particle_locations" << particle_pos_attr << particle_col_attr << particle_mat_unif << particle_color_unif << particle_radius_unif << particle_radius_factor_unif << particle_mode_unif << particle_poly_unif;
+        particle_max_speed_unif = particle_program->uniformLocation("maxSpeed");
+        particle_alpha_unif = particle_program->uniformLocation("alpha");
+        qDebug() << "particle_attr_locations" << particle_pos_attr << particle_col_attr << particle_speed_attr;
         assert(particle_pos_attr >= 0);
         assert(particle_col_attr >= 0);
+        assert(particle_speed_attr >= 0);
+        qDebug() << "particle_unif_locations" << particle_mat_unif << particle_water_color_unif << particle_foam_color_unif << particle_radius_unif << particle_radius_factor_unif << particle_mode_unif << particle_poly_unif << particle_max_speed_unif << particle_alpha_unif;
         assert(particle_mat_unif >= 0);
-        assert(particle_color_unif >= 0);
+        assert(particle_water_color_unif >= 0);
+        assert(particle_foam_color_unif >= 0);
         assert(particle_radius_unif >= 0);
         assert(particle_radius_factor_unif >= 0);
         assert(particle_mode_unif >= 0);
         assert(particle_poly_unif >= 0);
+        assert(particle_max_speed_unif >= 0);
+        assert(particle_alpha_unif >= 0);
         assert(glGetError() == GL_NO_ERROR);
     }
 
@@ -262,29 +271,33 @@ void GameWindowOpenGL::initializeGL()
             return true;
         };
 
-        const auto load_buffer3 = [this, &reserved_vbos, &is_available](const size_t kk, const std::vector<b2Vec3>& vertices) -> void
+        const auto reserve_vbo = [&reserved_vbos, &is_available](const size_t kk) -> void
         {
             assert(is_available(kk));
+            reserved_vbos.emplace(kk);
+        };
+
+        const auto load_buffer3 = [this, &reserve_vbo](const size_t kk, const std::vector<b2Vec3>& vertices) -> void
+        {
+            reserve_vbo(kk);
             glBindBuffer(GL_ARRAY_BUFFER, vbos[kk]);
             glBufferData(GL_ARRAY_BUFFER, vertices.size() * 3 * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
-            reserved_vbos.emplace(kk);
         };
 
-        const auto load_buffer4 = [this, &reserved_vbos, &is_available](const size_t kk, const std::vector<b2Vec4>& vertices) -> void
+        const auto load_buffer4 = [this, &reserve_vbo](const size_t kk, const std::vector<b2Vec4>& vertices) -> void
         {
-            assert(is_available(kk));
+            reserve_vbo(kk);
             glBindBuffer(GL_ARRAY_BUFFER, vbos[kk]);
             glBufferData(GL_ARRAY_BUFFER, vertices.size() * 4 * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
-            reserved_vbos.emplace(kk);
         };
 
-        const auto load_indices = [this, &reserved_vbos, &is_available](const size_t kk, const std::vector<GLuint>& indices) -> void
+        const auto load_indices = [this, &reserve_vbo](const size_t kk, const std::vector<GLuint>& indices) -> void
         {
-            assert(is_available(kk));
+            reserve_vbo(kk);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[kk]);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
-            reserved_vbos.emplace(kk);
         };
+
 
         // ship
         load_buffer3(0, {
@@ -312,24 +325,26 @@ void GameWindowOpenGL::initializeGL()
             { 0, 0, 1, 1 },
         });
 
-        { // cube
-            load_buffer3(6, {
-                { -1, -1, 1 },
-                { 1, -1, 1 },
-                { 1, 1, 1 },
-                { -1, 1, 1 },
-                { -1, -1, -1 },
-                { 1, -1, -1 },
-                { 1, 1, -1 },
-                { -1, 1, -1 },
-            });
-            load_indices(7, {
-                0, 1, 3, 2, 7, 6, 4, 5,
-                3, 7, 0, 4, 1, 5, 2, 6,
-            });
-        }
+        // cube
+        load_buffer3(4, {
+            { -1, -1, 1 },
+            { 1, -1, 1 },
+            { 1, 1, 1 },
+            { -1, 1, 1 },
+            { -1, -1, -1 },
+            { 1, -1, -1 },
+            { 1, 1, -1 },
+            { -1, 1, -1 },
+        });
+        load_indices(5, {
+            0, 1, 3, 2, 7, 6, 4, 5,
+            3, 7, 0, 4, 1, 5, 2, 6,
+        });
 
-        // buffers 4 & 5 are free
+        // buffers 6, 7 & 8 are used by particle system
+        reserve_vbo(6); // position
+        reserve_vbo(7); // color
+        reserve_vbo(8); // speed
 
         cout << "vbos";
         size_t kk = 0;
@@ -457,8 +472,7 @@ void GameWindowOpenGL::drawBody(QPainter& painter, const b2Body& body, const QCo
         painter.translate(world_center.x, world_center.y);
 
         painter.setBrush(Qt::NoBrush);
-        const QColor color = QColor::fromRgbF(water_color[0], water_color[1], water_color[2], water_color[3]);
-        painter.setPen(QPen(color, 0));
+        painter.setPen(QPen(Qt::red, 0));
         painter.drawLine(QPointF(0, 0), QPointF(linear_velocity.x, linear_velocity.y));
 
         painter.setBrush(is_awake ? Qt::blue : Qt::white);
@@ -659,11 +673,10 @@ void GameWindowOpenGL::paintGL()
 
         //ImGui::Text("Hello, world!");
         ImGui::ColorEdit3("water color", water_color.data());
-        //if (ImGui::Button("Test Window")) show_test_window ^= 1;
-        //if (ImGui::Button("Another Window")) show_another_window ^= 1;
+        ImGui::ColorEdit3("foam color", foam_color.data());
 
         {
-            const char* shader_names[] = { "full grprng + center dot", "full grprng", "full uniform", "dot grprng", "dot uniform" };
+            const char* shader_names[] = { "full grprng + center dot", "full grprng", "full uniform", "dot grprng", "dot uniform", "default" };
             shader_selection %= IM_ARRAYSIZE(shader_names);
             ImGui::Combo("shader", &shader_selection, shader_names, IM_ARRAYSIZE(shader_names));
         }
@@ -675,6 +688,19 @@ void GameWindowOpenGL::paintGL()
         }
 
         ImGui::SliderFloat("radius factor", &radius_factor, 0.0f, 1.0f);
+
+        ImGui::SliderFloat("alpha", &shading_alpha, 0, 10);
+        ImGui::SliderFloat("max speed", &shading_max_speed, 0, 100);
+        {
+            assert(state);
+            assert(state->system);
+            const b2Vec2* speeds = state->system->GetVelocityBuffer();
+            const auto kk_max = state->system->GetParticleCount();
+            const auto max_speed = std::accumulate(speeds, speeds + kk_max, 0.f, [](const float& max_speed, const b2Vec2& speed) -> float {
+                return std::max(max_speed, speed.Length());
+            });
+            ImGui::Text("max speed %f", max_speed);
+        }
 
         ImGui::End();
     }
@@ -818,10 +844,10 @@ void GameWindowOpenGL::paintGL()
 
         const auto blit_cube = [this]() -> void
         {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[7]);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[5]);
             assert(glGetError() == GL_NO_ERROR);
 
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[6]);
+            glBindBuffer(GL_ARRAY_BUFFER, vbos[4]);
             glVertexAttribPointer(base_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(base_pos_attr);
             assert(glGetError() == GL_NO_ERROR);
@@ -865,6 +891,7 @@ void GameWindowOpenGL::paintGL()
 
             const b2Vec2* positions = system->GetPositionBuffer();
             const b2ParticleColor* colors = system->GetColorBuffer();
+            const b2Vec2* speeds = system->GetVelocityBuffer();
             const auto kk_max = system->GetParticleCount();
             const auto radius = system->GetRadius();
 
@@ -872,14 +899,16 @@ void GameWindowOpenGL::paintGL()
             particle_program->setUniformValue(particle_radius_factor_unif, radius_factor);
             particle_program->setUniformValue(particle_mode_unif, shader_selection);
             particle_program->setUniformValue(particle_poly_unif, poly_selection);
+            particle_program->setUniformValue(particle_max_speed_unif, shading_max_speed);
+            particle_program->setUniformValue(particle_alpha_unif, shading_alpha);
 
             //            const auto& color = QColor::fromRgb(0x6cu, 0xc3u, 0xf6u, 0xffu);
-            const auto& color = QColor::fromRgbF(water_color[0], water_color[1], water_color[2], water_color[3]);
-            particle_program->setUniformValue(particle_color_unif, color);
+            particle_program->setUniformValue(particle_water_color_unif, QColor::fromRgbF(water_color[0], water_color[1], water_color[2], water_color[3]));
+            particle_program->setUniformValue(particle_foam_color_unif, QColor::fromRgbF(foam_color[0], foam_color[1], foam_color[2], foam_color[3]));
             particle_program->setUniformValue(particle_mat_unif, world_matrix);
             assert(glGetError() == GL_NO_ERROR);
 
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[4]);
+            glBindBuffer(GL_ARRAY_BUFFER, vbos[6]);
             glBufferData(GL_ARRAY_BUFFER, kk_max * 2 * sizeof(GLfloat), positions, GL_DYNAMIC_DRAW);
             glVertexAttribPointer(particle_pos_attr, 2, GL_FLOAT, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(particle_pos_attr);
@@ -887,16 +916,23 @@ void GameWindowOpenGL::paintGL()
 
             static_assert(std::is_same<GLubyte, decltype(b2ParticleColor::r)>::value, "mismatching color types");
 
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[5]);
+            glBindBuffer(GL_ARRAY_BUFFER, vbos[7]);
             glBufferData(GL_ARRAY_BUFFER, kk_max * 4 * sizeof(GLubyte), colors, GL_DYNAMIC_DRAW);
             glVertexAttribPointer(particle_col_attr, 4,  GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(particle_col_attr);
             assert(glGetError() == GL_NO_ERROR);
 
+            glBindBuffer(GL_ARRAY_BUFFER, vbos[8]);
+            glBufferData(GL_ARRAY_BUFFER, kk_max * 2 * sizeof(GLfloat), speeds, GL_DYNAMIC_DRAW);
+            glVertexAttribPointer(particle_speed_attr, 2,  GL_FLOAT, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(particle_speed_attr);
+            assert(glGetError() == GL_NO_ERROR);
+
             glDrawArrays(GL_POINTS, 0, kk_max);
             assert(glGetError() == GL_NO_ERROR);
 
-            //glDisableVertexAttribArray(particle_col_attr);
+            glDisableVertexAttribArray(particle_speed_attr);
+            glDisableVertexAttribArray(particle_col_attr);
             glDisableVertexAttribArray(particle_pos_attr);
             assert(glGetError() == GL_NO_ERROR);
         }

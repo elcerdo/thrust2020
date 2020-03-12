@@ -7,13 +7,16 @@ uniform mat4 matrix;
 uniform float radius;
 uniform int poly;
 
+in float speedAmpl_[];
 in vec4 colAttr_[];
 
 out vec4 pos;
+out float speed;
 out vec4 col;
 
 void main() {
   col = colAttr_[0];
+  speed = speedAmpl_[0];
 
   if (poly == 3)
   { // triangle

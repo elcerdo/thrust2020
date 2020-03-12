@@ -1,11 +1,15 @@
 #version 330 core
 
 in vec4 pos;
+in float speed;
 in vec4 col;
-uniform vec4 dotColor;
+uniform vec4 waterColor;
+uniform vec4 foamColor;
 uniform float radius;
 uniform float radiusFactor;
 uniform int mode;
+uniform float maxSpeed;
+uniform float alpha;
 
 out vec4 finalColor;
 
@@ -16,10 +20,11 @@ void main()
   if (mode > 2 && !in_dot)
     discard;
   finalColor =
-         mode == 0 ? in_dot ? dotColor : col :
+         mode == 0 ? in_dot ? waterColor : col :
          mode == 1 ? col :
-         mode == 2 ? dotColor :
+         mode == 2 ? waterColor :
          mode == 3 ? col :
-         dotColor;
+         mode == 4 ? waterColor :
+         mix(waterColor, foamColor, pow(clamp(speed / maxSpeed, 0, 1), alpha));
 }
 
