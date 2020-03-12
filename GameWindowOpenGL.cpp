@@ -740,6 +740,7 @@ void GameWindowOpenGL::paintGL()
         ImGui::Separator();
         ImGui::Text("particle %d", system.GetParticleCount());
         ImGui::Text("stuck %d", system.GetStuckCandidateCount());
+        ImGui::Text("all particle flags %d", system.GetAllParticleFlags());
 
         ImGui::End();
     }

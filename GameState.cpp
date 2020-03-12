@@ -281,7 +281,7 @@ void GameState::addWater(const b2Vec2 position, const b2Vec2 size, const size_t 
     const float32 bb = dist(rng);
     cout << rr << " ";
     cout << gg << " ";
-    cout << bb << endl;
+    cout << bb << " ";
 
     assert(system);
 
@@ -290,9 +290,11 @@ void GameState::addWater(const b2Vec2 position, const b2Vec2 size, const size_t 
 
     b2ParticleGroupDef group_def;
     group_def.shape = &shape;
-    group_def.flags = b2_tensileParticle | b2_viscousParticle; //b2_powderParticle;
+    group_def.flags = b2_tensileParticle | b2_viscousParticle | b2_fixtureContactFilterParticle;// | b2_staticPressureParticle; //b2_powderParticle;
     //group_def.flags = b2_elasticParticle;
     //group_def.groupFlags = b2_solidParticleGroup;
+    cout << std::bitset<32>(group_def.flags).to_string() << " ";
+    cout << std::bitset<32>(group_def.groupFlags).to_string() << endl;
     group_def.position.Set(position.x, position.y);
     group_def.color.Set(rr, gg, bb, 255u);
     system->CreateParticleGroup(group_def);
