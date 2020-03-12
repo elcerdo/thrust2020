@@ -119,7 +119,7 @@ void GameState::resetGround(const std::string& map_filename)
 void GameState::resetParticleSystem()
 {
     b2ParticleSystemDef system_def;
-    system_def.density = 5e-2;
+    system_def.density = .5;
     system_def.radius = .5;
     //system_def.elasticStrength = 1;
     system_def.surfaceTensionPressureStrength = .4;
@@ -257,7 +257,7 @@ void GameState::resetShip()
 
     b2FixtureDef fixture;
     fixture.shape = &shape;
-    fixture.density = .1;
+    fixture.density = 1;
     fixture.friction = .7;
     fixture.restitution = .1;
     fixture.filter.categoryBits = object_category;
@@ -353,8 +353,9 @@ void GameState::step(const float dt)
     using std::get;
     int velocityIterations = 6;
     int positionIterations = 2;
+    int particleIterations = std::min(world.CalculateReasonableParticleIterations(dt), 4);
     const auto angle = ship->GetAngle();
-    const auto thrust = ship_thrust_factor * (isGrabbed() ? 120. : 20.) * b2Rot(angle).GetYAxis();
+    const auto thrust = ship_thrust_factor * (isGrabbed() ? 50. : 40.) * b2Rot(angle).GetYAxis();
     for (auto& door : doors)
     {
         assert(get<2>(door) < get<1>(door).size());
@@ -363,10 +364,10 @@ void GameState::step(const float dt)
         const auto delta_norm = delta_length > 2 ? 2 * delta / delta_length : delta;
         get<0>(door)->SetLinearVelocity(20 * delta_norm);
     }
-    if (ship_firing) ship->ApplyForceToCenter(thrust, true);
+    if (ship_firing) ship->ApplyForceToCenter(ship->GetMass() * thrust, true);
     ship_target_angle += ship_target_angular_velocity * dt;
     ship->SetAngularVelocity((ship_target_angle - angle) / .05);
-    world.Step(dt, velocityIterations, positionIterations);
+    world.Step(dt, velocityIterations, positionIterations, particleIterations);
     world.ClearForces();
 }
 

@@ -660,6 +660,8 @@ void GameWindowOpenGL::paintGL()
         if (state->system) ImGui::Text("particles %d", state->system->GetParticleCount());
         ImGui::Text("crates %d", static_cast<int>(state->crates.size()));
         ImGui::Text("contact %d", state->all_accum_contact);
+        ImGui::Text("ship mass %f", state->ship->GetMass());
+        ImGui::Text("ball mass %f", state->ball->GetMass());
         ImGui::Text(state->ship_touched_wall ? "!!!!BOOOM!!!!" : "<3<3<3<3");
 
         ImGui::End();
@@ -691,6 +693,8 @@ void GameWindowOpenGL::paintGL()
 
         ImGui::SliderFloat("alpha", &shading_alpha, 0, 10);
         ImGui::SliderFloat("max speed", &shading_max_speed, 0, 100);
+
+        ImGui::Separator();
         {
             assert(state);
             assert(state->system);
@@ -701,6 +705,41 @@ void GameWindowOpenGL::paintGL()
             });
             ImGui::Text("max speed %f", max_speed);
         }
+
+        ImGui::End();
+    }
+
+    if (display_ui)
+    {
+        //ImGui::SetNextWindowSize(ImVec2(330,100), ImGuiCond_Always);
+        ImGui::SetNextWindowPos(ImVec2(width() - 330 - 5, 225), ImGuiCond_Once);
+        ImGui::Begin("Liquid system", &display_ui, ui_window_flags);
+
+        assert(state);
+        assert(state->system);
+        auto& system = *state->system;
+
+        {
+            static int value = 5;
+            ImGui::SliderInt("stuck thresh", &value, 1, 10);
+            system.SetStuckThreshold(value);
+        }
+
+        {
+            static float value = .2;
+            ImGui::SliderFloat("damping", &value, 0, 1);
+            system.SetDamping(value);
+        }
+
+        {
+            static float value = .4;
+            ImGui::SliderFloat("density", &value, .1, 2);
+            system.SetDensity(value);
+        }
+
+        ImGui::Separator();
+        ImGui::Text("particle %d", system.GetParticleCount());
+        ImGui::Text("stuck %d", system.GetStuckCandidateCount());
 
         ImGui::End();
     }
