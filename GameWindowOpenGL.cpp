@@ -84,7 +84,7 @@ void GameWindowOpenGL::resetLevel(const int level)
     }
 
     assert(level >= 0 );
-    assert(level < level_datas.size());
+    assert(level < static_cast<int>(level_datas.size()));
     const auto& level_data = level_datas[level];
 
     qDebug() << "loading" << QString::fromStdString(level_data.name);
