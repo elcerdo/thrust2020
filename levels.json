@@ -1,6 +1,6 @@
 [
   {
-    "name": "level1",
+    "name": "cave",
     "map": ":map1.svg",
     "doors": [
       { "cx": 115, "cy": -170, "dx": 0, "dy": -20},
@@ -9,12 +9,18 @@
     ]
   },
   {
-    "name": "level2",
+    "name": "sandhour",
     "map": ":map2.svg",
     "doors": [
       { "cx": -65, "cy": -160, "dx": 15, "dy": 0},
       { "cx": -90, "cy": 100, "dx": -15, "dy": 0},
       { "cx": 80, "cy": -250, "dx": -160, "dy": 0, "ww": 30, "hh": 5}
+    ]
+  },
+  {
+    "name": "level3",
+    "map": ":map3.svg",
+    "doors": [
     ]
   }
 ]

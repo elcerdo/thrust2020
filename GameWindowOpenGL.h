@@ -55,7 +55,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         std::unique_ptr<QOpenGLShaderProgram> loadAndCompileProgram(const QString& vertex_filename, const QString& fragment_filename, const QString& geometry_filename = QString());
 
     public:
-        int level_current = -1;
+        int level_current = 3;
         levels::LevelDatas level_datas;
         std::unique_ptr<GameState> state = nullptr;
         std::default_random_engine flame_rng;
