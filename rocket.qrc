@@ -8,6 +8,7 @@
     <file>map1.svg</file>
     <file>map2.svg</file>
     <file>map3.svg</file>
+    <file>map4.svg</file>
 
     <file>main_vertex.glsl</file>
     <file>main_fragment.glsl</file>
