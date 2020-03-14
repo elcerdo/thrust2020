@@ -29,6 +29,7 @@ int main(int argc, char* argv[])
             const auto& positions = get<0>(path);
             const auto& size = get<1>(path);
             cout << "** path " << kk++ << " " << positions.size() << " " << size.x << " " << size.y << endl;
+        }
     }
 
     return 0;

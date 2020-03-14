@@ -455,9 +455,9 @@ void GameState::addPath(const std::vector<b2Vec2>& positions, const b2Vec2 size)
     assert(!positions.empty());
     const auto& p0 = positions.front();
 
-    auto positions_ = positions;
-    for (auto& pp : positions_)
-        pp -= p0;
+//    auto positions_ = positions;
+//    for (auto& pp : positions_)
+//        pp -= p0;
 
     UniqueBody door = nullptr;
     {
@@ -483,7 +483,7 @@ void GameState::addPath(const std::vector<b2Vec2>& positions, const b2Vec2 size)
     }
     assert(door);
 
-    doors.emplace_back(std::move(door), positions_, 0);
+    doors.emplace_back(std::move(door), positions, 0);
 }
 
 void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle)

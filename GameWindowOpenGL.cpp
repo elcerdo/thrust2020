@@ -96,6 +96,9 @@ void GameWindowOpenGL::resetLevel(const int level)
     for (const auto& door : level_data.doors)
         state->addDoor(get<0>(door), get<1>(door), get<2>(door));
 
+    for (const auto& path : level_data.paths)
+        state->addPath(get<0>(path), get<1>(path));
+
     state->dumpCollisionData();
     level_current = level;
 }
