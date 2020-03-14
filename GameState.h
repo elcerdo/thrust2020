@@ -27,7 +27,7 @@ struct GameState : public b2ContactListener
     void addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle);
     void clearCrates();
 
-    void addWater(const b2Vec2 pos, const b2Vec2 size, const size_t seed);
+    void addWater(const b2Vec2 pos, const b2Vec2 size, const size_t seed, const uint flags);
     void clearWater();
 
     void addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 delta);

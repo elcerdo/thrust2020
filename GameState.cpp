@@ -271,7 +271,7 @@ void GameState::resetShip()
     ship_touched_wall = false;
 }
 
-void GameState::addWater(const b2Vec2 position, const b2Vec2 size, const size_t seed)
+void GameState::addWater(const b2Vec2 position, const b2Vec2 size, const size_t seed, const uint flags)
 {
     cout << "flop ";
     std::default_random_engine rng(seed);
@@ -290,7 +290,7 @@ void GameState::addWater(const b2Vec2 position, const b2Vec2 size, const size_t 
 
     b2ParticleGroupDef group_def;
     group_def.shape = &shape;
-    group_def.flags = b2_tensileParticle | b2_viscousParticle | b2_fixtureContactFilterParticle;// | b2_staticPressureParticle; //b2_powderParticle;
+    group_def.flags = flags;/*b2_tensileParticle |*/ b2_viscousParticle | b2_fixtureContactFilterParticle;// | b2_staticPressureParticle; //b2_powderParticle;
     //group_def.flags = b2_elasticParticle;
     //group_def.groupFlags = b2_solidParticleGroup;
     cout << std::bitset<32>(group_def.flags).to_string() << " ";

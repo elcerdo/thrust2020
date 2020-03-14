@@ -66,7 +66,8 @@ int main(int argc, char* argv[])
     std::default_random_engine rng;
     view.addButton("drop water", Qt::Key_E, [&view, &rng]() -> void {
         assert(view.state);
-        view.state->addWater({ 0, 70 }, { 10, 10 }, rng());
+        const uint flags = b2_viscousParticle | b2_fixtureContactFilterParticle;
+        view.state->addWater({ 0, 70 }, { 10, 10 }, rng(), flags);
     });
     view.addButton("clear water", Qt::Key_D, [&view]() -> void {
         assert(view.state);
