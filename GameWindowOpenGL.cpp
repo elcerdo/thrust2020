@@ -31,8 +31,6 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
     for (const auto& level_data : level_datas)
         qDebug() << "level" << QString::fromStdString(level_data.name) << QString::fromStdString(level_data.map_filename) << level_data.doors.size();
 
-    resetLevel(0);
-
     {
         auto& sfx = engine_sfx;
         const auto sound = QUrl::fromLocalFile(":engine.wav");

@@ -15,7 +15,9 @@ int main(int argc, char* argv[])
 
     QApplication app(argc, argv);
 
-    GameWindowOpenGL view;
+    GameWindowOpenGL view;    
+    view.resetLevel(3);
+
 
     view.setAnimated(true);
     view.resize(1280, 720);
