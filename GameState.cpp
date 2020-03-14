@@ -449,9 +449,41 @@ void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 delta)
     doors.emplace_back(std::move(door), std::vector<b2Vec2> { origin, origin + delta }, 0);
 }
 
-void GameState::clearDoors()
+
+void GameState::addPath(const std::vector<b2Vec2>& positions, const b2Vec2 size)
 {
-    doors.clear();
+    assert(!positions.empty());
+    const auto& p0 = positions.front();
+
+    auto positions_ = positions;
+    for (auto& pp : positions_)
+        pp -= p0;
+
+    UniqueBody door = nullptr;
+    {
+        b2BodyDef def;
+        def.type = b2_kinematicBody;
+        def.position = p0;
+        def.angle = 0;//atan2(delta.y, delta.x) + M_PI / 2.f;
+
+        b2PolygonShape shape;
+        shape.SetAsBox(size.x, size.y);
+
+        b2FixtureDef fixture;
+        fixture.shape = &shape;
+        fixture.density = 0;
+        fixture.friction = .8;
+        fixture.filter.categoryBits = door_category;
+        fixture.filter.maskBits = object_category;
+
+        auto body = world.CreateBody(&def);
+        body->CreateFixture(&fixture);
+
+        door = UniqueBody(body, [this](b2Body* body) { world.DestroyBody(body); });
+    }
+    assert(door);
+
+    doors.emplace_back(std::move(door), positions_, 0);
 }
 
 void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle)

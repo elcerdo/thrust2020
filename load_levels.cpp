@@ -40,7 +40,8 @@ levels::LevelDatas levels::load(const std::string& json_filename)
         LevelData level {
             level_obj["name"].toString().toStdString(),
             level_obj["map"].toString().toStdString(),
-            {}
+            {},
+            {},
         };
 
         for (const auto& door_json : level_obj["doors"].toArray())
@@ -51,6 +52,19 @@ levels::LevelDatas levels::load(const std::string& json_filename)
             const b2Vec2 size = vec2_from_json(door_obj, "ww", "hh", b2Vec2 { 1, 10 });
             const b2Vec2 delta = vec2_from_json(door_obj, "dx", "dy", b2Vec2 { 0, -20 });
             level.doors.emplace_back(LevelData::DoorData { center, size, delta });
+        }
+
+        for (const auto& path_json : level_obj["paths"].toArray())
+        {
+            assert(path_json.isObject());
+            const auto& path_obj = path_json.toObject();
+            const b2Vec2 size = vec2_from_json(path_obj, "ww", "hh", b2Vec2 { 1, 10 });
+
+            std::vector<b2Vec2> positions;
+            for (const auto& pos_json : path_obj["positions"].toArray())
+                positions.emplace_back(vec2_from_json(pos_json, "x", "y"));
+
+            level.paths.emplace_back(LevelData::PathData { positions, size });
         }
 
         data.emplace_back(level);

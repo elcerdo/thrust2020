@@ -31,7 +31,7 @@ struct GameState : public b2ContactListener
     void clearWater();
 
     void addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 delta);
-    void clearDoors();
+    void addPath(const std::vector<b2Vec2>& positions, const b2Vec2 size);
 
     void resetShip();
     void resetBall();
