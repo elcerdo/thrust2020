@@ -681,7 +681,7 @@ void GameWindowOpenGL::paintGL()
         {
             const char* shader_names[] = { "full grprng + center dot", "full grprng", "full uniform", "dot grprng", "dot uniform", "default" };
             shader_selection %= IM_ARRAYSIZE(shader_names);
-            ImGui::Combo("shader", &shader_selection, shader_names, IM_ARRAYSIZE(shader_names));
+            ImGui::Combo("shader (Q)", &shader_selection, shader_names, IM_ARRAYSIZE(shader_names));
         }
 
         {
@@ -914,6 +914,8 @@ void GameWindowOpenGL::paintGL()
         }
 
         base_program->release();
+
+        glBindVertexArray(0);
     }
 
     { // draw with particle program
@@ -983,7 +985,6 @@ void GameWindowOpenGL::paintGL()
         particle_program->release();
 
         glBindVertexArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -1064,6 +1065,8 @@ void GameWindowOpenGL::paintGL()
         glDisable(GL_DEPTH_TEST);
 
         main_program->release();
+
+        glBindVertexArray(0);
     }
 
     { // draw with ball program
@@ -1112,6 +1115,8 @@ void GameWindowOpenGL::paintGL()
         }
 
         ball_program->release();
+
+        glBindVertexArray(0);
     }
 
 
