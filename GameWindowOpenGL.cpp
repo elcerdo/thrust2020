@@ -18,6 +18,7 @@
 #include <iostream>
 #include <sstream>
 #include <unordered_set>
+#include <bitset>
 
 const float camera_world_zoom = 1.5;
 const QVector2D camera_world_center { 0, -120 };
@@ -228,6 +229,7 @@ void GameWindowOpenGL::initializeGL()
         particle_pos_attr = particle_program->attributeLocation("posAttr");
         particle_col_attr = particle_program->attributeLocation("colAttr");
         particle_speed_attr = particle_program->attributeLocation("speedAttr");
+        particle_flag_attr = particle_program->attributeLocation("flagAttr");
         particle_mat_unif = particle_program->uniformLocation("matrix");
         particle_water_color_unif = particle_program->uniformLocation("waterColor");
         particle_foam_color_unif = particle_program->uniformLocation("foamColor");
@@ -237,10 +239,11 @@ void GameWindowOpenGL::initializeGL()
         particle_poly_unif = particle_program->uniformLocation("poly");
         particle_max_speed_unif = particle_program->uniformLocation("maxSpeed");
         particle_alpha_unif = particle_program->uniformLocation("alpha");
-        qDebug() << "particle_attr_locations" << particle_pos_attr << particle_col_attr << particle_speed_attr;
+        qDebug() << "particle_attr_locations" << particle_pos_attr << particle_col_attr << particle_speed_attr << particle_flag_attr;
         assert(particle_pos_attr >= 0);
         assert(particle_col_attr >= 0);
         assert(particle_speed_attr >= 0);
+        assert(particle_flag_attr >= 0);
         qDebug() << "particle_unif_locations" << particle_mat_unif << particle_water_color_unif << particle_foam_color_unif << particle_radius_unif << particle_radius_factor_unif << particle_mode_unif << particle_poly_unif << particle_max_speed_unif << particle_alpha_unif;
         assert(particle_mat_unif >= 0);
         assert(particle_water_color_unif >= 0);
@@ -346,6 +349,7 @@ void GameWindowOpenGL::initializeGL()
         reserve_vbo(6); // position
         reserve_vbo(7); // color
         reserve_vbo(8); // speed
+        reserve_vbo(9); // flag
 
         cout << "vbos";
         size_t kk = 0;
@@ -741,7 +745,15 @@ void GameWindowOpenGL::paintGL()
         ImGui::Separator();
         ImGui::Text("particle %d", system.GetParticleCount());
         ImGui::Text("stuck %d", system.GetStuckCandidateCount());
-        ImGui::Text("all particle flags %d", system.GetAllParticleFlags());
+
+        {
+            const auto flags = system.GetAllParticleFlags();
+            const auto str = std::bitset<32>(flags).to_string();
+            assert(str.size() == 32);
+            ImGui::Text("all particle flags %d", flags);
+            ImGui::Text("%s", str.substr(0, 16).c_str());
+            ImGui::Text("%s", str.substr(16, 16).c_str());
+        }
 
         ImGui::End();
     }
@@ -938,6 +950,15 @@ void GameWindowOpenGL::paintGL()
             const auto kk_max = system->GetParticleCount();
             const auto radius = system->GetRadius();
 
+            std::vector<GLuint> flags(kk_max);
+            {
+                std::fill(std::begin(flags), std::end(flags), 0);
+                const auto candidates = system->GetStuckCandidates();
+                for (auto ll=0, ll_max=system->GetStuckCandidateCount(); ll < ll_max; ll++)
+                    flags[candidates[ll]] = 1;
+            }
+
+
             particle_program->setUniformValue(particle_radius_unif, radius);
             particle_program->setUniformValue(particle_radius_factor_unif, radius_factor);
             particle_program->setUniformValue(particle_mode_unif, shader_selection);
@@ -971,9 +992,16 @@ void GameWindowOpenGL::paintGL()
             glEnableVertexAttribArray(particle_speed_attr);
             assert(glGetError() == GL_NO_ERROR);
 
+            glBindBuffer(GL_ARRAY_BUFFER, vbos[9]);
+            glBufferData(GL_ARRAY_BUFFER, kk_max * sizeof(GLuint), flags.data(), GL_DYNAMIC_DRAW);
+            glVertexAttribPointer(particle_flag_attr, 1,  GL_UNSIGNED_INT, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(particle_flag_attr);
+            assert(glGetError() == GL_NO_ERROR);
+
             glDrawArrays(GL_POINTS, 0, kk_max);
             assert(glGetError() == GL_NO_ERROR);
 
+            glDisableVertexAttribArray(particle_flag_attr);
             glDisableVertexAttribArray(particle_speed_attr);
             glDisableVertexAttribArray(particle_col_attr);
             glDisableVertexAttribArray(particle_pos_attr);

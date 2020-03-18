@@ -9,14 +9,17 @@ uniform int poly;
 
 in float speedAmpl_[];
 in vec4 colAttr_[];
+flat in uint flagAttr_[];
 
 out vec4 pos;
 out float speed;
+flat out uint flag;
 out vec4 col;
 
 void main() {
   col = colAttr_[0];
   speed = speedAmpl_[0];
+  flag = flagAttr_[0];
 
   if (poly == 3)
   { // triangle

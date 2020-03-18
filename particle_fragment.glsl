@@ -3,6 +3,7 @@
 in vec4 pos;
 in float speed;
 in vec4 col;
+flat in uint flag;
 uniform vec4 waterColor;
 uniform vec4 foamColor;
 uniform float radius;
@@ -19,7 +20,15 @@ void main()
   bool in_dot = pos.x * pos.x + pos.y * pos.y + pos.z * pos.z < dotRadius * dotRadius;
   if (mode > 2 && !in_dot)
     discard;
-  finalColor =
+  bool is_stuck = flag != 0u; //% 2u != 0u;
+/*
+  finalColor = is_stuck ? vec4(1, 0, 0, 1) : vec4(0, 1, 0, 1);
+  finalColor += 1e-9 * col;
+  finalColor += 1e-9 * waterColor;
+  finalColor += 1e-9 * foamColor;
+  finalColor.b += 1e-9 * (speed - maxSpeed + alpha);
+*/
+  finalColor = is_stuck ? vec4(1, 0, 0, 1) :
          mode == 0 ? in_dot ? waterColor : col :
          mode == 1 ? col :
          mode == 2 ? waterColor :

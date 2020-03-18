@@ -108,6 +108,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         int particle_pos_attr = -1;
         int particle_col_attr = -1;
         int particle_speed_attr = -1;
+        int particle_flag_attr = -1;
         int particle_mat_unif = -1;
         int particle_water_color_unif = -1;
         int particle_foam_color_unif = -1;
@@ -119,7 +120,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         int particle_alpha_unif = -1;
 
         GLuint vao = 0;
-        std::array<GLuint, 9> vbos = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        std::array<GLuint, 10> vbos = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 };
 
 
