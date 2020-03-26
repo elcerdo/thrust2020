@@ -33,7 +33,8 @@ GameState::GameState() :
     ship_thrust_factor(1.),
     ship_accum_contact(0),
     all_accum_contact(0),
-    all_energy(0)
+    all_energy(0),
+    clean_stuck_particles(false)
 {
     resetShip();
     resetBall();
@@ -353,24 +354,42 @@ bool GameState::isGrabbed() const {
 void GameState::step(const float dt)
 {
     using std::get;
-    int velocityIterations = 6;
-    int positionIterations = 2;
-    int particleIterations = std::min(world.CalculateReasonableParticleIterations(dt), 4);
-    const auto angle = ship->GetAngle();
-    const auto thrust = ship_thrust_factor * (isGrabbed() ? 50. : 40.) * b2Rot(angle).GetYAxis();
+
     for (auto& door : doors)
     {
+        assert(get<0>(door));
         assert(get<2>(door) < get<1>(door).size());
         const auto delta = get<1>(door)[get<2>(door)] - get<0>(door)->GetWorldCenter();
         const auto delta_length = delta.Length();
         const auto delta_norm = delta_length > 2 ? 2 * delta / delta_length : delta;
         get<0>(door)->SetLinearVelocity(20 * delta_norm);
     }
-    if (ship_firing) ship->ApplyForceToCenter(ship->GetMass() * thrust, true);
-    ship_target_angle += ship_target_angular_velocity * dt;
-    ship->SetAngularVelocity((ship_target_angle - angle) / .05);
-    world.Step(dt, velocityIterations, positionIterations, particleIterations);
-    world.ClearForces();
+
+    { // ship
+        assert(ship);
+        const auto angle = ship->GetAngle();
+        const auto thrust = ship_thrust_factor * (isGrabbed() ? 50. : 40.) * b2Rot(angle).GetYAxis();
+        if (ship_firing) ship->ApplyForceToCenter(ship->GetMass() * thrust, true);
+        ship_target_angle += ship_target_angular_velocity * dt;
+        ship->SetAngularVelocity((ship_target_angle - angle) / .05);
+    }
+
+    { // step
+        int velocityIterations = 6;
+        int positionIterations = 2;
+        int particleIterations = std::min(world.CalculateReasonableParticleIterations(dt), 4);
+        world.Step(dt, velocityIterations, positionIterations, particleIterations);
+        world.ClearForces();
+    }
+
+    if (clean_stuck_particles)
+    {
+        assert(system);
+        const auto candidates = system->GetStuckCandidates();
+        for (auto kk=0, kk_max=system->GetStuckCandidateCount(); kk<kk_max; kk++)
+            system->DestroyParticle(candidates[kk]);
+    }
+
 }
 
 void GameState::BeginContact(b2Contact* contact)

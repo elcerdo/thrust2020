@@ -28,12 +28,13 @@ void main()
   finalColor += 1e-9 * foamColor;
   finalColor.b += 1e-9 * (speed - maxSpeed + alpha);
 */
-  finalColor = is_stuck ? vec4(1, 0, 0, 1) :
+  finalColor = 
          mode == 0 ? in_dot ? waterColor : col :
          mode == 1 ? col :
          mode == 2 ? waterColor :
          mode == 3 ? col :
          mode == 4 ? waterColor :
+         mode == 5 ? is_stuck ? vec4(1, 0, 0, 1) : vec4(0, 1, 0, 1) :
          mix(waterColor, foamColor, pow(clamp(speed / maxSpeed, 0, 1), alpha));
 }
 

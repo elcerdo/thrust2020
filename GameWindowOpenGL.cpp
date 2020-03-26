@@ -683,7 +683,7 @@ void GameWindowOpenGL::paintGL()
         ImGui::ColorEdit3("foam color", foam_color.data());
 
         {
-            const char* shader_names[] = { "full grprng + center dot", "full grprng", "full uniform", "dot grprng", "dot uniform", "default" };
+            const char* shader_names[] = { "full grprng + center dot", "full grprng", "full uniform", "dot grprng", "dot uniform", "stuck", "default" };
             shader_selection %= IM_ARRAYSIZE(shader_names);
             ImGui::Combo("shader (Q)", &shader_selection, shader_names, IM_ARRAYSIZE(shader_names));
         }
@@ -725,8 +725,8 @@ void GameWindowOpenGL::paintGL()
         auto& system = *state->system;
 
         {
-            static int value = 5;
-            ImGui::SliderInt("stuck thresh", &value, 1, 10);
+            static int value = 10;
+            ImGui::SliderInt("stuck thresh", &value, 0, 60);
             system.SetStuckThreshold(value);
         }
 
@@ -741,6 +741,9 @@ void GameWindowOpenGL::paintGL()
             ImGui::SliderFloat("density", &value, .1, 2);
             system.SetDensity(value);
         }
+
+        ImGui::Checkbox("clean stuck", &state->clean_stuck_particles);
+
 
         ImGui::Separator();
         ImGui::Text("particle %d", system.GetParticleCount());
