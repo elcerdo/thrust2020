@@ -34,7 +34,7 @@ GameState::GameState() :
     ship_accum_contact(0),
     all_accum_contact(0),
     all_energy(0),
-    clean_stuck_particles(false)
+    clean_stuck_in_door(true)
 {
     resetShip();
     resetBall();
@@ -126,6 +126,8 @@ void GameState::resetParticleSystem()
     system_def.surfaceTensionPressureStrength = .4;
     system_def.surfaceTensionNormalStrength = .4;
     auto system_ = world.CreateParticleSystem(&system_def);
+    assert(system_);
+    system_->SetStuckThreshold(4);
 
     system = UniqueSystem(system_, [this](b2ParticleSystem* system_) -> void { world.DestroyParticleSystem(system_); });
 
@@ -382,12 +384,24 @@ void GameState::step(const float dt)
         world.ClearForces();
     }
 
-    if (clean_stuck_particles)
+    if (clean_stuck_in_door)
     {
         assert(system);
         const auto candidates = system->GetStuckCandidates();
+        const auto positions = system->GetPositionBuffer();
         for (auto kk=0, kk_max=system->GetStuckCandidateCount(); kk<kk_max; kk++)
-            system->DestroyParticle(candidates[kk]);
+            for (auto& door : doors)
+            {
+                assert(get<0>(door));
+                const auto fixture = get<0>(door)->GetFixtureList();
+                assert(fixture);
+                const auto candidate = candidates[kk];
+                if (fixture->TestPoint(positions[candidate]))
+                {
+                    system->DestroyParticle(candidate);
+                    break;
+                }
+            }
     }
 
 }

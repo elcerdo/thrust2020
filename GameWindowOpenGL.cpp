@@ -662,7 +662,7 @@ void GameWindowOpenGL::paintGL()
         ImGui::Separator();
         ImGui::Text("application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::Text("ship %.2f %.2f", state->ship->GetPosition().x, state->ship->GetPosition().y);
-        if (state->system) ImGui::Text("particles %d", state->system->GetParticleCount());
+        if (state->system) ImGui::Text("particles %d(%d)", state->system->GetParticleCount(), state->system->GetStuckCandidateCount());
         ImGui::Text("crates %d", static_cast<int>(state->crates.size()));
         ImGui::Text("contact %d", state->all_accum_contact);
         ImGui::Text("ship mass %f", state->ship->GetMass());
@@ -725,8 +725,8 @@ void GameWindowOpenGL::paintGL()
         auto& system = *state->system;
 
         {
-            static int value = 10;
-            ImGui::SliderInt("stuck thresh", &value, 0, 60);
+            static int value = 4;
+            ImGui::SliderInt("stuck thresh", &value, 0, 10);
             system.SetStuckThreshold(value);
         }
 
@@ -742,20 +742,17 @@ void GameWindowOpenGL::paintGL()
             system.SetDensity(value);
         }
 
-        ImGui::Checkbox("clean stuck", &state->clean_stuck_particles);
-
+        ImGui::Checkbox("clean stuck in door", &state->clean_stuck_in_door);
 
         ImGui::Separator();
-        ImGui::Text("particle %d", system.GetParticleCount());
-        ImGui::Text("stuck %d", system.GetStuckCandidateCount());
 
         {
             const auto flags = system.GetAllParticleFlags();
             const auto str = std::bitset<32>(flags).to_string();
             assert(str.size() == 32);
             ImGui::Text("all particle flags %d", flags);
-            ImGui::Text("%s", str.substr(0, 16).c_str());
-            ImGui::Text("%s", str.substr(16, 16).c_str());
+            ImGui::Text("00-15 %s", str.substr(0, 16).c_str());
+            ImGui::Text("16-31 %s", str.substr(16, 16).c_str());
         }
 
         ImGui::End();

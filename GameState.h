@@ -63,6 +63,6 @@ struct GameState : public b2ContactListener
     int ship_accum_contact;
     int all_accum_contact;
     double all_energy;
-    bool clean_stuck_particles;
+    bool clean_stuck_in_door;
 };
 
