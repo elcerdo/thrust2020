@@ -41,6 +41,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         void resetLevel(const int level);
 
     protected:
+        void assertNoError();
         void initializeGL() override;
         void paintGL() override;
         void keyPressEvent(QKeyEvent* event) override;

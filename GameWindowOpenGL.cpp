@@ -66,6 +66,54 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
     }*/
 }
 
+void GameWindowOpenGL::assertNoError()
+{
+#if !defined(NDEBUG)
+    const auto gl_error = glGetError();
+
+    using std::cerr;
+    using std::endl;
+
+    switch (gl_error)
+    {
+        default:
+        case GL_NO_ERROR:
+            break;
+        case GL_INVALID_ENUM:
+            cerr << "GL_INVALID_ENUM" << endl;
+            cerr << "An unacceptable value is specified for an enumerated argument. The offending command is ignored and has no other side effect than to set the error flag." << endl;
+            break;
+        case GL_INVALID_VALUE:
+            cerr << "GL_INVALID_VALUE" << endl;
+            cerr << "A numerir argument is out of range. The offending command is ignored and has no other side effect than to set the error flag." << endl;
+            break;
+        case GL_INVALID_OPERATION:
+            cerr << "GL_INVALID_OPERATION" << endl;
+            cerr << "The specified operation is not allowed in the current state. The offending command is ignored and has no other side effect than to set the error flag." << endl;
+            break;
+        case GL_INVALID_FRAMEBUFFER_OPERATION:
+            cerr << "GL_INVALID_FRAMEBUFFER_OPERATION" << endl;
+            cerr << "The framebuffer object is not complete. The offending command is ignored and has no other side effect than to set the error flag." << endl;
+            break;
+        case GL_OUT_OF_MEMORY:
+            cerr << "GL_OUT_OF_MEMORY" << endl;
+            cerr << "There is not enough memory left to execute the command. The state of the GL is undefined, except for the state of the error flags, after this error is recorded." << endl;
+            break;
+        case GL_STACK_UNDERFLOW:
+            cerr << "GL_STACK_UNDERFLOW" << endl;
+            cerr << "An attempt has been made to perform an operation that would cause an internal stack to underflow." << endl;
+            break;
+        case GL_STACK_OVERFLOW:
+            cerr << "GL_STACK_OVERFLOW" << endl;
+            cerr << "An attempt has been made to perform an operation that would cause an internal stack to overflow." << endl;
+            break;
+    }
+#endif
+
+    assert(gl_error == GL_NO_ERROR);
+}
+
+
 void GameWindowOpenGL::resetLevel(const int level)
 {
     using std::get;
@@ -154,6 +202,7 @@ std::unique_ptr<QOpenGLShaderProgram> GameWindowOpenGL::loadAndCompileProgram(co
         qDebug() << program->log();
         return nullptr;
     }
+    assertNoError();
     assert(all_ok);
 
     return program;
@@ -176,7 +225,7 @@ void GameWindowOpenGL::initializeGL()
 
     initializeOpenGLFunctions();
     QtImGui::initialize(this);
-    assert(glGetError() == GL_NO_ERROR);
+    assertNoError();
 
     {
         assert(!base_program);
@@ -188,7 +237,7 @@ void GameWindowOpenGL::initializeGL()
         qDebug() << "base_locations" << base_pos_attr << base_mat_unif;
         assert(base_pos_attr >= 0);
         assert(base_mat_unif >= 0);
-        assert(glGetError() == GL_NO_ERROR);
+        assertNoError();
     }
 
     {
@@ -203,7 +252,7 @@ void GameWindowOpenGL::initializeGL()
         assert(main_pos_attr >= 0);
         assert(main_col_attr >= 0);
         assert(main_mat_unif >= 0);
-        assert(glGetError() == GL_NO_ERROR);
+        assertNoError();
     }
 
     {
@@ -218,7 +267,7 @@ void GameWindowOpenGL::initializeGL()
         assert(ball_pos_attr >= 0);
         assert(ball_mat_unif >= 0);
         assert(ball_angular_speed_unif >= 0);
-        assert(glGetError() == GL_NO_ERROR);
+        assertNoError();
     }
 
     {
@@ -254,7 +303,7 @@ void GameWindowOpenGL::initializeGL()
         assert(particle_poly_unif >= 0);
         assert(particle_max_speed_unif >= 0);
         assert(particle_alpha_unif >= 0);
-        assert(glGetError() == GL_NO_ERROR);
+        assertNoError();
     }
 
     { // ship vao
@@ -564,15 +613,18 @@ void GameWindowOpenGL::drawShip(QPainter& painter)
 
 void GameWindowOpenGL::paintGL()
 {
+    assertNoError();
+
     const double dt_ = std::min(50e-3, 1. / ImGui::GetIO().Framerate);
     state->step(dt_);
 
     glClearColor(1, 0, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    assertNoError();
 
     const qreal retinaScale = devicePixelRatio();
     glViewport(0, 0, width() * retinaScale, height() * retinaScale);
-    assert(glGetError() == GL_NO_ERROR);
+    assertNoError();
 
     QtImGui::newFrame();
 
@@ -890,7 +942,7 @@ void GameWindowOpenGL::paintGL()
 
         assert(base_program);
         base_program->bind();
-        assert(glGetError() == GL_NO_ERROR);
+        assertNoError();
 
         glDepthFunc(GL_LESS);
         glEnable(GL_DEPTH_TEST);
@@ -898,21 +950,21 @@ void GameWindowOpenGL::paintGL()
         const auto blit_cube = [this]() -> void
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[5]);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
 
             glBindBuffer(GL_ARRAY_BUFFER, vbos[4]);
             glVertexAttribPointer(base_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(base_pos_attr);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
 
             //glEnable(GL_CULL_FACE);
             glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
             glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(8 * sizeof(unsigned int)));
             //glDisable(GL_CULL_FACE);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
 
             glDisableVertexAttribArray(base_pos_attr);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
         };
 
         {
@@ -935,7 +987,7 @@ void GameWindowOpenGL::paintGL()
 
         assert(particle_program);
         particle_program->bind();
-        assert(glGetError() == GL_NO_ERROR);
+        assertNoError();
 
         glDepthFunc(GL_LESS);
         glEnable(GL_DEPTH_TEST);
@@ -970,13 +1022,13 @@ void GameWindowOpenGL::paintGL()
             particle_program->setUniformValue(particle_water_color_unif, QColor::fromRgbF(water_color[0], water_color[1], water_color[2], water_color[3]));
             particle_program->setUniformValue(particle_foam_color_unif, QColor::fromRgbF(foam_color[0], foam_color[1], foam_color[2], foam_color[3]));
             particle_program->setUniformValue(particle_mat_unif, world_matrix);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
 
             glBindBuffer(GL_ARRAY_BUFFER, vbos[6]);
             glBufferData(GL_ARRAY_BUFFER, kk_max * 2 * sizeof(GLfloat), positions, GL_DYNAMIC_DRAW);
             glVertexAttribPointer(particle_pos_attr, 2, GL_FLOAT, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(particle_pos_attr);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
 
             static_assert(std::is_same<GLubyte, decltype(b2ParticleColor::r)>::value, "mismatching color types");
 
@@ -984,28 +1036,28 @@ void GameWindowOpenGL::paintGL()
             glBufferData(GL_ARRAY_BUFFER, kk_max * 4 * sizeof(GLubyte), colors, GL_DYNAMIC_DRAW);
             glVertexAttribPointer(particle_col_attr, 4,  GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(particle_col_attr);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
 
             glBindBuffer(GL_ARRAY_BUFFER, vbos[8]);
             glBufferData(GL_ARRAY_BUFFER, kk_max * 2 * sizeof(GLfloat), speeds, GL_DYNAMIC_DRAW);
             glVertexAttribPointer(particle_speed_attr, 2,  GL_FLOAT, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(particle_speed_attr);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
 
             glBindBuffer(GL_ARRAY_BUFFER, vbos[9]);
             glBufferData(GL_ARRAY_BUFFER, kk_max * sizeof(GLuint), flags.data(), GL_DYNAMIC_DRAW);
             glVertexAttribPointer(particle_flag_attr, 1,  GL_UNSIGNED_INT, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(particle_flag_attr);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
 
             glDrawArrays(GL_POINTS, 0, kk_max);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
 
             glDisableVertexAttribArray(particle_flag_attr);
             glDisableVertexAttribArray(particle_speed_attr);
             glDisableVertexAttribArray(particle_col_attr);
             glDisableVertexAttribArray(particle_pos_attr);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
         }
 
         glDisable(GL_DEPTH_TEST);
@@ -1022,7 +1074,7 @@ void GameWindowOpenGL::paintGL()
 
         assert(main_program);
         main_program->bind();
-        assert(glGetError() == GL_NO_ERROR);
+        assertNoError();
 
         glDepthFunc(GL_LESS);
         glEnable(GL_DEPTH_TEST);
@@ -1032,19 +1084,19 @@ void GameWindowOpenGL::paintGL()
             glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
             glVertexAttribPointer(main_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(main_pos_attr);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
 
             glBindBuffer(GL_ARRAY_BUFFER, vbos[1]);
             glVertexAttribPointer(main_col_attr, 4, GL_FLOAT, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(main_col_attr);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
 
             glDrawArrays(GL_TRIANGLES, 0, 3);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
 
             glDisableVertexAttribArray(main_col_attr);
             glDisableVertexAttribArray(main_pos_attr);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
         };
 
         const auto blit_square = [this]() -> void
@@ -1052,19 +1104,19 @@ void GameWindowOpenGL::paintGL()
             glBindBuffer(GL_ARRAY_BUFFER, vbos[2]);
             glVertexAttribPointer(main_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(main_pos_attr);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
 
             glBindBuffer(GL_ARRAY_BUFFER, vbos[3]);
             glVertexAttribPointer(main_col_attr, 4, GL_FLOAT, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(main_col_attr);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
 
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
 
             glDisableVertexAttribArray(main_col_attr);
             glDisableVertexAttribArray(main_pos_attr);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
         };
 
         { // ship
@@ -1077,7 +1129,7 @@ void GameWindowOpenGL::paintGL()
             matrix.rotate(frame_counter, 0, 1, 0);
 
             main_program->setUniformValue(main_mat_unif, matrix);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
 
             blit_triangle();
             blit_square();
@@ -1085,7 +1137,7 @@ void GameWindowOpenGL::paintGL()
             matrix.rotate(90, 0, 1, 0);
 
             main_program->setUniformValue(main_mat_unif, matrix);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
 
             blit_triangle();
         }
@@ -1102,7 +1154,7 @@ void GameWindowOpenGL::paintGL()
 
         assert(ball_program);
         ball_program->bind();
-        assert(glGetError() == GL_NO_ERROR);
+        assertNoError();
 
         glDepthFunc(GL_LESS);
         glEnable(GL_DEPTH_TEST);
@@ -1112,13 +1164,13 @@ void GameWindowOpenGL::paintGL()
             glBindBuffer(GL_ARRAY_BUFFER, vbos[2]);
             glVertexAttribPointer(main_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(main_pos_attr);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
 
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
 
             glDisableVertexAttribArray(main_pos_attr);
-            assert(glGetError() == GL_NO_ERROR);
+            assertNoError();
         };
 
         {
