@@ -7,6 +7,10 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+if(WIN32)
+    add_definitions(-D_USE_MATH_DEFINES)
+endif()
+
 find_package(Qt5 COMPONENTS Widgets Multimedia OpenGL Svg REQUIRED)
 
 set(BOX2D_VERSION 2.3.0)
