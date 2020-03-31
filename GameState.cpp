@@ -274,7 +274,7 @@ void GameState::resetShip()
     ship_touched_wall = false;
 }
 
-void GameState::addWater(const b2Vec2 position, const b2Vec2 size, const size_t seed, const uint flags)
+void GameState::addWater(const b2Vec2 position, const b2Vec2 size, const size_t seed, const unsigned int flags)
 {
     cout << "flop ";
     std::default_random_engine rng(seed);
