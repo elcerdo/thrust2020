@@ -36,6 +36,8 @@ class RasterWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         void paintGL() override;
         void keyPressEvent(QKeyEvent* event) override;
 
+        virtual void paintUI();
+
         std::unique_ptr<QOpenGLShaderProgram> loadAndCompileProgram(const QString& vertex_filename, const QString& fragment_filename, const QString& geometry_filename = QString());
 
     public:
@@ -54,7 +56,7 @@ class RasterWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         int base_mat_unif = -1;
 
         GLuint vao = 0;
-        std::array<GLuint, 10> vbos = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        std::array<GLuint, 2> vbos = { 0, 0 };
 };
 
 

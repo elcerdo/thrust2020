@@ -222,15 +222,14 @@ void RasterWindowOpenGL::initializeGL()
             reserved_vbos.emplace(kk);
         };
 
-        /*
-        const auto load_buffer3 = [this, &reserve_vbo](const size_t kk, const std::vector<b2Vec3>& vertices) -> void
+        const auto load_buffer3 = [this, &reserve_vbo](const size_t kk, const std::vector<std::array<GLfloat, 3>>& vertices) -> void
         {
             reserve_vbo(kk);
             glBindBuffer(GL_ARRAY_BUFFER, vbos[kk]);
             glBufferData(GL_ARRAY_BUFFER, vertices.size() * 3 * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
         };
 
-        const auto load_buffer4 = [this, &reserve_vbo](const size_t kk, const std::vector<b2Vec4>& vertices) -> void
+        const auto load_buffer4 = [this, &reserve_vbo](const size_t kk, const std::vector<std::array<GLfloat, 4>>& vertices) -> void
         {
             reserve_vbo(kk);
             glBindBuffer(GL_ARRAY_BUFFER, vbos[kk]);
@@ -243,7 +242,6 @@ void RasterWindowOpenGL::initializeGL()
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[kk]);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
         };
-        */
 
         /*
         // ship
@@ -271,9 +269,10 @@ void RasterWindowOpenGL::initializeGL()
             { 0, 0, 1, 1 },
             { 0, 0, 1, 1 },
         });
+        */
 
         // cube
-        load_buffer3(4, {
+        load_buffer3(0, {
             { -1, -1, 1 },
             { 1, -1, 1 },
             { 1, 1, 1 },
@@ -283,11 +282,12 @@ void RasterWindowOpenGL::initializeGL()
             { 1, 1, -1 },
             { -1, 1, -1 },
         });
-        load_indices(5, {
+        load_indices(1, {
             0, 1, 3, 2, 7, 6, 4, 5,
             3, 7, 0, 4, 1, 5, 2, 6,
         });
 
+        /*
         // buffers 6, 7 & 8 are used by particle system
         reserve_vbo(6); // position
         reserve_vbo(7); // color
@@ -306,42 +306,15 @@ void RasterWindowOpenGL::initializeGL()
     }
 }
 
-void RasterWindowOpenGL::paintGL()
+void RasterWindowOpenGL::paintUI()
 {
-    assertNoError();
+    constexpr auto ui_window_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize;
 
-    glClearColor(1, 0, 1, 1);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    assertNoError();
-
-    const qreal retinaScale = devicePixelRatio();
-    glViewport(0, 0, width() * retinaScale, height() * retinaScale);
-    assertNoError();
-
-    QtImGui::newFrame();
-
-    constexpr auto ui_window_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
-
-    if (display_ui)
     {
-        //ImGui::SetNextWindowSize(ImVec2(350, 440), ImGuiCond_Once);
         ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiCond_Once);
+        //ImGui::SetNextWindowSize(ImVec2(350, 440), ImGuiCond_Once);
         //ImGui::SetNextWindowSize(ImVec2(350,400), ImGuiCond_FirstUseEver);
-        ImGui::Begin("raster", &display_ui, ui_window_flags);
-
-        /*
-        {
-            std::vector<const char*> level_names;
-            for (const auto& level_data : level_datas)
-                level_names.emplace_back(level_data.name.c_str());
-
-            int level_current_ = level_current;
-            ImGui::Combo("level", &level_current_, level_names.data(), level_names.size());
-            if (level_current_ != level_current)
-                resetLevel(level_current_);
-        }
-        ImGui::Separator();
-        */
+        ImGui::Begin("callbacks", &display_ui, ui_window_flags);
 
         for (auto& state : float_states)
         {
@@ -404,226 +377,61 @@ void RasterWindowOpenGL::paintGL()
             }
         }
 
-        ImGui::Separator();
-        ImGui::Text("prout");
-
         ImGui::End();
     }
+}
+
+void RasterWindowOpenGL::paintGL()
+{
+    assertNoError();
+
+    glClearColor(1, 0, 1, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    assertNoError();
+
+    const qreal retinaScale = devicePixelRatio();
+    glViewport(0, 0, width() * retinaScale, height() * retinaScale);
+    assertNoError();
 
     /*
-    if (display_ui)
-    {
-        //ImGui::SetNextWindowSize(ImVec2(330,100), ImGuiCond_Always);
-        ImGui::SetNextWindowPos(ImVec2(width() - 330 - 5, 5), ImGuiCond_Once);
-        ImGui::Begin("Shading", &display_ui, ui_window_flags);
-
-        //ImGui::Text("Hello, world!");
-        ImGui::ColorEdit3("water color", water_color.data());
-        ImGui::ColorEdit3("foam color", foam_color.data());
-
-        {
-            const char* shader_names[] = { "full grprng + center dot", "full grprng", "full uniform", "dot grprng", "dot uniform", "stuck", "default" };
-            shader_selection %= IM_ARRAYSIZE(shader_names);
-            ImGui::Combo("shader (Q)", &shader_selection, shader_names, IM_ARRAYSIZE(shader_names));
-        }
-
-        {
-            const char* poly_names[] = { "octogon", "hexagon", "square", "triangle" };
-            poly_selection %= IM_ARRAYSIZE(poly_names);
-            ImGui::Combo("poly", &poly_selection, poly_names, IM_ARRAYSIZE(poly_names));
-        }
-
-        ImGui::SliderFloat("radius factor", &radius_factor, 0.0f, 1.0f);
-
-        ImGui::SliderFloat("alpha", &shading_alpha, 0, 10);
-        ImGui::SliderFloat("max speed", &shading_max_speed, 0, 100);
-
-        ImGui::Separator();
-        {
-            assert(state);
-            assert(state->system);
-            const b2Vec2* speeds = state->system->GetVelocityBuffer();
-            const auto kk_max = state->system->GetParticleCount();
-            const auto max_speed = std::accumulate(speeds, speeds + kk_max, 0.f, [](const float& max_speed, const b2Vec2& speed) -> float {
-                return std::max(max_speed, speed.Length());
-            });
-            ImGui::Text("max speed %f", max_speed);
-        }
-
-        ImGui::End();
-    }
-
-    if (display_ui)
-    {
-        //ImGui::SetNextWindowSize(ImVec2(330,100), ImGuiCond_Always);
-        ImGui::SetNextWindowPos(ImVec2(width() - 330 - 5, 225), ImGuiCond_Once);
-        ImGui::Begin("Liquid system", &display_ui, ui_window_flags);
-
-        assert(state);
-        assert(state->system);
-        auto& system = *state->system;
-
-        {
-            static int value = 4;
-            ImGui::SliderInt("stuck thresh", &value, 0, 10);
-            system.SetStuckThreshold(value);
-        }
-
-        {
-            static float value = .2;
-            ImGui::SliderFloat("damping", &value, 0, 1);
-            system.SetDamping(value);
-        }
-
-        {
-            static float value = .4;
-            ImGui::SliderFloat("density", &value, .1, 2);
-            system.SetDensity(value);
-        }
-
-        ImGui::Checkbox("clean stuck in door", &state->clean_stuck_in_door);
-
-        ImGui::Separator();
-
-        {
-            const auto flags = system.GetAllParticleFlags();
-            const auto str = std::bitset<32>(flags).to_string();
-            assert(str.size() == 32);
-            ImGui::Text("all particle flags %d", flags);
-            ImGui::Text("00-15 %s", str.substr(0, 16).c_str());
-            ImGui::Text("16-31 %s", str.substr(16, 16).c_str());
-        }
-
-        ImGui::End();
-    }
-*/
-
-    /*
-    glBindVertexArray(0);
-
-    if (!device)
-        device = new QOpenGLPaintDevice;
-
-    device->setSize(size() * devicePixelRatio());
-    device->setDevicePixelRatio(devicePixelRatio());
-
-    static const QFont fixed_font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
-
-    QPainter painter(device);
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.setFont(fixed_font);
-
-    { // background gradient
-        QLinearGradient linearGrad(QPointF(0, 0), QPointF(0, height()));
-        linearGrad.setColorAt(0, QColor(0x33, 0x08, 0x67)); // morpheus den gradient
-        linearGrad.setColorAt(1, QColor(0x30, 0xcf, 0xd0));
-        painter.fillRect(0, 0, width(), height(), linearGrad);
-    }
-
-    { // world
-        painter.save();
-        painter.translate(width() / 2, height() / 2);
-        painter.scale(1., -1);
-
-        if (!is_zoom_out)
-        {
-            const auto& pos = state->ship->GetPosition();
-            const int side = qMin(width(), height());
-            const double ship_height =  75 * std::max(1., pos.y / 40.);
-            painter.scale(side / ship_height, side / ship_height);
-            painter.translate(-pos.x, -std::min(20.f, pos.y));
-        }
-        else
-        {
-            painter.scale(camera_world_zoom, camera_world_zoom);
-            painter.translate(-camera_world_center.toPoint());
-        }
-
-        //{
-        //    const QTransform tt = painter.worldTransform();
-        //    const std::array<float, 9> tt_values {
-        //        static_cast<float>(tt.m11()), static_cast<float>(tt.m21()), static_cast<float>(tt.m31()),
-        //        static_cast<float>(tt.m12()), static_cast<float>(tt.m22()), static_cast<float>(tt.m32()),
-        //        static_cast<float>(tt.m13()), static_cast<float>(tt.m23()), static_cast<float>(tt.m33())
-        //    };
-        //    const QMatrix3x3 foo(tt_values.data());
-        //    qDebug() << foo << world_matrix;
-        //}
-
-        { // svg
-            constexpr double scale = 600;
-            painter.save();
-            painter.scale(scale, scale);
-            map_renderer.render(&painter, QRectF(-.5, -.75, 1, -1));
-            painter.restore();
-        }
-
-        drawOrigin(painter);
-        if (draw_debug)
-            drawBody(painter, *state->ground);
-
-        for (auto& crate : state->crates)
-            drawBody(painter, *crate);
-
-        for (auto& door : state->doors)
-            drawBody(painter, *std::get<0>(door), Qt::yellow);
-
-        //drawParticleSystem(painter, state->system);
-
-        if (state->link)
-        { // joint line
-            assert(state->link);
-            painter.save();
-            const auto& anchor_aa = state->link->GetAnchorA();
-            const auto& anchor_bb = state->link->GetAnchorB();
-            painter.setBrush(Qt::NoBrush);
-            painter.setPen(QPen(Qt::white, 0));
-            painter.drawLine(QPointF(anchor_aa.x, anchor_aa.y), QPointF(anchor_bb.x, anchor_bb.y));
-            painter.restore();
-        }
-
-        if (draw_debug)
-        {
-            assert(state->ball);
-            const bool is_fast = state->ball->GetLinearVelocity().Length() > 30;
-            drawBody(painter, *state->ball, is_fast ? QColor(0xfd, 0xa0, 0x85) : Qt::black);
-        }
-
-        drawShip(painter);
-
-        painter.restore();
-    }
-*/
-
     const auto world_matrix = [this]() -> QMatrix4x4
     {
         QMatrix4x4 matrix;
         const auto ratio = static_cast<double>(width()) / height();
         const auto norm_width = ratio;
         const double norm_height = 1;
-        //matrix.ortho(-norm_width, norm_width, -norm_height, norm_height, 0, 100);
-        matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
+        matrix.ortho(-norm_width, norm_width, -norm_height, norm_height, 0, 100);
+        //matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
 
-        matrix.translate(0, 0, -50);
-        matrix.scale(2, 2, 2);
+        matrix.translate(0, 0, -5);
+        //matrix.scale(2, 2, 2);
 
-        /*
-        if (!is_zoom_out)
-        {
-            const auto& pos = state->ship->GetPosition();
-            const auto side = std::min(ratio, 1.);
-            const double ship_height = 75 * std::max(1., pos.y / 40.);
-            matrix.scale(side / ship_height, side / ship_height, 1);
-            matrix.translate(-pos.x, -std::min(20.f, pos.y), 0);
-        }
-        else
-        {
+        //if (!is_zoom_out)
+        //{
+        //    const auto& pos = state->ship->GetPosition();
+        //    const auto side = std::min(ratio, 1.);
+        //    const double ship_height = 75 * std::max(1., pos.y / 40.);
+        //    matrix.scale(side / ship_height, side / ship_height, 1);
+        //    matrix.translate(-pos.x, -std::min(20.f, pos.y), 0);
+        //}
+        //else
+        //{
+            const float camera_world_zoom = 1.5;
+            //const QVector2D camera_world_center { 0, -120 };
             const int side = qMin(width(), height());
             matrix.scale(camera_world_zoom/side, camera_world_zoom/side, camera_world_zoom);
-            matrix.translate(-camera_world_center);
-        }
-        */
+            //matrix.translate(-camera_world_center);
+        //}
 
+        return matrix;
+    }();
+    */
+
+    const auto world_matrix = [this]() -> QMatrix4x4
+    {
+        QMatrix4x4 matrix;
+        matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
+        matrix.translate(0, 0, -5);
         return matrix;
     }();
 
@@ -639,10 +447,10 @@ void RasterWindowOpenGL::paintGL()
 
         const auto blit_cube = [this]() -> void
         {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[5]);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[1]);
             assertNoError();
 
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[4]);
+            glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
             glVertexAttribPointer(base_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(base_pos_attr);
             assertNoError();
@@ -659,8 +467,8 @@ void RasterWindowOpenGL::paintGL()
 
         {
             auto matrix = world_matrix;
-            matrix.translate(0, 10);
-            matrix.scale(3, 3, 3);
+            //matrix.translate(0, 10);
+            //matrix.scale(3, 3, 3);
             matrix.rotate(frame_counter, 1, 1, 1);
             base_program->setUniformValue(base_mat_unif, matrix);
 
@@ -672,6 +480,9 @@ void RasterWindowOpenGL::paintGL()
         glBindVertexArray(0);
     }
 
+    QtImGui::newFrame();
+    if (display_ui)
+        paintUI();
     ImGui::Render();
 
     frame_counter++;
