@@ -53,8 +53,6 @@ class TestWindowOpenGL : public RasterWindowOpenGL
             constexpr auto  ui_window_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize;
 
             ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiCond_Once);
-            //ImGui::SetNextWindowSize(ImVec2(350, 440), ImGuiCond_Once);
-            //ImGui::SetNextWindowSize(ImVec2(350,400), ImGuiCond_FirstUseEver);
             ImGui::Begin("test_raster_window", &display_ui, ui_window_flags);
             ImGuiCallbacks();
             ImGui::Separator();
@@ -78,7 +76,6 @@ class TestWindowOpenGL : public RasterWindowOpenGL
                 ProgramBinder binder(*this, base_program);
 
                 glDepthFunc(GL_LESS);
-                glDepthMask(true);
                 glEnable(GL_DEPTH_TEST);
 
                 const auto blit_cube = [this]() -> void
@@ -108,7 +105,6 @@ class TestWindowOpenGL : public RasterWindowOpenGL
 
                     blit_cube();
                 }
-
             }
         }
 };

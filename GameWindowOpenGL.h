@@ -2,48 +2,24 @@
 
 #include "load_levels.h"
 #include "GameState.h"
+#include "RasterWindowOpenGL.h"
 
-#include <QOpenGLWindow>
-#include <QOpenGLExtraFunctions>
-#include <QOpenGLShaderProgram>
 #include <QOpenGLPaintDevice>
 #include <QSoundEffect>
 #include <QSvgRenderer>
 
 #include <random>
-#include <array>
-#include <unordered_map>
 
-class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
+class GameWindowOpenGL : public RasterWindowOpenGL
 {
     Q_OBJECT
     public:
-        using VoidCallback = std::function<void(void)>;
-        using ButtonState = std::tuple<size_t, std::string, VoidCallback>;
-        using ButtonStates = std::unordered_map<int, ButtonState>;
-
-        using BoolCallback = std::function<void(bool)>;
-        using BoolState = std::tuple<size_t, std::string, bool, BoolCallback>;
-        using BoolStates = std::unordered_map<int, BoolState>;
-
-        using FloatCallback = std::function<void(float)>;
-        using FloatState = std::tuple<std::string, float, float, float, FloatCallback>;
-        using FloatStates = std::vector<FloatState>;
-
         GameWindowOpenGL(QWindow* parent = nullptr);
-        void setAnimated(const bool value);
-        void addSlider(const std::string& label, const float& min, const float& max, const float& value, const FloatCallback& callback);
-        void addCheckbox(const std::string& label, const int key, const bool& value, const BoolCallback& callback);
-        void addButton(const std::string& label, const int key, const VoidCallback& callback);
         void setMuted(const bool muted);
-        bool isKeyFree(const int key) const;
         void loadBackground(const std::string& map_filename);
         void resetLevel(const int level);
 
     protected:
-        void assertNoError();
-        void initializeGL() override;
-        void paintGL() override;
         void keyPressEvent(QKeyEvent* event) override;
         void keyReleaseEvent(QKeyEvent* event) override;
 
@@ -53,7 +29,10 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         void drawShip(QPainter& painter);
         void drawFlame(QPainter& painter);
 
-        std::unique_ptr<QOpenGLShaderProgram> loadAndCompileProgram(const QString& vertex_filename, const QString& fragment_filename, const QString& geometry_filename = QString());
+        void initializeBuffers(BufferLoader& loader) override;
+        void initializePrograms() override;
+        void paintUI() override;
+        void paintScene() override;
 
     public:
         levels::LevelDatas level_datas;
@@ -61,9 +40,7 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         std::default_random_engine flame_rng;
         std::array<float, 4> water_color = { 108 / 255., 195 / 255., 246 / 255., 1 };
         std::array<float, 4> foam_color = { 1, 1, 1, 1 };
-        bool is_animated = false;
         bool draw_debug = false;
-        bool display_ui = true;
         bool is_zoom_out = true;
         int shader_selection = 6;
         int poly_selection = 3;
@@ -72,19 +49,12 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         float shading_alpha = 2;
 
     protected:
-        //bool show_test_window = true;
-        //bool show_another_window = false;
-        BoolStates checkbox_states;
-        FloatStates float_states;
-        ButtonStates button_states;
-
         QOpenGLPaintDevice* device = nullptr;
-        //QOpenGLContext* context = nullptr;
-        size_t frame_counter = 0;
 
         QSoundEffect engine_sfx;
         QSoundEffect ship_click_sfx;
         //QSoundEffect back_click_sfx;
+
         QSvgRenderer map_renderer;
 
         bool is_muted = false;
@@ -119,9 +89,6 @@ class GameWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
         int particle_poly_unif = -1;
         int particle_max_speed_unif = -1;
         int particle_alpha_unif = -1;
-
-        GLuint vao = 0;
-        std::array<GLuint, 10> vbos = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 };
 
 

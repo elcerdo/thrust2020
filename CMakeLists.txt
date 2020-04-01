@@ -100,6 +100,7 @@ add_executable(rocket
     imgui/imgui_widgets.cpp
     QtImGui.cpp
     ImGuiRenderer.cpp
+    RasterWindowOpenGL.cpp
     GameWindowOpenGL.cpp
     GameState.cpp
     main.cpp

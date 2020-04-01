@@ -37,9 +37,6 @@ class RasterWindowOpenGL : public QOpenGLWindow, public QOpenGLExtraFunctions
         void paintGL() override final;
         void keyPressEvent(QKeyEvent* event) override;
 
-        void ImGuiCallbacks();
-        virtual void paintUI() = 0;
-
         class BufferLoader
         {
             public:
@@ -77,6 +74,9 @@ class RasterWindowOpenGL : public QOpenGLWindow, public QOpenGLExtraFunctions
 
         };
         virtual void paintScene() = 0;
+
+        void ImGuiCallbacks();
+        virtual void paintUI() = 0;
 
     public:
         bool is_animated = false;

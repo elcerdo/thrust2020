@@ -130,6 +130,8 @@ void RasterWindowOpenGL::keyPressEvent(QKeyEvent* event)
             return;
         }
     }
+
+    QOpenGLWindow::keyPressEvent(event);
 }
 
 RasterWindowOpenGL::BufferLoader::BufferLoader(RasterWindowOpenGL& view_)
