@@ -5,9 +5,10 @@
 #include <QOpenGLShaderProgram>
 
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
 
-class RasterWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
+class RasterWindowOpenGL : public QOpenGLWindow, public QOpenGLExtraFunctions
 {
     Q_OBJECT
     public:
@@ -32,13 +33,50 @@ class RasterWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
 
     protected:
         void assertNoError();
-        void initializeGL() override;
-        void paintGL() override;
+        void initializeGL() override final;
+        void paintGL() override final;
         void keyPressEvent(QKeyEvent* event) override;
 
-        virtual void paintUI();
+        void ImGuiCallbacks();
+        virtual void paintUI() = 0;
 
-        std::unique_ptr<QOpenGLShaderProgram> loadAndCompileProgram(const QString& vertex_filename, const QString& fragment_filename, const QString& geometry_filename = QString());
+        class BufferLoader
+        {
+            public:
+                BufferLoader(RasterWindowOpenGL& view);
+                ~BufferLoader();
+
+                void init(const size_t size);
+                bool isAvailable(const size_t kk) const;
+                void reserve(const size_t kk);
+                void loadBuffer2(const size_t kk, const std::vector<std::array<GLfloat, 2>>& values);
+                void loadBuffer3(const size_t kk, const std::vector<std::array<GLfloat, 3>>& values);
+                void loadBuffer4(const size_t kk, const std::vector<std::array<GLfloat, 4>>& values);
+                void loadIndices(const size_t kk, const std::vector<GLuint>& indices);
+
+            protected:
+                RasterWindowOpenGL& view;
+                GLuint vao = 0;
+                std::vector<GLuint> vbos;
+                std::unordered_set<size_t> reserved_indices;
+        };
+        virtual void initializeBuffers(BufferLoader& loader) = 0;
+
+        std::unique_ptr<QOpenGLShaderProgram> loadAndCompileProgram(const std::string& vertex_filename, const std::string& fragment_filename, const std::string& geometry_filename = "");
+        virtual void initializePrograms() = 0;
+
+        class ProgramBinder
+        {
+            public:
+                ProgramBinder(RasterWindowOpenGL& view, std::unique_ptr<QOpenGLShaderProgram>& program);
+                ~ProgramBinder();
+
+            protected:
+                RasterWindowOpenGL& view;
+                std::unique_ptr<QOpenGLShaderProgram>& program;
+
+        };
+        virtual void paintScene() = 0;
 
     public:
         bool is_animated = false;
@@ -51,12 +89,8 @@ class RasterWindowOpenGL : public QOpenGLWindow, private QOpenGLExtraFunctions
 
         size_t frame_counter = 0;
 
-        std::unique_ptr<QOpenGLShaderProgram> base_program = nullptr;
-        int base_pos_attr = -1;
-        int base_mat_unif = -1;
-
         GLuint vao = 0;
-        std::array<GLuint, 2> vbos = { 0, 0 };
+        std::vector<GLuint> vbos;
 };
 
 

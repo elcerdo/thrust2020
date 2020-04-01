@@ -8,6 +8,7 @@
 #include <iostream>
 #include <unordered_set>
 #include <sstream>
+#include <iomanip>
 
 RasterWindowOpenGL::RasterWindowOpenGL(QWindow* parent)
     : QOpenGLWindow(QOpenGLWindow::NoPartialUpdate, parent)
@@ -131,33 +132,161 @@ void RasterWindowOpenGL::keyPressEvent(QKeyEvent* event)
     }
 }
 
-// opengl stuff
-
-std::unique_ptr<QOpenGLShaderProgram> RasterWindowOpenGL::loadAndCompileProgram(const QString& vertex_filename, const QString& fragment_filename, const QString& geometry_filename)
+RasterWindowOpenGL::BufferLoader::BufferLoader(RasterWindowOpenGL& view_)
+    : view(view_)
 {
-    qDebug() << "========== shader";
+}
+
+RasterWindowOpenGL::BufferLoader::~BufferLoader()
+{
+    assert(vao);
+    view.assertNoError();
+
+    using std::cout;
+    using std::endl;
+
+    cout << "vbos";
+    size_t kk = 0;
+    for (const auto& vbo : vbos)
+    {
+        cout << " " << vbo;
+        if (reserved_indices.find(kk++) != std::cend(reserved_indices)) cout << "*";
+    }
+    cout << endl;
+
+    view.vao = vao;
+    view.vbos = vbos;
+}
+
+void RasterWindowOpenGL::BufferLoader::init(const size_t size)
+{
+    using std::cout;
+    using std::endl;
+
+    assert(vao == 0);
+    assert(vbos.empty());
+    assert(reserved_indices.empty());
+
+    view.glGenVertexArrays(1, &vao);
+    view.assertNoError();
+    assert(vao > 0);
+
+    cout << "========== vao " << vao << endl;
+    vbos.resize(size);
+
+    view.glBindVertexArray(vao);
+    view.glGenBuffers(vbos.size(), vbos.data());
+    view.glBindVertexArray(0);
+    view.assertNoError();
+}
+
+bool RasterWindowOpenGL::BufferLoader::isAvailable(const size_t kk) const
+{
+    if (kk >= vbos.size()) return false;
+    if (reserved_indices.find(kk) != std::cend(reserved_indices)) return false;
+    return true;
+}
+
+void RasterWindowOpenGL::BufferLoader::reserve(const size_t kk)
+{
+    assert(isAvailable(kk));
+    reserved_indices.emplace(kk);
+}
+
+void RasterWindowOpenGL::BufferLoader::loadBuffer2(const size_t kk, const std::vector<std::array<GLfloat, 2>>& values)
+{
+    reserve(kk);
+    view.glBindVertexArray(vao);
+    view.glBindBuffer(GL_ARRAY_BUFFER, vbos[kk]);
+    view.glBufferData(GL_ARRAY_BUFFER, values.size() * 2 * sizeof(GLfloat), values.data(), GL_STATIC_DRAW);
+    view.glBindVertexArray(0);
+    view.assertNoError();
+}
+
+void RasterWindowOpenGL::BufferLoader::loadBuffer3(const size_t kk, const std::vector<std::array<GLfloat, 3>>& values)
+{
+    reserve(kk);
+    view.glBindVertexArray(vao);
+    view.glBindBuffer(GL_ARRAY_BUFFER, vbos[kk]);
+    view.glBufferData(GL_ARRAY_BUFFER, values.size() * 3 * sizeof(GLfloat), values.data(), GL_STATIC_DRAW);
+    view.glBindVertexArray(0);
+    view.assertNoError();
+}
+
+void RasterWindowOpenGL::BufferLoader::loadBuffer4(const size_t kk, const std::vector<std::array<GLfloat, 4>>& values)
+{
+    reserve(kk);
+    view.glBindVertexArray(vao);
+    view.glBindBuffer(GL_ARRAY_BUFFER, vbos[kk]);
+    view.glBufferData(GL_ARRAY_BUFFER, values.size() * 4 * sizeof(GLfloat), values.data(), GL_STATIC_DRAW);
+    view.glBindVertexArray(0);
+    view.assertNoError();
+}
+
+void RasterWindowOpenGL::BufferLoader::loadIndices(const size_t kk, const std::vector<GLuint>& indices)
+{
+    reserve(kk);
+    view.glBindVertexArray(vao);
+    view.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[kk]);
+    view.glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
+    view.glBindVertexArray(0);
+    view.assertNoError();
+}
+
+std::unique_ptr<QOpenGLShaderProgram> RasterWindowOpenGL::loadAndCompileProgram(const std::string& vertex_filename, const std::string& fragment_filename, const std::string& geometry_filename)
+{
+    using std::cerr;
+    using std::cout;
+    using std::endl;
+
+    cout << "========== shader" << endl;
     auto program = std::make_unique<QOpenGLShaderProgram>();
 
-    const auto load_shader = [&program](const QOpenGLShader::ShaderType type, const QString& filename) -> bool
+    const auto load_shader = [&program](const QOpenGLShader::ShaderType type, const std::string& filename) -> bool
     {
-        qDebug() << "compiling" << filename;
-        QFile handle(filename);
+        cout << "compiling ";
+        switch (type)
+        {
+            case QOpenGLShader::Vertex:
+                cout << "vertex ";
+                break;
+            case QOpenGLShader::Geometry:
+                cout << "geometry ";
+                break;
+            case QOpenGLShader::Fragment:
+                cout << "fragment ";
+                break;
+            default:
+                assert(false);
+                break;
+        };
+        cout << std::quoted(filename) << " ";
+        cout.flush();
+
+        QFile handle(QString::fromStdString(filename));
         if (!handle.open(QIODevice::ReadOnly))
             return false;
         const auto& source = handle.readAll();
-        return program->addShaderFromSourceCode(type, source);
+        const auto compile_ok = program->addShaderFromSourceCode(type, source);
+
+        cout << (compile_ok ? "OK" : "ERROR") << endl;
+
+        return compile_ok;
     };
 
     const auto vertex_load_ok = load_shader(QOpenGLShader::Vertex, vertex_filename);
-    const auto geometry_load_ok = geometry_filename.isNull() ? true : load_shader(QOpenGLShader::Geometry, geometry_filename);
+    const auto geometry_load_ok = geometry_filename.empty() ? true : load_shader(QOpenGLShader::Geometry, geometry_filename);
     const auto fragment_load_ok = load_shader(QOpenGLShader::Fragment, fragment_filename);
-    const auto link_ok = program->link();
-    const auto gl_ok = glGetError() == GL_NO_ERROR;
-    qDebug() << "loadAndCompileProgram" << link_ok << vertex_load_ok << fragment_load_ok << geometry_load_ok << gl_ok;
 
+    cout << "linking ";
+    cout.flush();
+    const auto link_ok = program->link();
+    cout << (link_ok ? "OK" : "ERROR") << endl;
+
+    const auto gl_ok = glGetError() == GL_NO_ERROR;
     const auto all_ok = vertex_load_ok && fragment_load_ok && geometry_load_ok && link_ok && gl_ok;
     if (!all_ok) {
-        qDebug() << program->log();
+        cerr << program->log().toStdString() << endl;
         return nullptr;
     }
     assertNoError();
@@ -168,154 +297,39 @@ std::unique_ptr<QOpenGLShaderProgram> RasterWindowOpenGL::loadAndCompileProgram(
 
 void RasterWindowOpenGL::initializeGL()
 {
+    using std::cout;
+    using std::endl;
 
     /*
     assert(!context);
     context = new QOpenGLContext(this);
     context->setFormat(requestedFormat());
     context->create();
-    qDebug() << context->format();
 
     assert(context);
     context->makeCurrent(this);
     */
-    qDebug() << "currentOpenGLVersion" << QOpenGLContext::currentContext()->format().version();
+
+    {
+        const auto version = QOpenGLContext::currentContext()->format().version();
+        cout << "glversion " << version.first << "." << version.second << endl;
+    }
 
     initializeOpenGLFunctions();
     QtImGui::initialize(this);
     assertNoError();
 
+    initializePrograms();
+
     {
-        assert(!base_program);
-        base_program = loadAndCompileProgram(":base_vertex.glsl", ":base_fragment.glsl");
-
-        assert(base_program);
-        base_pos_attr = base_program->attributeLocation("posAttr");
-        base_mat_unif = base_program->uniformLocation("matrix");
-        qDebug() << "base_locations" << base_pos_attr << base_mat_unif;
-        assert(base_pos_attr >= 0);
-        assert(base_mat_unif >= 0);
-        assertNoError();
-    }
-
-    { // buffers
-        using std::cout;
-        using std::endl;
-
-        glGenVertexArrays(1, &vao);
-        qDebug() << "========== vao" << vao;
-        glBindVertexArray(vao);
-
-        glGenBuffers(vbos.size(), vbos.data());
-        std::unordered_set<size_t> reserved_vbos;
-
-        const auto is_available = [this, &reserved_vbos](const size_t kk) -> bool
-        {
-            if (kk >= vbos.size()) return false;
-            if (reserved_vbos.find(kk) != std::cend(reserved_vbos)) return false;
-            return true;
-        };
-
-        const auto reserve_vbo = [&reserved_vbos, &is_available](const size_t kk) -> void
-        {
-            assert(is_available(kk));
-            reserved_vbos.emplace(kk);
-        };
-
-        const auto load_buffer3 = [this, &reserve_vbo](const size_t kk, const std::vector<std::array<GLfloat, 3>>& vertices) -> void
-        {
-            reserve_vbo(kk);
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[kk]);
-            glBufferData(GL_ARRAY_BUFFER, vertices.size() * 3 * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
-        };
-
-        const auto load_buffer4 = [this, &reserve_vbo](const size_t kk, const std::vector<std::array<GLfloat, 4>>& vertices) -> void
-        {
-            reserve_vbo(kk);
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[kk]);
-            glBufferData(GL_ARRAY_BUFFER, vertices.size() * 4 * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
-        };
-
-        const auto load_indices = [this, &reserve_vbo](const size_t kk, const std::vector<GLuint>& indices) -> void
-        {
-            reserve_vbo(kk);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[kk]);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
-        };
-
-        /*
-        // ship
-        load_buffer3(0, {
-            { -1.8, 0, 0 },
-            { 1.8, 0, 0 },
-            { 0, 2*1.8, 0 },
-        });
-        load_buffer4(1, {
-            { 1, 0, 0, 1 },
-            { 0, 1, 0, 1 },
-            { 0, 0, 1, 1 },
-        });
-
-        // square
-        load_buffer3(2, {
-            { -1, -1, 0 },
-            { 1, -1, 0 },
-            { -1, 1, 0 },
-            { 1, 1, 0 },
-        });
-        load_buffer4(3, {
-            { 0, 0, 1, 1 },
-            { 0, 0, 1, 1 },
-            { 0, 0, 1, 1 },
-            { 0, 0, 1, 1 },
-        });
-        */
-
-        // cube
-        load_buffer3(0, {
-            { -1, -1, 1 },
-            { 1, -1, 1 },
-            { 1, 1, 1 },
-            { -1, 1, 1 },
-            { -1, -1, -1 },
-            { 1, -1, -1 },
-            { 1, 1, -1 },
-            { -1, 1, -1 },
-        });
-        load_indices(1, {
-            0, 1, 3, 2, 7, 6, 4, 5,
-            3, 7, 0, 4, 1, 5, 2, 6,
-        });
-
-        /*
-        // buffers 6, 7 & 8 are used by particle system
-        reserve_vbo(6); // position
-        reserve_vbo(7); // color
-        reserve_vbo(8); // speed
-        reserve_vbo(9); // flag
-        */
-
-        cout << "vbos";
-        size_t kk = 0;
-        for (const auto& vbo : vbos)
-        {
-            cout << " " << vbo;
-            if (reserved_vbos.find(kk++) != std::cend(reserved_vbos)) cout << "*";
-        }
-        cout << endl;
+        BufferLoader loader(*this);
+        initializeBuffers(loader);
     }
 }
 
-void RasterWindowOpenGL::paintUI()
+void RasterWindowOpenGL::ImGuiCallbacks()
 {
     using std::get;
-
-    constexpr auto ui_window_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize;
-
-    ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiCond_Once);
-    //ImGui::SetNextWindowSize(ImVec2(350, 440), ImGuiCond_Once);
-    //ImGui::SetNextWindowSize(ImVec2(350,400), ImGuiCond_FirstUseEver);
-    ImGui::Begin("callbacks", &display_ui, ui_window_flags);
 
     for (auto& state : float_states)
     {
@@ -374,11 +388,25 @@ void RasterWindowOpenGL::paintUI()
             kk++;
         }
     }
+}
 
-    ImGui::Separator();
-    ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+RasterWindowOpenGL::ProgramBinder::ProgramBinder(RasterWindowOpenGL& view_, std::unique_ptr<QOpenGLShaderProgram>& program_)
+    : view(view_), program(program_)
+{
+    assert(program);
+    program->bind();
 
-    ImGui::End();
+    view.glBindVertexArray(view.vao);
+    view.assertNoError();
+}
+
+RasterWindowOpenGL::ProgramBinder::~ProgramBinder()
+{
+    assert(program);
+    program->release();
+
+    view.glBindVertexArray(0);
+    view.assertNoError();
 }
 
 void RasterWindowOpenGL::paintGL()
@@ -393,93 +421,7 @@ void RasterWindowOpenGL::paintGL()
     glViewport(0, 0, width() * retinaScale, height() * retinaScale);
     assertNoError();
 
-    /*
-    const auto world_matrix = [this]() -> QMatrix4x4
-    {
-        QMatrix4x4 matrix;
-        const auto ratio = static_cast<double>(width()) / height();
-        const auto norm_width = ratio;
-        const double norm_height = 1;
-        matrix.ortho(-norm_width, norm_width, -norm_height, norm_height, 0, 100);
-        //matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
-
-        matrix.translate(0, 0, -5);
-        //matrix.scale(2, 2, 2);
-
-        //if (!is_zoom_out)
-        //{
-        //    const auto& pos = state->ship->GetPosition();
-        //    const auto side = std::min(ratio, 1.);
-        //    const double ship_height = 75 * std::max(1., pos.y / 40.);
-        //    matrix.scale(side / ship_height, side / ship_height, 1);
-        //    matrix.translate(-pos.x, -std::min(20.f, pos.y), 0);
-        //}
-        //else
-        //{
-            const float camera_world_zoom = 1.5;
-            //const QVector2D camera_world_center { 0, -120 };
-            const int side = qMin(width(), height());
-            matrix.scale(camera_world_zoom/side, camera_world_zoom/side, camera_world_zoom);
-            //matrix.translate(-camera_world_center);
-        //}
-
-        return matrix;
-    }();
-    */
-
-    const auto world_matrix = [this]() -> QMatrix4x4
-    {
-        QMatrix4x4 matrix;
-        matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
-        matrix.translate(0, 0, -5);
-        return matrix;
-    }();
-
-    { // draw with base program
-        glBindVertexArray(vao);
-
-        assert(base_program);
-        base_program->bind();
-        assertNoError();
-
-        glDepthFunc(GL_LESS);
-        glDepthMask(true);
-        glEnable(GL_DEPTH_TEST);
-
-        const auto blit_cube = [this]() -> void
-        {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[1]);
-            assertNoError();
-
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
-            glVertexAttribPointer(base_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(base_pos_attr);
-            assertNoError();
-
-            //glEnable(GL_CULL_FACE);
-            glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
-            glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(8 * sizeof(unsigned int)));
-            //glDisable(GL_CULL_FACE);
-            assertNoError();
-
-            glDisableVertexAttribArray(base_pos_attr);
-            assertNoError();
-        };
-
-        {
-            auto matrix = world_matrix;
-            //matrix.translate(0, 10);
-            //matrix.scale(3, 3, 3);
-            matrix.rotate(frame_counter, 1, 1, 1);
-            base_program->setUniformValue(base_mat_unif, matrix);
-
-            blit_cube();
-        }
-
-        base_program->release();
-
-        glBindVertexArray(0);
-    }
+    paintScene();
 
     QtImGui::newFrame();
     if (display_ui)
@@ -491,3 +433,4 @@ void RasterWindowOpenGL::paintGL()
     if (is_animated)
         update();
 }
+

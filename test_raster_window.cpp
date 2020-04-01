@@ -1,8 +1,117 @@
 #include "RasterWindowOpenGL.h"
 
+#include <imgui.h>
+
 #include <QApplication>
 
 #include <iostream>
+
+class TestWindowOpenGL : public RasterWindowOpenGL
+{
+    protected:
+        std::unique_ptr<QOpenGLShaderProgram> base_program = nullptr;
+        int base_pos_attr = -1;
+        int base_mat_unif = -1;
+
+        void initializePrograms() override
+        {
+            assert(!base_program);
+            base_program = loadAndCompileProgram(":base_vertex.glsl", ":base_fragment.glsl");
+            assert(base_program);
+
+            base_pos_attr = base_program->attributeLocation("posAttr");
+            base_mat_unif = base_program->uniformLocation("matrix");
+            qDebug() << "locations" << base_pos_attr << base_mat_unif;
+            assert(base_pos_attr >= 0);
+            assert(base_mat_unif >= 0);
+            assertNoError();
+        }
+
+        void initializeBuffers(BufferLoader& loader) override
+        {
+            loader.init(2);
+
+            // cube
+            loader.loadBuffer3(0, {
+                { -1, -1, 1 },
+                { 1, -1, 1 },
+                { 1, 1, 1 },
+                { -1, 1, 1 },
+                { -1, -1, -1 },
+                { 1, -1, -1 },
+                { 1, 1, -1 },
+                { -1, 1, -1 },
+            });
+            loader.loadIndices(1, {
+                0, 1, 3, 2, 7, 6, 4, 5,
+                3, 7, 0, 4, 1, 5, 2, 6,
+            });
+        }
+
+        void paintUI() override
+        {
+            constexpr auto  ui_window_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize;
+
+            ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiCond_Once);
+            //ImGui::SetNextWindowSize(ImVec2(350, 440), ImGuiCond_Once);
+            //ImGui::SetNextWindowSize(ImVec2(350,400), ImGuiCond_FirstUseEver);
+            ImGui::Begin("test_raster_window", &display_ui, ui_window_flags);
+            ImGuiCallbacks();
+            ImGui::Separator();
+            ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+            ImGui::End();
+
+        }
+
+        void paintScene() override
+        {
+            const auto world_matrix = [this]() -> QMatrix4x4
+            {
+                QMatrix4x4 matrix;
+                matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
+                matrix.translate(0, 0, -5);
+                return matrix;
+            }();
+
+            { // draw with base program
+                ProgramBinder binder(*this, base_program);
+
+                glDepthFunc(GL_LESS);
+                glDepthMask(true);
+                glEnable(GL_DEPTH_TEST);
+
+                const auto blit_cube = [this]() -> void
+                {
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[1]);
+                    assertNoError();
+
+                    glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
+                    glVertexAttribPointer(base_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
+                    glEnableVertexAttribArray(base_pos_attr);
+                    assertNoError();
+
+                    glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
+                    glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(8 * sizeof(unsigned int)));
+                    assertNoError();
+
+                    glDisableVertexAttribArray(base_pos_attr);
+                    assertNoError();
+                };
+
+                {
+                    auto matrix = world_matrix;
+                    //matrix.translate(0, 10);
+                    //matrix.scale(3, 3, 3);
+                    matrix.rotate(frame_counter, 1, 1, 1);
+                    base_program->setUniformValue(base_mat_unif, matrix);
+
+                    blit_cube();
+                }
+
+            }
+        }
+};
 
 int main(int argc, char* argv[])
 {
@@ -22,7 +131,7 @@ int main(int argc, char* argv[])
 
     QApplication app(argc, argv);
 
-    RasterWindowOpenGL view;
+    TestWindowOpenGL view;
 
     view.setAnimated(true);
     view.resize(1280, 720);
