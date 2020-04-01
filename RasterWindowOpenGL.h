@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <memory>
+#include <array>
 
 class RasterWindowOpenGL : public QOpenGLWindow, public QOpenGLExtraFunctions
 {
