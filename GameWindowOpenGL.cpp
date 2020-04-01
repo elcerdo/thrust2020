@@ -518,13 +518,13 @@ void GameWindowOpenGL::paintUI()
         }
 
         {
-            static float value = .2;
+            static float value = 0;
             ImGui::SliderFloat("damping", &value, 0, 1);
             system.SetDamping(value);
         }
 
         {
-            static float value = .4;
+            static float value = .1;
             ImGui::SliderFloat("density", &value, .1, 2);
             system.SetDensity(value);
         }
@@ -626,7 +626,7 @@ void GameWindowOpenGL::paintScene()
             const auto& anchor_aa = state->link->GetAnchorA();
             const auto& anchor_bb = state->link->GetAnchorB();
             painter.setBrush(Qt::NoBrush);
-            painter.setPen(QPen(Qt::white, 0));
+            painter.setPen(QPen(Qt::white, .5));
             painter.drawLine(QPointF(anchor_aa.x, anchor_aa.y), QPointF(anchor_bb.x, anchor_bb.y));
             painter.restore();
         }
