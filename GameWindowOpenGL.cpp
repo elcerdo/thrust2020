@@ -742,18 +742,16 @@ void GameWindowOpenGL::paintGL()
             painter.translate(-camera_world_center.toPoint());
         }
 
-        /*
-        {
-            const QTransform tt = painter.worldTransform();
-            const std::array<float, 9> tt_values {
-                static_cast<float>(tt.m11()), static_cast<float>(tt.m21()), static_cast<float>(tt.m31()),
-                static_cast<float>(tt.m12()), static_cast<float>(tt.m22()), static_cast<float>(tt.m32()),
-                static_cast<float>(tt.m13()), static_cast<float>(tt.m23()), static_cast<float>(tt.m33())
-            };
-            const QMatrix3x3 foo(tt_values.data());
-            qDebug() << foo << world_matrix;
-        }
-        */
+        //{
+        //    const QTransform tt = painter.worldTransform();
+        //    const std::array<float, 9> tt_values {
+        //        static_cast<float>(tt.m11()), static_cast<float>(tt.m21()), static_cast<float>(tt.m31()),
+        //        static_cast<float>(tt.m12()), static_cast<float>(tt.m22()), static_cast<float>(tt.m32()),
+        //        static_cast<float>(tt.m13()), static_cast<float>(tt.m23()), static_cast<float>(tt.m33())
+        //    };
+        //    const QMatrix3x3 foo(tt_values.data());
+        //    qDebug() << foo << world_matrix;
+        //}
 
         { // svg
             constexpr double scale = 600;
@@ -1096,11 +1094,9 @@ void GameWindowOpenGL::paintGL()
         if (state->ship_accum_contact > 0)
             ship_click_sfx.play();
 
-        /*
-        back_click_sfx.setVolume(volume);
-        if (state->all_accum_contact > 0)
-            back_click_sfx.play();
-            */
+        //back_click_sfx.setVolume(volume);
+        //if (state->all_accum_contact > 0)
+        //    back_click_sfx.play();
     }
 
     { // reset
