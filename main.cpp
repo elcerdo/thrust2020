@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
     QApplication app(argc, argv);
 
     GameWindowOpenGL view;    
-    view.resetLevel(4); // default level
+    view.resetLevel(5); // default level
 
 
     view.setAnimated(true);

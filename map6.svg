@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="800"
+   height="800"
+   viewBox="0 0 211.66667 211.66667"
+   version="1.1"
+   id="svg8"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="map6.svg">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.216701"
+     inkscape:cx="307.79936"
+     inkscape:cy="635.84668"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer2"
+     showgrid="true"
+     inkscape:window-width="1440"
+     inkscape:window-height="856"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:lockguides="false"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:snap-global="false"
+     units="px"
+     inkscape:showpageshadow="false"
+     inkscape:snap-bbox="true"
+     inkscape:object-nodes="true"
+     inkscape:snap-grids="true">
+    <sodipodi:guide
+       position="119.0625,119.0625"
+       orientation="-0.70710678,0.70710678"
+       id="guide858"
+       inkscape:locked="false" />
+    <inkscape:grid
+       type="xygrid"
+       id="grid860" />
+    <sodipodi:guide
+       position="0,211.66667"
+       orientation="0.70710678,0.70710678"
+       id="guide4565"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="66.145834,158.75"
+       orientation="0,1"
+       id="guide4577"
+       inkscape:locked="false" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-85.333337)"
+     style="display:inline" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Layer 2">
+    <g
+       id="g8855"
+       transform="matrix(0.14479786,0,0,0.1591054,90.82793,35.696984)">
+      <path
+         sodipodi:nodetypes="cccccccccccccccccccccccccccccccccc"
+         inkscape:connector-curvature="0"
+         transform="scale(0.26458334,0.26458334)"
+         id="rect8807"
+         d="m -555.63672,-561.09375 0,1922.18755 1916.73052,0 0,-1922.18755 z M -110,440 -30,410 340.26436,410 340.23024,300.28759 -340,-340 l 660,0 120,0 700,0 L 456.28812,303.66269 458.61718,410 l 381.38283,0 60,20 50,50 59.99999,530 -29.99999,120 -70,40 -230,0 L 360,860.00001 l -20,-10 -20,10 0,20 20,169.99999 -20,70 -70,60 -350,0 -70,-40 -29.44335,-60.5089 L -150,480 Z"
+         style="opacity:1;fill:#000000;fill-opacity:1;stroke:#00ffff;stroke-width:6.41596508;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cccccccccccccccccc"
+         inkscape:connector-curvature="0"
+         id="rect8817"
+         d="m 23.812501,166.68751 5.291667,-2.64584 156.171422,0 5.22442,2.64584 0.52079,2.30169 10.06254,90.30248 -2.64583,2.64583 -5.29167,-5.29167 -82.02084,-76.72917 -26.45833,-5.29166 -31.750001,0 -15.875001,5.29166 -5.291667,10.58334 -10.583334,68.79167 -5.291666,5.29166 -5.291667,-5.29166 10.583333,-87.31251 z"
+         style="opacity:1;fill:#000000;fill-opacity:1;stroke:#00ffff;stroke-width:1.71979165;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+    </g>
+  </g>
+</svg>

@@ -50,7 +50,7 @@
     ]
   },
   {
-    "name": "TBA",
+    "name": "squeeze",
     "map": ":map5.svg",
     "doors": [
       { "cx": -2, "cy": 0, "dx": 16, "dy": 0},
@@ -66,5 +66,19 @@
             "hh": 10
          }
       ]
+  },
+  {
+    "name": "racetrack",
+    "map": ":map6.svg",
+    "paths": [
+        {
+            "positions": [
+            { "x": 1, "y": 102},
+            { "x": 1, "y": 10}
+            ],
+            "ww": 100,
+            "hh": 10
+        }
+     ]
   }
 ]
