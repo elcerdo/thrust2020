@@ -73,7 +73,7 @@ void GameState::resetGround(const std::string& map_filename)
         b2FixtureDef fixture;
         fixture.shape = &shape;
         fixture.density = 0;
-        fixture.friction = 0; // .9
+        fixture.friction = 1; // .9
         fixture.filter.categoryBits = ground_category;
         fixture.filter.maskBits = object_category | door_category;
 
@@ -220,7 +220,7 @@ void GameState::resetBall()
     b2FixtureDef fixture;
     fixture.shape = &shape;
     fixture.density = .1;
-    fixture.friction = 0; // 1
+    fixture.friction = 1; // 1
     fixture.restitution = 0; // 0.1
     fixture.filter.categoryBits = object_category;
     fixture.filter.maskBits = object_category | ground_category | door_category;
@@ -539,7 +539,7 @@ void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double a
     b2FixtureDef fixture;
     fixture.shape = &shape;
     fixture.density = .005; // .01
-    fixture.friction = 0; // .8
+    fixture.friction = 1; // .8
     fixture.restitution = 0; // .7
     fixture.filter.categoryBits = object_category;
     fixture.filter.maskBits = object_category | ground_category | door_category;

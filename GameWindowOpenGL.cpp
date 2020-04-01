@@ -485,7 +485,7 @@ void GameWindowOpenGL::paintUI()
 
         ImGui::SliderFloat("radius factor", &radius_factor, 0.0f, 1.0f);
 
-        ImGui::SliderFloat("alpha", &shading_alpha, 0, 10);
+        ImGui::SliderFloat("alpha", &shading_alpha, -1, 1);
         ImGui::SliderFloat("max speed", &shading_max_speed, 0, 100);
 
         ImGui::Separator();
