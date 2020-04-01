@@ -1,7 +1,8 @@
 # THRUST2020
 
 Thrust2020 is a sandbox "game" with solid and fluid dynamics.
-It uses box2d and liquidfun to provide the user with splashy experience.
+It uses box2d and liquidfun to provide the user with a splashy experience.
+Use cursor keys to move ship, space to grab/release the ball.
 
 ![](rocket_screenshot_zoom_out.png)
 ![](rocket_screenshot_zoom_in.png)
