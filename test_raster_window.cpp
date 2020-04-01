@@ -9,11 +9,16 @@ int main(int argc, char* argv[])
     using std::cout;
     using std::endl;
 
-    QSurfaceFormat glFormat;
-    glFormat.setVersion(3, 3);
-    //glFormat.setSamples(2);
-    glFormat.setProfile(QSurfaceFormat::CoreProfile);
-    QSurfaceFormat::setDefaultFormat(glFormat);
+    QSurfaceFormat format;
+    format.setVersion(3, 3);
+    format.setRedBufferSize(8);
+    format.setGreenBufferSize(8);
+    format.setBlueBufferSize(8);
+    format.setAlphaBufferSize(0);
+    format.setStencilBufferSize(0);
+    format.setDepthBufferSize(16);
+    format.setProfile(QSurfaceFormat::CoreProfile);
+    QSurfaceFormat::setDefaultFormat(format);
 
     QApplication app(argc, argv);
 

@@ -308,84 +308,84 @@ void RasterWindowOpenGL::initializeGL()
 
 void RasterWindowOpenGL::paintUI()
 {
+    using std::get;
+
     constexpr auto ui_window_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize;
 
+    ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiCond_Once);
+    //ImGui::SetNextWindowSize(ImVec2(350, 440), ImGuiCond_Once);
+    //ImGui::SetNextWindowSize(ImVec2(350,400), ImGuiCond_FirstUseEver);
+    ImGui::Begin("callbacks", &display_ui, ui_window_flags);
+
+    for (auto& state : float_states)
     {
-        ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiCond_Once);
-        //ImGui::SetNextWindowSize(ImVec2(350, 440), ImGuiCond_Once);
-        //ImGui::SetNextWindowSize(ImVec2(350,400), ImGuiCond_FirstUseEver);
-        ImGui::Begin("callbacks", &display_ui, ui_window_flags);
-
-        for (auto& state : float_states)
-        {
-            const auto prev = std::get<3>(state);
-            ImGui::SliderFloat(std::get<0>(state).c_str(), &std::get<3>(state), std::get<1>(state), std::get<2>(state));
-            if (prev != std::get<3>(state)) std::get<4>(state)(std::get<3>(state));
-        }
-
-        {
-            using std::get;
-
-            using Pair = std::tuple<size_t, int>;
-            std::vector<Pair> pairs;
-            for (const auto& pair : checkbox_states)
-                pairs.emplace_back(get<0>(pair.second), pair.first);
-            std::sort(std::begin(pairs), std::end(pairs), [](const Pair& aa, const Pair& bb) -> bool { return get<0>(aa) < get<0>(bb); });
-
-            for (auto& pair_ : pairs)
-            {
-                auto pair = checkbox_states.find(get<1>(pair_));
-                assert(pair != std::end(checkbox_states));
-                auto& state = pair->second;
-                assert(get<1>(pair_) == pair->first);
-                assert(get<0>(pair_) == get<0>(pair->second));
-                const auto prev = get<2>(state);
-                const std::string key_name = QKeySequence(pair->first).toString().toStdString();
-                std::stringstream ss;
-                ss << get<1>(state) << " (" << key_name << ")";
-                ImGui::Checkbox(ss.str().c_str(), &get<2>(state));
-                if (prev != std::get<2>(state)) std::get<3>(state)(std::get<2>(state));
-            }
-        }
-
-        {
-            using std::get;
-
-            using Pair = std::tuple<size_t, int>;
-            std::vector<Pair> pairs;
-            for (const auto& pair : button_states)
-                pairs.emplace_back(get<0>(pair.second), pair.first);
-            std::sort(std::begin(pairs), std::end(pairs), [](const Pair& aa, const Pair& bb) -> bool { return get<0>(aa) < get<0>(bb); });
-
-            size_t kk = 0;
-            const size_t kk_max = pairs.size();
-            for (const auto& pair_ : pairs)
-            {
-                const auto& pair = button_states.find(get<1>(pair_));
-                assert(pair != std::cend(button_states));
-                const auto& state = pair->second;
-                assert(get<1>(pair_) == pair->first);
-                assert(get<0>(pair_) == get<0>(pair->second));
-                const std::string key_name = QKeySequence(pair->first).toString().toStdString();
-                std::stringstream ss;
-                ss << get<1>(state) << " (" << key_name << ")";
-                if (ImGui::Button(ss.str().c_str(), { 163, 19 }))
-                    get<2>(state)();
-
-                if (kk % 2 != 1 && kk != kk_max - 1) ImGui::SameLine();
-                kk++;
-            }
-        }
-
-        ImGui::End();
+        const auto prev = get<3>(state);
+        ImGui::SliderFloat(get<0>(state).c_str(), &get<3>(state), get<1>(state), get<2>(state));
+        if (prev != get<3>(state)) get<4>(state)(get<3>(state));
     }
+
+    {
+
+        using Pair = std::tuple<size_t, int>;
+        std::vector<Pair> pairs;
+        for (const auto& pair : checkbox_states)
+            pairs.emplace_back(get<0>(pair.second), pair.first);
+        std::sort(std::begin(pairs), std::end(pairs), [](const Pair& aa, const Pair& bb) -> bool { return get<0>(aa) < get<0>(bb); });
+
+        for (auto& pair_ : pairs)
+        {
+            auto pair = checkbox_states.find(get<1>(pair_));
+            assert(pair != std::end(checkbox_states));
+            auto& state = pair->second;
+            assert(get<1>(pair_) == pair->first);
+            assert(get<0>(pair_) == get<0>(pair->second));
+            const auto prev = get<2>(state);
+            const std::string key_name = QKeySequence(pair->first).toString().toStdString();
+            std::stringstream ss;
+            ss << get<1>(state) << " (" << key_name << ")";
+            ImGui::Checkbox(ss.str().c_str(), &get<2>(state));
+            if (prev != std::get<2>(state)) std::get<3>(state)(std::get<2>(state));
+        }
+    }
+
+    {
+        using Pair = std::tuple<size_t, int>;
+        std::vector<Pair> pairs;
+        for (const auto& pair : button_states)
+            pairs.emplace_back(get<0>(pair.second), pair.first);
+        std::sort(std::begin(pairs), std::end(pairs), [](const Pair& aa, const Pair& bb) -> bool { return get<0>(aa) < get<0>(bb); });
+
+        size_t kk = 0;
+        const size_t kk_max = pairs.size();
+        for (const auto& pair_ : pairs)
+        {
+            const auto& pair = button_states.find(get<1>(pair_));
+            assert(pair != std::cend(button_states));
+            const auto& state = pair->second;
+            assert(get<1>(pair_) == pair->first);
+            assert(get<0>(pair_) == get<0>(pair->second));
+            const std::string key_name = QKeySequence(pair->first).toString().toStdString();
+            std::stringstream ss;
+            ss << get<1>(state) << " (" << key_name << ")";
+            if (ImGui::Button(ss.str().c_str(), { 163, 19 }))
+                get<2>(state)();
+
+            if (kk % 2 != 1 && kk != kk_max - 1) ImGui::SameLine();
+            kk++;
+        }
+    }
+
+    ImGui::Separator();
+    ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+    ImGui::End();
 }
 
 void RasterWindowOpenGL::paintGL()
 {
     assertNoError();
 
-    glClearColor(1, 0, 1, 1);
+    glClearColor(.8, .8, .8, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     assertNoError();
 
@@ -443,6 +443,7 @@ void RasterWindowOpenGL::paintGL()
         assertNoError();
 
         glDepthFunc(GL_LESS);
+        glDepthMask(true);
         glEnable(GL_DEPTH_TEST);
 
         const auto blit_cube = [this]() -> void
