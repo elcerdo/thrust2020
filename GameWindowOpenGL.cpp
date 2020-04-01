@@ -66,54 +66,6 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
     }*/
 }
 
-void GameWindowOpenGL::assertNoError()
-{
-#if !defined(NDEBUG)
-    const auto gl_error = glGetError();
-
-    using std::cerr;
-    using std::endl;
-
-    switch (gl_error)
-    {
-        default:
-        case GL_NO_ERROR:
-            break;
-        case GL_INVALID_ENUM:
-            cerr << "GL_INVALID_ENUM" << endl;
-            cerr << "An unacceptable value is specified for an enumerated argument. The offending command is ignored and has no other side effect than to set the error flag." << endl;
-            break;
-        case GL_INVALID_VALUE:
-            cerr << "GL_INVALID_VALUE" << endl;
-            cerr << "A numerir argument is out of range. The offending command is ignored and has no other side effect than to set the error flag." << endl;
-            break;
-        case GL_INVALID_OPERATION:
-            cerr << "GL_INVALID_OPERATION" << endl;
-            cerr << "The specified operation is not allowed in the current state. The offending command is ignored and has no other side effect than to set the error flag." << endl;
-            break;
-        case GL_INVALID_FRAMEBUFFER_OPERATION:
-            cerr << "GL_INVALID_FRAMEBUFFER_OPERATION" << endl;
-            cerr << "The framebuffer object is not complete. The offending command is ignored and has no other side effect than to set the error flag." << endl;
-            break;
-        case GL_OUT_OF_MEMORY:
-            cerr << "GL_OUT_OF_MEMORY" << endl;
-            cerr << "There is not enough memory left to execute the command. The state of the GL is undefined, except for the state of the error flags, after this error is recorded." << endl;
-            break;
-        case GL_STACK_UNDERFLOW:
-            cerr << "GL_STACK_UNDERFLOW" << endl;
-            cerr << "An attempt has been made to perform an operation that would cause an internal stack to underflow." << endl;
-            break;
-        case GL_STACK_OVERFLOW:
-            cerr << "GL_STACK_OVERFLOW" << endl;
-            cerr << "An attempt has been made to perform an operation that would cause an internal stack to overflow." << endl;
-            break;
-    }
-#endif
-
-    assert(gl_error == GL_NO_ERROR);
-}
-
-
 void GameWindowOpenGL::resetLevel(const int level)
 {
     using std::get;
@@ -168,50 +120,19 @@ void GameWindowOpenGL::setMuted(const bool muted)
     //back_click_sfx.setMuted(muted);
 }
 
+/*
 void GameWindowOpenGL::setAnimated(const bool value)
 {
     is_animated = value;
     if (is_animated)
         update();
 }
+*/
 
-std::unique_ptr<QOpenGLShaderProgram> GameWindowOpenGL::loadAndCompileProgram(const QString& vertex_filename, const QString& fragment_filename, const QString& geometry_filename)
-{
-    qDebug() << "========== shader";
-    auto program = std::make_unique<QOpenGLShaderProgram>();
-
-    const auto load_shader = [&program](const QOpenGLShader::ShaderType type, const QString& filename) -> bool
-    {
-        qDebug() << "compiling" << filename;
-        QFile handle(filename);
-        if (!handle.open(QIODevice::ReadOnly))
-            return false;
-        const auto& source = handle.readAll();
-        return program->addShaderFromSourceCode(type, source);
-    };
-
-    const auto vertex_load_ok = load_shader(QOpenGLShader::Vertex, vertex_filename);
-    const auto geometry_load_ok = geometry_filename.isNull() ? true : load_shader(QOpenGLShader::Geometry, geometry_filename);
-    const auto fragment_load_ok = load_shader(QOpenGLShader::Fragment, fragment_filename);
-    const auto link_ok = program->link();
-    const auto gl_ok = glGetError() == GL_NO_ERROR;
-    qDebug() << "loadAndCompileProgram" << link_ok << vertex_load_ok << fragment_load_ok << geometry_load_ok << gl_ok;
-
-    const auto all_ok = vertex_load_ok && fragment_load_ok && geometry_load_ok && link_ok && gl_ok;
-    if (!all_ok) {
-        qDebug() << program->log();
-        return nullptr;
-    }
-    assertNoError();
-    assert(all_ok);
-
-    return program;
-};
-
+/*
 void GameWindowOpenGL::initializeGL()
 {
 
-    /*
     assert(!context);
     context = new QOpenGLContext(this);
     context->setFormat(requestedFormat());
@@ -220,7 +141,6 @@ void GameWindowOpenGL::initializeGL()
 
     assert(context);
     context->makeCurrent(this);
-    */
     qDebug() << "currentVersion" << QOpenGLContext::currentContext()->format().version();
 
     initializeOpenGLFunctions();
@@ -411,36 +331,7 @@ void GameWindowOpenGL::initializeGL()
     }
 
 }
-
-bool GameWindowOpenGL::isKeyFree(const int key) const
-{
-    if (key == Qt::Key_A) return false;
-    if (key == Qt::Key_Q) return false;
-    if (button_states.find(key) != std::cend(button_states)) return false;
-    if (checkbox_states.find(key) != std::cend(checkbox_states)) return false;
-    return true;
-}
-
-void GameWindowOpenGL::addButton(const std::string& label, const int key, const VoidCallback& callback)
-{
-    assert(isKeyFree(key));
-    button_states.emplace(key, ButtonState { button_states.size(), label, callback });
-}
-
-void GameWindowOpenGL::addCheckbox(const std::string& label, const int key, const bool& value, const BoolCallback& callback)
-{
-    assert(isKeyFree(key));
-    auto state = std::make_tuple(checkbox_states.size(), label, value, callback);
-    checkbox_states.emplace(key, state);
-    std::get<3>(state)(std::get<2>(state));
-}
-
-void GameWindowOpenGL::addSlider(const std::string& label, const float& min, const float& max, const float& value, const FloatCallback& callback)
-{
-    auto state = std::make_tuple(label, min, max, value, callback);
-    float_states.emplace_back(state);
-    std::get<4>(state)(std::get<3>(state));
-}
+    */
 
 void GameWindowOpenGL::drawOrigin(QPainter& painter) const
 {
@@ -611,6 +502,7 @@ void GameWindowOpenGL::drawShip(QPainter& painter)
     }
 }
 
+/*
 void GameWindowOpenGL::paintGL()
 {
     assertNoError();
@@ -1226,7 +1118,9 @@ void GameWindowOpenGL::paintGL()
     if (is_animated)
         update();
 }
+*/
 
+/*
 void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
 {
     if (event->key() == Qt::Key_Q)
@@ -1282,7 +1176,9 @@ void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
         return;
     }
 }
+*/
 
+/*
 void GameWindowOpenGL::keyReleaseEvent(QKeyEvent* event)
 {
     if (event->key() == Qt::Key_Up)
@@ -1299,3 +1195,4 @@ void GameWindowOpenGL::keyReleaseEvent(QKeyEvent* event)
         return;
     }
 }
+*/

@@ -75,6 +75,21 @@ target_link_libraries(test_extract_polygons
     acd2d
     )
 
+add_executable(test_raster_window
+    imgui/imgui.cpp
+    imgui/imgui_draw.cpp
+    imgui/imgui_widgets.cpp
+    QtImGui.cpp
+    ImGuiRenderer.cpp
+    RasterWindowOpenGL.cpp
+    test_raster_window.cpp
+    rocket.qrc
+    )
+target_link_libraries(test_raster_window
+    Qt5::Widgets
+    Qt5::OpenGL
+    )
+
 add_executable(rocket
     load_levels.cpp
     data_polygons.cpp

@@ -5,9 +5,9 @@
 
 #include <QOpenGLWindow>
 #include <QOpenGLExtraFunctions>
+#include <QOpenGLShaderProgram>
 #include <QOpenGLPaintDevice>
 #include <QSoundEffect>
-#include <QOpenGLShaderProgram>
 #include <QSvgRenderer>
 
 #include <random>
