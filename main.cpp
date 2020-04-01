@@ -7,17 +7,23 @@
 
 int main(int argc, char* argv[])
 {
-    QSurfaceFormat glFormat;
-    glFormat.setVersion(3, 3);
-    //glFormat.setSamples(2);
-    glFormat.setProfile(QSurfaceFormat::CoreProfile);
-    QSurfaceFormat::setDefaultFormat(glFormat);
+    { // default opengl format
+        QSurfaceFormat format;
+        format.setVersion(3, 3);
+        format.setRedBufferSize(8);
+        format.setGreenBufferSize(8);
+        format.setBlueBufferSize(8);
+        format.setAlphaBufferSize(0);
+        format.setStencilBufferSize(0);
+        format.setDepthBufferSize(16);
+        format.setProfile(QSurfaceFormat::CoreProfile);
+        QSurfaceFormat::setDefaultFormat(format);
+    }
 
     QApplication app(argc, argv);
 
-    GameWindowOpenGL view;    
+    GameWindowOpenGL view;
     view.resetLevel(4); // default level
-
 
     view.setAnimated(true);
     view.resize(1280, 720);
