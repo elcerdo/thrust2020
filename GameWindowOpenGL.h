@@ -42,6 +42,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         std::array<float, 4> foam_color = { 1, 1, 1, 1 };
         bool draw_debug = false;
         bool is_zoom_out = true;
+        bool is_paused = false;
         int shader_selection = 6;
         int poly_selection = 3;
         float radius_factor = 1;

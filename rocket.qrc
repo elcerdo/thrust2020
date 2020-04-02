@@ -19,5 +19,6 @@
         <file>ball_fragment.glsl</file>
         <file>map5.svg</file>
         <file>map6.svg</file>
+        <file>map7.svg</file>
     </qresource>
 </RCC>

@@ -218,7 +218,7 @@ void GameWindowOpenGL::initializeBuffers(BufferLoader& loader)
             { 0, 0, 1, 1 },
             });
 
-    // square
+    // square (ship tail)
     loader.loadBuffer3(2, {
             { -1, -1, 0 },
             { 1, -1, 0 },

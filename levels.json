@@ -80,5 +80,9 @@
             "hh": 10
         }
      ]
+  },
+  {
+    "name": "pythacup",
+    "map": ":map7.svg"
   }
 ]
