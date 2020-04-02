@@ -369,6 +369,8 @@ void RasterWindowOpenGL::ImGuiCallbacks()
             pairs.emplace_back(get<0>(pair.second), pair.first);
         std::sort(std::begin(pairs), std::end(pairs), [](const Pair& aa, const Pair& bb) -> bool { return get<0>(aa) < get<0>(bb); });
 
+        size_t kk = 0;
+        const size_t kk_max = pairs.size();
         for (auto& pair_ : pairs)
         {
             auto pair = checkbox_states.find(get<1>(pair_));
@@ -381,7 +383,11 @@ void RasterWindowOpenGL::ImGuiCallbacks()
             std::stringstream ss;
             ss << get<1>(state) << " (" << key_name << ")";
             ImGui::Checkbox(ss.str().c_str(), &get<2>(state));
-            if (prev != std::get<2>(state)) std::get<3>(state)(std::get<2>(state));
+            if (prev != std::get<2>(state))
+                std::get<3>(state)(std::get<2>(state));
+
+            if (kk % 2 != 1 && kk != kk_max - 1) ImGui::SameLine(150);
+            kk++;
         }
     }
 
@@ -404,10 +410,10 @@ void RasterWindowOpenGL::ImGuiCallbacks()
             const std::string key_name = QKeySequence(pair->first).toString().toStdString();
             std::stringstream ss;
             ss << get<1>(state) << " (" << key_name << ")";
-            if (ImGui::Button(ss.str().c_str(), { 163, 19 }))
+            if (ImGui::Button(ss.str().c_str(), { 139, 20 }))
                 get<2>(state)();
 
-            if (kk % 2 != 1 && kk != kk_max - 1) ImGui::SameLine();
+            if (kk % 2 != 1 && kk != kk_max - 1) ImGui::SameLine(150);
             kk++;
         }
     }
