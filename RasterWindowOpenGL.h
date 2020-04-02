@@ -31,6 +31,7 @@ class RasterWindowOpenGL : public QOpenGLWindow, public QOpenGLExtraFunctions
         void addCheckbox(const std::string& label, const int key, const bool& value, const BoolCallback& callback);
         void addButton(const std::string& label, const int key, const VoidCallback& callback);
         bool isKeyFree(const int key) const;
+				void enforceCallbackValues() const;
 
     protected:
         void assertNoError();

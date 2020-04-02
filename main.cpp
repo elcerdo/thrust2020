@@ -21,14 +21,14 @@ int main(int argc, char* argv[])
     }
 
     QApplication app(argc, argv);
-    GameWindowOpenGL view;    
+    GameWindowOpenGL view;
     view.resetLevel(5); // default level
 
     view.setAnimated(true);
     view.resize(1280, 720);
     view.show();
 
-    view.addSlider("thrust", .5, 100, 15, [&view](const float value) -> void {
+    view.addSlider("thrust", .5, 10, 5, [&view](const float value) -> void {
         assert(view.state);
         qDebug() << "change thrust" << value;
         view.state->ship_thrust_factor = value;

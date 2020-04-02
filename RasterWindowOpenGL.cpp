@@ -90,6 +90,20 @@ void RasterWindowOpenGL::addSlider(const std::string& label, const float& min, c
     std::get<4>(state)(std::get<3>(state));
 }
 
+void RasterWindowOpenGL::enforceCallbackValues() const
+{
+    using std::get;
+
+    for (const auto& state : float_states)
+        get<4>(state)(get<3>(state));
+
+    for (const auto& pair : checkbox_states)
+    {
+        const auto& state = pair.second;
+        get<3>(state)(get<2>(state));
+    }
+}
+
 // keyboard controls
 
 bool RasterWindowOpenGL::isKeyFree(const int key) const

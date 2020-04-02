@@ -100,6 +100,8 @@ void GameWindowOpenGL::resetLevel(const int level)
 
     state->dumpCollisionData();
     level_current = level;
+
+    enforceCallbackValues();
 }
 
 void GameWindowOpenGL::loadBackground(const std::string& map_filename)
