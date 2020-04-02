@@ -13,6 +13,7 @@
 RasterWindowOpenGL::RasterWindowOpenGL(QWindow* parent)
     : QOpenGLWindow(QOpenGLWindow::NoPartialUpdate, parent)
 {
+    registerFreeKey(Qt::Key_A);
 }
 
 void RasterWindowOpenGL::assertNoError()
@@ -108,10 +109,16 @@ void RasterWindowOpenGL::enforceCallbackValues() const
 
 bool RasterWindowOpenGL::isKeyFree(const int key) const
 {
-    if (key == Qt::Key_A) return false;
+    if (other_keys.find(key) != std::cend(other_keys)) return false;
     if (button_states.find(key) != std::cend(button_states)) return false;
     if (checkbox_states.find(key) != std::cend(checkbox_states)) return false;
     return true;
+}
+
+void RasterWindowOpenGL::registerFreeKey(const int key)
+{
+    assert(isKeyFree(key));
+    other_keys.emplace(key);
 }
 
 void RasterWindowOpenGL::keyPressEvent(QKeyEvent* event)

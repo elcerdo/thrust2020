@@ -26,6 +26,8 @@ const QVector2D camera_world_center { 0, -120 };
 GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
     : RasterWindowOpenGL(parent)
 {
+    registerFreeKey(Qt::Key_Q);
+
     qDebug() << "========== levels";
     level_datas = levels::load(":levels.json");
     qDebug() << level_datas.size() << "levels";
