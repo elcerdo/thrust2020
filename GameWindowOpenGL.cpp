@@ -866,14 +866,14 @@ void GameWindowOpenGL::paintScene()
         const auto blit_square = [this]() -> void
         {
             glBindBuffer(GL_ARRAY_BUFFER, vbos[2]);
-            glVertexAttribPointer(main_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(main_pos_attr);
+            glVertexAttribPointer(ball_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glEnableVertexAttribArray(ball_pos_attr);
             assertNoError();
 
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
             assertNoError();
 
-            glDisableVertexAttribArray(main_pos_attr);
+            glDisableVertexAttribArray(ball_pos_attr);
             assertNoError();
         };
 
