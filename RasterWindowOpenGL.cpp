@@ -438,11 +438,13 @@ void RasterWindowOpenGL::paintGL()
     assertNoError();
 
     paintScene();
+    assertNoError();
 
     QtImGui::newFrame();
     if (display_ui)
         paintUI();
     ImGui::Render();
+    assertNoError();
 
     frame_counter++;
 
