@@ -19,6 +19,7 @@
 #include <sstream>
 #include <unordered_set>
 #include <bitset>
+#include <iomanip>
 
 const float camera_world_zoom = 1.5;
 const QVector2D camera_world_center { 0, -120 };
@@ -68,16 +69,16 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
 
 void GameWindowOpenGL::resetLevel(const int level)
 {
+    using std::cout;
+    using std::endl;
     using std::get;
-    qDebug() << "reset level" << level << level_current;
 
     if (level == level_current)
         return;
 
     if (level < 0)
     {
-        state = std::make_unique<GameState>();
-        state->dumpCollisionData();
+        state = nullptr;
         level_current = level;
         return;
     }
@@ -86,7 +87,7 @@ void GameWindowOpenGL::resetLevel(const int level)
     assert(level < static_cast<int>(level_datas.size()));
     const auto& level_data = level_datas[level];
 
-    qDebug() << "loading" << QString::fromStdString(level_data.name);
+    cout << "========== loading " << std::quoted(level_data.name) << endl;
 
     state = std::make_unique<GameState>();
     state->resetGround(level_data.map_filename);

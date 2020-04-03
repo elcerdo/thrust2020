@@ -134,6 +134,9 @@ int main(int argc, char* argv[])
         }
         return;
     });
+    view.addButton("clear level", Qt::Key_Y, [&view]() -> void {
+        view.resetLevel(-1);
+    });
 
     return app.exec();
 }
