@@ -1,4 +1,5 @@
 #include "data_polygons.h"
+#include <algorithm>
 
 template <class T>
 inline void hash_combine(std::size_t& seed, const T& v)
