@@ -15,6 +15,8 @@ add_subdirectory(liquidfun/liquidfun/Box2D/Box2D)
 include_directories(liquidfun/liquidfun/Box2D)
 include_directories(imgui)
 
+enable_testing()
+
 add_library(acd2d STATIC
     acd2d/src/acd2d_data.cpp
     acd2d/src/acd2d_concavity.cpp
@@ -37,20 +39,8 @@ add_executable(test_level
 target_link_libraries(test_level
     Qt5::Core
     )
-
-
-add_executable(test_imgui
-    imgui/imgui.cpp
-    imgui/imgui_draw.cpp
-    imgui/imgui_demo.cpp
-    imgui/imgui_widgets.cpp
-    QtImGui.cpp
-    ImGuiRenderer.cpp
-    test_imgui.cpp
-    )
-target_link_libraries(test_imgui
-    Qt5::Widgets
-    Qt5::OpenGL
+add_test(test_level
+    test_level
     )
 
 add_executable(test_convex_decomposition
@@ -60,6 +50,9 @@ add_executable(test_convex_decomposition
     )
 target_link_libraries(test_convex_decomposition
     acd2d
+    )
+add_test(test_convex_decomposition
+    test_convex_decomposition
     )
 
 add_executable(test_extract_polygons
@@ -73,6 +66,23 @@ target_link_libraries(test_extract_polygons
     Qt5::Core
     Qt5::Svg
     acd2d
+    )
+add_test(test_extract_polygons
+    test_extract_polygons
+    )
+
+add_executable(test_imgui
+    imgui/imgui.cpp
+    imgui/imgui_draw.cpp
+    imgui/imgui_demo.cpp
+    imgui/imgui_widgets.cpp
+    QtImGui.cpp
+    ImGuiRenderer.cpp
+    test_imgui.cpp
+    )
+target_link_libraries(test_imgui
+    Qt5::Widgets
+    Qt5::OpenGL
     )
 
 add_executable(test_raster_window
