@@ -33,11 +33,11 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.7206751"
-     inkscape:cx="363.30523"
-     inkscape:cy="577.27381"
+     inkscape:zoom="3.4413501"
+     inkscape:cx="397.79315"
+     inkscape:cy="704.54651"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="layer2"
      showgrid="true"
      inkscape:window-width="1440"
      inkscape:window-height="856"
@@ -62,7 +62,7 @@
        type="xygrid"
        id="grid860" />
     <sodipodi:guide
-       position="0,211.66667"
+       position="51.593751,160.07292"
        orientation="0.70710678,0.70710678"
        id="guide4565"
        inkscape:locked="false" />
@@ -87,8 +87,7 @@
   <g
      inkscape:groupmode="layer"
      id="layer2"
-     inkscape:label="Layer 2"
-     sodipodi:insensitive="true">
+     inkscape:label="Layer 2">
     <g
        id="g8855"
        transform="matrix(0.14479786,0,0,0.1591054,90.82793,35.696984)" />

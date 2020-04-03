@@ -83,6 +83,19 @@
   },
   {
     "name": "pythacup",
-    "map": ":map7.svg"
+    "map": ":map7.svg",
+    "doors": [
+      { "cx": 29, "cy": -130, "dx": -25, "dy": 0}
+    ],
+    "paths": [
+        {
+            "positions": [
+            { "x": -32, "y": -138},
+            { "x": 32, "y": -138}
+            ],
+            "ww": 2,
+            "hh": 6
+        }
+     ]
   }
 ]

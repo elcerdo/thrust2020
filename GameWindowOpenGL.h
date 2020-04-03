@@ -46,8 +46,8 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         int shader_selection = 6;
         int poly_selection = 3;
         float radius_factor = 1;
-        float shading_max_speed = 20;
-        float shading_alpha = 2;
+        float shading_max_speed = 60;
+        float shading_alpha = -0.65;
 
     protected:
         QOpenGLPaintDevice* device = nullptr;
