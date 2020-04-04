@@ -48,6 +48,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         float shading_max_speed = 20;
         float shading_alpha = 2;
         unsigned int water_flags = 0;
+        bool skip_state_step = false;
 
     protected:
         QOpenGLPaintDevice* device = nullptr;

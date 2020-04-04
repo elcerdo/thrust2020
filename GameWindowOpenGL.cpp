@@ -628,8 +628,11 @@ void GameWindowOpenGL::paintScene()
     if (!state)
         return;
 
-    const double dt_ = std::min(50e-3, 1. / ImGui::GetIO().Framerate);
-    state->step(dt_);
+    if (!skip_state_step)
+    {
+        const double dt = std::min(50e-3, 1. / ImGui::GetIO().Framerate);
+        state->step(dt);
+    }
 
     { // draw with qt painter
         glBindVertexArray(0);
