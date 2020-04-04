@@ -35,6 +35,6 @@ void main()
          mode == 3 ? col :
          mode == 4 ? waterColor :
          mode == 5 ? is_stuck ? vec4(1, 0, 0, 1) : vec4(0, 1, 0, 1) :
-         mix(waterColor, foamColor, pow(clamp(speed / maxSpeed, 0, 1), alpha));
+         mix(waterColor, foamColor, pow(clamp(speed / maxSpeed, 0, 1), pow(5., alpha)));
 }
 

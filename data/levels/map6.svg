@@ -17,7 +17,15 @@
    inkscape:version="0.91 r13725"
    sodipodi:docname="map6.svg">
   <defs
-     id="defs2" />
+     id="defs2">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 105.83334 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="211.66667 : 105.83334 : 1"
+       inkscape:persp3d-origin="105.83334 : 70.555557 : 1"
+       id="perspective8859" />
+  </defs>
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -25,9 +33,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.216701"
-     inkscape:cx="307.79936"
-     inkscape:cy="635.84668"
+     inkscape:zoom="3.4413502"
+     inkscape:cx="394.80336"
+     inkscape:cy="641.82943"
      inkscape:document-units="px"
      inkscape:current-layer="layer2"
      showgrid="true"
@@ -39,7 +47,7 @@
      inkscape:lockguides="false"
      showguides="true"
      inkscape:guide-bbox="true"
-     inkscape:snap-global="false"
+     inkscape:snap-global="true"
      units="px"
      inkscape:showpageshadow="false"
      inkscape:snap-bbox="true"
@@ -94,7 +102,7 @@
          inkscape:connector-curvature="0"
          transform="scale(0.26458334,0.26458334)"
          id="rect8807"
-         d="m -555.63672,-561.09375 0,1922.18755 1916.73052,0 0,-1922.18755 z M -110,440 -30,410 340.26436,410 340.23024,300.28759 -340,-340 l 660,0 120,0 700,0 L 456.28812,303.66269 458.61718,410 l 381.38283,0 60,20 50,50 59.99999,530 -29.99999,120 -70,40 -230,0 L 360,860.00001 l -20,-10 -20,10 0,20 20,169.99999 -20,70 -70,60 -350,0 -70,-40 -29.44335,-60.5089 L -150,480 Z"
+         d="m -555.63672,-561.09375 0,1922.18755 1916.73052,0 0,-1922.18755 z M -110,440 l 80,-30 352.61076,-0.94864 0,-94.27719 L -340,-340 l 660,0 120,0 700,0 -679.26565,654.77417 0,94.27719 379.26566,0.94864 60,20 50,50 59.99999,530 -29.99999,120 -70,40 -230,0 L 360,860.00001 l -20,-10 -20,10 0,20 20,169.99999 -20,70 -70,60 -350,0 -70,-40 -29.44335,-60.5089 L -150,480 Z"
          style="opacity:1;fill:#000000;fill-opacity:1;stroke:#00ffff;stroke-width:6.41596508;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
       <path
          sodipodi:nodetypes="cccccccccccccccccc"

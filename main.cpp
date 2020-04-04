@@ -27,9 +27,7 @@ int main(int argc, char* argv[])
     view.resize(1280, 720);
     view.show();
 
-    //view.resetLevel(5); // default level
-
-    view.addSlider("thrust", .5, 10, 5, [&view](const float value) -> void {
+    view.addSlider("thrust", .5, 10, 2, [&view](const float value) -> void {
         if (!view.state)
             return;
         assert(view.state);

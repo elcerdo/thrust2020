@@ -47,8 +47,8 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         int shader_selection = 6;
         int poly_selection = 3;
         float radius_factor = 1;
-        float shading_max_speed = 20;
-        float shading_alpha = 2;
+        float shading_max_speed = 60;
+        float shading_alpha = -.65;
         unsigned int water_flags = 0;
         bool skip_state_step = false;
         bool use_painter = true;

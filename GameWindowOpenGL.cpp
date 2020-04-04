@@ -244,7 +244,7 @@ void GameWindowOpenGL::initializeBuffers(BufferLoader& loader)
             { 0, 0, 1, 1 },
             });
 
-    // square
+    // square (ship tail)
     loader.loadBuffer3(2, {
             { -1, -1, 0 },
             { 1, -1, 0 },
@@ -521,7 +521,7 @@ void GameWindowOpenGL::paintUI()
 
         ImGui::SliderFloat("radius factor", &radius_factor, 0.0f, 1.0f);
 
-        ImGui::SliderFloat("alpha", &shading_alpha, 0, 10);
+        ImGui::SliderFloat("alpha", &shading_alpha, -1, 1);
         ImGui::SliderFloat("max speed", &shading_max_speed, 0, 100);
 
         if (state && state->system)
@@ -614,13 +614,13 @@ void GameWindowOpenGL::paintUI()
         }
 
         {
-            static float value = .2;
+            static float value = .5;
             ImGui::SliderFloat("damping", &value, 0, 1);
             system.SetDamping(value);
         }
 
         {
-            static float value = .4;
+            static float value = .1;
             ImGui::SliderFloat("density", &value, .1, 2);
             system.SetDensity(value);
         }
@@ -739,7 +739,7 @@ void GameWindowOpenGL::paintScene()
                 const auto& anchor_aa = state->link->GetAnchorA();
                 const auto& anchor_bb = state->link->GetAnchorB();
                 painter.setBrush(Qt::NoBrush);
-                painter.setPen(QPen(Qt::white, 0));
+                painter.setPen(QPen(Qt::white, .5));
                 painter.drawLine(QPointF(anchor_aa.x, anchor_aa.y), QPointF(anchor_bb.x, anchor_bb.y));
                 painter.restore();
             }
