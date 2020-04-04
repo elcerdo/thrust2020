@@ -476,7 +476,12 @@ void GameWindowOpenGL::paintUI()
         ImGuiCallbacks();
         ImGui::Separator();
 
-        ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        {
+            const auto& io = ImGui::GetIO();
+            ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+            ImGui::Text("left %d right %d", io.KeysDown[ImGuiKey_LeftArrow], io.KeysDown[ImGuiKey_RightArrow]);
+        }
+
         if (state)
         {
             assert(state);
@@ -1083,6 +1088,8 @@ void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
 
     if (event->key() == Qt::Key_Up)
     {
+        if (!state)
+            return;
         assert(state);
         engine_sfx.setMuted(is_muted);
         state->ship_firing = true;
@@ -1090,6 +1097,8 @@ void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
     }
     if (event->key() == Qt::Key_Left || event->key() == Qt::Key_Right)
     {
+        if (!state)
+            return;
         assert(state);
         state->ship_target_angular_velocity = (state->isGrabbed() ? 2. : 2.6) * M_PI / 2. * (event->key() == Qt::Key_Left ? 1. : -1.);
         return;
@@ -1102,6 +1111,8 @@ void GameWindowOpenGL::keyReleaseEvent(QKeyEvent* event)
 {
     if (event->key() == Qt::Key_Up)
     {
+        if (!state)
+            return;
         assert(state);
         engine_sfx.setMuted(true);
         state->ship_firing = false;
@@ -1109,6 +1120,8 @@ void GameWindowOpenGL::keyReleaseEvent(QKeyEvent* event)
     }
     if (event->key() == Qt::Key_Left || event->key() == Qt::Key_Right)
     {
+        if (!state)
+            return;
         assert(state);
         state->ship_target_angular_velocity = 0;
         return;

@@ -59,7 +59,12 @@ class TestWindowOpenGL : public RasterWindowOpenGL
             ImGui::Begin("test_raster_window", &display_ui, ui_window_flags);
             ImGuiCallbacks();
             ImGui::Separator();
-            ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+            {
+                const auto& io = ImGui::GetIO();
+                ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+                ImGui::Text("left %d right %d", io.KeysDown[ImGuiKey_LeftArrow], io.KeysDown[ImGuiKey_RightArrow]);
+            }
 
             ImGui::End();
 
