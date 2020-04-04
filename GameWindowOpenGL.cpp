@@ -539,7 +539,7 @@ void GameWindowOpenGL::paintUI()
             }
 
             {
-                static bool state = false;
+                static bool state = true;
                 ImGui::Checkbox("viscous", &state);
                 if (state) water_flags |= b2_viscousParticle;
             }
@@ -552,7 +552,7 @@ void GameWindowOpenGL::paintUI()
             }
 
             {
-                static bool state = false;
+                static bool state = true;
                 ImGui::Checkbox("tensible", &state);
                 if (state) water_flags |= b2_tensileParticle;
             }
