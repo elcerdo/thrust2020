@@ -518,7 +518,7 @@ void GameWindowOpenGL::paintUI()
         }
 
         {
-            static float value = 0;
+            static float value = .5;
             ImGui::SliderFloat("damping", &value, 0, 1);
             system.SetDamping(value);
         }

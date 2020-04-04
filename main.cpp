@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
 
     QApplication app(argc, argv);
     GameWindowOpenGL view;    
-    view.resetLevel(6); // default level -1
+    view.resetLevel(7); // default level -1
 
     view.setAnimated(true);
     view.resize(1280, 720);
@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
     std::default_random_engine rng;
     view.addButton("drop water", Qt::Key_E, [&view, &rng]() -> void {
         assert(view.state);
-        const uint flags = b2_waterParticle | b2_tensileParticle;// | b2_viscousParticle;
+        const uint flags = b2_waterParticle; //| b2_tensileParticle; | b2_viscousParticle;
         view.state->addWater({ 0, 70 }, { 10, 10 }, rng(), flags);
     });
     view.addButton("clear water", Qt::Key_D, [&view]() -> void {

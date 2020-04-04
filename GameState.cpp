@@ -539,7 +539,7 @@ void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double a
     b2FixtureDef fixture;
     fixture.shape = &shape;
     fixture.density = .01;
-    fixture.friction = .01;
+    fixture.friction = 1;
     fixture.restitution = .7;
     fixture.filter.categoryBits = object_category;
     fixture.filter.maskBits = object_category | ground_category | door_category;
