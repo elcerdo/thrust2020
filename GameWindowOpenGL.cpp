@@ -30,7 +30,7 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
     registerFreeKey(Qt::Key_Q);
 
     qDebug() << "========== levels";
-    level_datas = levels::load(":/level/levels.json");
+    level_datas = levels::load(":/level/level.json");
     qDebug() << level_datas.size() << "levels";
     for (const auto& level_data : level_datas)
         qDebug() << "level" << QString::fromStdString(level_data.name) << QString::fromStdString(level_data.map_filename) << level_data.doors.size();

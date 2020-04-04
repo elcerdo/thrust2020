@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10.0)
 
-project(rocket)
+project(thrust2020)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_AUTOMOC ON)
@@ -38,7 +38,7 @@ target_include_directories(acd2d
 add_executable(test_level
     load_levels.cpp
     test_level.cpp
-    rocket.qrc
+    level/level.qrc
     )
 target_link_libraries(test_level
     Qt5::Core
@@ -64,7 +64,7 @@ add_executable(test_extract_polygons
     extract_polygons.cpp
     decompose_polygons.cpp
     test_extract_polygons.cpp
-    rocket.qrc
+    level/level.qrc
     )
 target_link_libraries(test_extract_polygons
     Qt5::Core
@@ -97,7 +97,7 @@ add_executable(test_raster_window
     ImGuiRenderer.cpp
     RasterWindowOpenGL.cpp
     test_raster_window.cpp
-    rocket.qrc
+    shader/shader.qrc
     )
 target_link_libraries(test_raster_window
     Qt5::Widgets
@@ -118,9 +118,9 @@ add_executable(rocket
     GameWindowOpenGL.cpp
     GameState.cpp
     main.cpp
-    #mainwindow.ui
-    #mainwindow.cpp
-    rocket.qrc
+    shader/shader.qrc
+    sound/sound.qrc
+    level/level.qrc
     )
 target_link_libraries(rocket
     Box2D

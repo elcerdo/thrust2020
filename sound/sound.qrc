@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/sound">
+        <file>engine.wav</file>
+        <file>click00.wav</file>
+        <file>click01.wav</file>
+    </qresource>
+</RCC>
+

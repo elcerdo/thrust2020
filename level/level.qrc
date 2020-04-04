@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/level">
+        <file>level.json</file>
+        <file>map1.svg</file>
+        <file>map2.svg</file>
+        <file>map3.svg</file>
+        <file>map4.svg</file>
+        <file>map5.svg</file>
+        <file>map6.svg</file>
+    </qresource>
+</RCC>
