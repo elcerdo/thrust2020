@@ -27,6 +27,8 @@ const QVector2D camera_world_center { 0, -120 };
 GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
     : RasterWindowOpenGL(parent)
 {
+    registerFreeKey(Qt::Key_Q);
+
     qDebug() << "========== levels";
     level_datas = levels::load(":levels.json");
     qDebug() << level_datas.size() << "levels";
@@ -431,7 +433,7 @@ void GameWindowOpenGL::paintUI()
 {
     constexpr auto ui_window_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
 
-    {
+    { // callbacks and general info window
         ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiCond_Once);
         //ImGui::SetNextWindowSize(ImVec2(350, 440), ImGuiCond_Once);
         //ImGui::SetNextWindowSize(ImVec2(350,400), ImGuiCond_FirstUseEver);
@@ -469,7 +471,7 @@ void GameWindowOpenGL::paintUI()
         ImGui::End();
     }
 
-    {
+    { // shading window
         ImGui::SetNextWindowPos(ImVec2(width() - 330 - 5, 5), ImGuiCond_Once);
         ImGui::Begin("Shading", &display_ui, ui_window_flags);
 
@@ -494,9 +496,10 @@ void GameWindowOpenGL::paintUI()
         ImGui::SliderFloat("alpha", &shading_alpha, 0, 10);
         ImGui::SliderFloat("max speed", &shading_max_speed, 0, 100);
 
-        ImGui::Separator();
         if (state && state->system)
         {
+            ImGui::Separator();
+
             assert(state);
             assert(state->system);
             const b2Vec2* speeds = state->system->GetVelocityBuffer();
@@ -511,13 +514,70 @@ void GameWindowOpenGL::paintUI()
     }
 
     if (state && state->system)
-    {
+    { // particle system control
         ImGui::SetNextWindowPos(ImVec2(width() - 330 - 5, 225), ImGuiCond_Once);
-        ImGui::Begin("Liquid system", &display_ui, ui_window_flags);
+        ImGui::Begin("Particle system", &display_ui, ui_window_flags);
 
         assert(state);
         assert(state->system);
         auto& system = *state->system;
+
+        {
+            water_flags = 0;
+
+            {
+                static bool state = false;
+                ImGui::Checkbox("spring", &state);
+                if (state) water_flags |= b2_springParticle;
+            }
+
+            {
+                static bool state = false;
+                ImGui::SameLine(150);
+                ImGui::Checkbox("elastic", &state);
+                if (state) water_flags |= b2_elasticParticle;
+            }
+
+            {
+                static bool state = true;
+                ImGui::Checkbox("viscous", &state);
+                if (state) water_flags |= b2_viscousParticle;
+            }
+
+            {
+                static bool state = false;
+                ImGui::SameLine(150);
+                ImGui::Checkbox("powder", &state);
+                if (state) water_flags |= b2_powderParticle;
+            }
+
+            {
+                static bool state = true;
+                ImGui::Checkbox("tensible", &state);
+                if (state) water_flags |= b2_tensileParticle;
+            }
+
+            {
+                static bool state = false;
+                ImGui::SameLine(150);
+                ImGui::Checkbox("color mixing", &state);
+                if (state) water_flags |= b2_colorMixingParticle;
+            }
+
+            {
+                static bool state = false;
+                ImGui::Checkbox("static pressure", &state);
+                if (state) water_flags |= b2_staticPressureParticle;
+            }
+
+            {
+                static bool state = false;
+                ImGui::SameLine(150);
+                ImGui::Checkbox("repulsive", &state);
+                if (state) water_flags |= b2_repulsiveParticle;
+            }
+        }
+
 
         {
             static int value = 4;
@@ -539,15 +599,24 @@ void GameWindowOpenGL::paintUI()
 
         ImGui::Checkbox("clean stuck in door", &state->clean_stuck_in_door);
 
-        ImGui::Separator();
+        {
+            ImGui::Separator();
+            const auto& flags = water_flags;
+            const auto str = std::bitset<32>(flags).to_string();
+            assert(str.size() == 32);
+            ImGui::Text("next drop flags %d", flags);
+            ImGui::Text("31-16 %s", str.substr(0, 16).c_str());
+            ImGui::Text("15-00 %s", str.substr(16, 16).c_str());
+        }
 
         {
-            const auto flags = system.GetAllParticleFlags();
+            ImGui::Separator();
+            const auto& flags = system.GetAllParticleFlags();
             const auto str = std::bitset<32>(flags).to_string();
             assert(str.size() == 32);
             ImGui::Text("all particle flags %d", flags);
-            ImGui::Text("00-15 %s", str.substr(0, 16).c_str());
-            ImGui::Text("16-31 %s", str.substr(16, 16).c_str());
+            ImGui::Text("31-16 %s", str.substr(0, 16).c_str());
+            ImGui::Text("15-00 %s", str.substr(16, 16).c_str());
         }
 
         ImGui::End();

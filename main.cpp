@@ -82,8 +82,7 @@ int main(int argc, char* argv[])
         if (!view.state)
             return;
         assert(view.state);
-        const uint flags = b2_viscousParticle | b2_fixtureContactFilterParticle;
-        view.state->addWater({ 0, 70 }, { 10, 10 }, rng(), flags);
+        view.state->addWater({ 0, 70 }, { 10, 10 }, rng(), view.water_flags);
     });
     view.addButton("clear water", Qt::Key_D, [&view]() -> void {
         if (!view.state)
