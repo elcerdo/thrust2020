@@ -16,6 +16,9 @@
 constexpr uint16 ground_category = 1 << 0;
 constexpr uint16 object_category = 1 << 1;
 constexpr uint16 door_category = 1 << 2;
+const float default_density = 0.2;
+const float default_friction = 0.1;
+const float default_restitution = 0.5;
 
 GameState::GameState() :
     world(b2Vec2(0, -8)),
@@ -225,9 +228,9 @@ void GameState::resetBall()
 
     b2FixtureDef fixture;
     fixture.shape = &shape;
-    fixture.density = .1;
-    fixture.friction = .5;
-    fixture.restitution = 1;
+    fixture.density = default_density;
+    fixture.friction = default_friction;
+    fixture.restitution = default_restitution;
     fixture.filter.categoryBits = object_category;
     fixture.filter.maskBits = object_category | ground_category | door_category;
 
@@ -266,9 +269,9 @@ void GameState::resetShip()
 
     b2FixtureDef fixture;
     fixture.shape = &shape;
-    fixture.density = 1;
-    fixture.friction = 0; // 0.7
-    fixture.restitution = 0;
+    fixture.density = default_density;
+    fixture.friction = default_friction;
+    fixture.restitution = default_restitution;
     fixture.filter.categoryBits = object_category;
     fixture.filter.maskBits = object_category | ground_category | door_category;
 
@@ -303,9 +306,7 @@ void GameState::addWater(const b2Vec2 position, const b2Vec2 size, const size_t 
 
     b2ParticleGroupDef group_def;
     group_def.shape = &shape;
-    group_def.flags = flags;//b2_tensileParticle |*/ //b2_viscousParticle | b2_fixtureContactFilterParticle;// | b2_staticPressureParticle; //b2_powderParticle;
-    //group_def.flags = b2_elasticParticle;
-    //group_def.groupFlags = b2_solidParticleGroup;
+    group_def.flags = flags;
     cout << std::bitset<32>(group_def.flags).to_string() << " ";
     cout << std::bitset<32>(group_def.groupFlags).to_string() << endl;
     group_def.position.Set(position.x, position.y);
@@ -386,7 +387,7 @@ void GameState::step(const float dt)
         ship->SetAngularVelocity((ship_target_angle - angle) / .05);
     }
 
-    { // step (pause here?)
+    { // step
         int velocityIterations = 6;
         int positionIterations = 2;
         int particleIterations = std::min(world.CalculateReasonableParticleIterations(dt), 4);
@@ -548,9 +549,9 @@ void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double a
 
     b2FixtureDef fixture;
     fixture.shape = &shape;
-    fixture.density = .2;
-    fixture.friction = 0;
-    fixture.restitution = 1;
+    fixture.density = default_density;
+    fixture.friction = default_friction;
+    fixture.restitution = default_restitution;
     fixture.filter.categoryBits = object_category;
     fixture.filter.maskBits = object_category | ground_category | door_category;
 
