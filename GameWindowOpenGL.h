@@ -51,6 +51,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         float shading_alpha = 2;
         unsigned int water_flags = 0;
         bool skip_state_step = false;
+        bool use_painter = true;
 
     protected:
         QOpenGLPaintDevice* device = nullptr;

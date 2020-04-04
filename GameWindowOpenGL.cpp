@@ -657,6 +657,7 @@ void GameWindowOpenGL::paintScene()
     if (!skip_state_step)
         state->step(dt);
 
+    if (use_painter)
     { // draw with qt painter
         glBindVertexArray(0);
 
