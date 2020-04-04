@@ -2,3 +2,4 @@ build*
 map6_withbitmap.svg
 *.user
 *blend1
+*.autosave
