@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
 
     QCoreApplication app(argc, argv);
 
-    const auto levels = levels::load(":level/level.json");
+    const auto levels = levels::load(":/levels/levels.json");
 
     cout << levels.size() << " levels" << endl;
     for (const auto& level : levels)

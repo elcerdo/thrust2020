@@ -54,16 +54,16 @@ target_include_directories(imgui_qt
     imgui_qt
     )
 
-add_executable(test_level
+add_executable(test_levels
     load_levels.cpp
-    test_level.cpp
-    level/level.qrc
+    test_levels.cpp
+    data/levels/levels.qrc
     )
-target_link_libraries(test_level
+target_link_libraries(test_levels
     Qt5::Core
     )
-add_test(test_level
-    test_level
+add_test(test_levels
+    test_levels
     )
 
 add_executable(test_convex_decomposition
@@ -83,7 +83,7 @@ add_executable(test_extract_polygons
     extract_polygons.cpp
     decompose_polygons.cpp
     test_extract_polygons.cpp
-    level/level.qrc
+    data/levels/levels.qrc
     )
 target_link_libraries(test_extract_polygons
     Qt5::Core
@@ -104,7 +104,7 @@ target_link_libraries(test_imgui_qt
 add_executable(test_raster_window
     RasterWindowOpenGL.cpp
     test_raster_window.cpp
-    shader/shader.qrc
+    data/shaders/shaders.qrc
     )
 target_link_libraries(test_raster_window
     imgui_qt
@@ -119,9 +119,9 @@ add_executable(rocket
     GameWindowOpenGL.cpp
     GameState.cpp
     main.cpp
-    shader/shader.qrc
-    sound/sound.qrc
-    level/level.qrc
+    data/sounds/sounds.qrc
+    data/shaders/shaders.qrc
+    data/levels/levels.qrc
     )
 target_link_libraries(rocket
     Box2D
