@@ -30,14 +30,14 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
     registerFreeKey(Qt::Key_Q);
 
     qDebug() << "========== levels";
-    level_datas = levels::load(":levels.json");
+    level_datas = levels::load(":/level/levels.json");
     qDebug() << level_datas.size() << "levels";
     for (const auto& level_data : level_datas)
         qDebug() << "level" << QString::fromStdString(level_data.name) << QString::fromStdString(level_data.map_filename) << level_data.doors.size();
 
     {
         auto& sfx = engine_sfx;
-        const auto sound = QUrl::fromLocalFile(":engine.wav");
+        const auto sound = QUrl::fromLocalFile(":/sound/engine.wav");
         assert(sound.isValid());
         sfx.setSource(sound);
         sfx.setLoopCount(QSoundEffect::Infinite);
@@ -48,7 +48,7 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
 
     {
         auto& sfx = ship_click_sfx;
-        const auto click_sound = QUrl::fromLocalFile(":click01.wav");
+        const auto click_sound = QUrl::fromLocalFile(":/sound/click01.wav");
         assert(click_sound.isValid());
         sfx.setSource(click_sound);
         sfx.setLoopCount(1);
@@ -59,7 +59,7 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
 
     /*{
         auto& sfx = back_click_sfx;
-        const auto click_sound = QUrl::fromLocalFile(":click00.wav");
+        const auto click_sound = QUrl::fromLocalFile(":/sound/click00.wav");
         assert(click_sound.isValid());
         sfx.setSource(click_sound);
         sfx.setLoopCount(1);
@@ -129,7 +129,7 @@ void GameWindowOpenGL::initializePrograms()
 {
     {
         assert(!base_program);
-        base_program = loadAndCompileProgram(":base_vertex.glsl", ":base_fragment.glsl");
+        base_program = loadAndCompileProgram(":/shader/base_vertex.glsl", ":/shader/base_fragment.glsl");
 
         assert(base_program);
         base_pos_attr = base_program->attributeLocation("posAttr");
@@ -142,7 +142,7 @@ void GameWindowOpenGL::initializePrograms()
 
     {
         assert(!main_program);
-        main_program = loadAndCompileProgram(":main_vertex.glsl", ":main_fragment.glsl");
+        main_program = loadAndCompileProgram(":/shader/main_vertex.glsl", ":/shader/main_fragment.glsl");
 
         assert(main_program);
         main_pos_attr = main_program->attributeLocation("posAttr");
@@ -157,7 +157,7 @@ void GameWindowOpenGL::initializePrograms()
 
     {
         assert(!ball_program);
-        ball_program = loadAndCompileProgram(":ball_vertex.glsl", ":ball_fragment.glsl");
+        ball_program = loadAndCompileProgram(":/shader/ball_vertex.glsl", ":/shader/ball_fragment.glsl");
 
         assert(ball_program);
         ball_pos_attr = ball_program->attributeLocation("posAttr");
@@ -172,7 +172,7 @@ void GameWindowOpenGL::initializePrograms()
 
     {
         assert(!particle_program);
-        particle_program = loadAndCompileProgram(":particle_vertex.glsl", ":particle_fragment.glsl", ":particle_geometry.glsl");
+        particle_program = loadAndCompileProgram(":/shader/particle_vertex.glsl", ":/shader/particle_fragment.glsl", ":/shader/particle_geometry.glsl");
 
         assert(particle_program);
         particle_pos_attr = particle_program->attributeLocation("posAttr");

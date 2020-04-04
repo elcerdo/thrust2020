@@ -1,13 +1,10 @@
 <RCC>
-    <qresource prefix="/">
+    <qresource prefix="/sound">
         <file>engine.wav</file>
         <file>click00.wav</file>
         <file>click01.wav</file>
-        <file>levels.json</file>
-        <file>map1.svg</file>
-        <file>map2.svg</file>
-        <file>map3.svg</file>
-        <file>map4.svg</file>
+    </qresource>
+    <qresource prefix="/shader">
         <file>main_vertex.glsl</file>
         <file>main_fragment.glsl</file>
         <file>base_vertex.glsl</file>
@@ -17,6 +14,13 @@
         <file>particle_fragment.glsl</file>
         <file alias="ball_vertex.glsl">base_vertex.glsl</file>
         <file>ball_fragment.glsl</file>
+    </qresource>
+    <qresource prefix="/level">
+        <file>levels.json</file>
+        <file>map1.svg</file>
+        <file>map2.svg</file>
+        <file>map3.svg</file>
+        <file>map4.svg</file>
         <file>map5.svg</file>
         <file>map6.svg</file>
     </qresource>

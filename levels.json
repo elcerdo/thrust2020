@@ -1,7 +1,7 @@
 [
   {
     "name": "cave",
-    "map": ":map1.svg",
+    "map": ":/level/map1.svg",
     "doors": [
       { "cx": 115, "cy": -170, "dx": 0, "dy": -20},
       { "cx": 15, "cy": -230, "dx": 20, "dy": 0},
@@ -10,7 +10,7 @@
   },
   {
     "name": "sandhour",
-    "map": ":map2.svg",
+    "map": ":/level/map2.svg",
     "doors": [
       { "cx": -65, "cy": -160, "dx": 15, "dy": 0},
       { "cx": -90, "cy": 100, "dx": -15, "dy": 0},
@@ -19,13 +19,13 @@
   },
   {
     "name": "bottle",
-    "map": ":map3.svg",
+    "map": ":/level/map3.svg",
     "doors": [
     ]
   },
   {
     "name": "pump",
-    "map": ":map4.svg",
+    "map": ":/level/map4.svg",
     "paths": [
         {
             "positions": [
@@ -51,7 +51,7 @@
   },
   {
     "name": "squeeze",
-    "map": ":map5.svg",
+    "map": ":/level/map5.svg",
     "doors": [
       { "cx": -2, "cy": 0, "dx": 16, "dy": 0},
       { "cx": -17, "cy": 77, "dx": 16, "dy": 0}
@@ -69,7 +69,7 @@
   },
   {
     "name": "racetrack",
-    "map": ":map6.svg",
+    "map": ":/level/map6.svg",
     "paths": [
         {
             "positions": [

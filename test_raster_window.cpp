@@ -16,7 +16,7 @@ class TestWindowOpenGL : public RasterWindowOpenGL
         void initializePrograms() override
         {
             assert(!base_program);
-            base_program = loadAndCompileProgram(":base_vertex.glsl", ":base_fragment.glsl");
+            base_program = loadAndCompileProgram(":/shader/base_vertex.glsl", ":/shader/base_fragment.glsl");
             assert(base_program);
 
             base_pos_attr = base_program->attributeLocation("posAttr");
