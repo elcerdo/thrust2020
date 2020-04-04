@@ -7,13 +7,11 @@
 #include "Box2D/Particle/b2ParticleGroup.h"
 
 #include <iostream>
+#include <iomanip>
 #include <bitset>
 
 #include "extract_polygons.h"
 #include "decompose_polygons.h"
-
-using std::cout;
-using std::endl;
 
 constexpr uint16 ground_category = 1 << 0;
 constexpr uint16 object_category = 1 << 1;
@@ -60,6 +58,9 @@ GameState::GameState() :
 
 void GameState::resetGround(const std::string& map_filename)
 {
+    using std::cout;
+    using std::endl;
+
     b2BodyDef def;
     def.type = b2_staticBody;
     def.position.Set(0, 0);
@@ -81,7 +82,9 @@ void GameState::resetGround(const std::string& map_filename)
 
     };
 
-    cout << "========== svg map loading" << endl;
+    cout << "** svg loading" << endl;
+    cout << "filename " << std::quoted(map_filename) << endl;
+
     const auto polys_to_colors = polygons::extract(map_filename);
     const polygons::Color foreground_color { 0, 1, 0, 1};
 
@@ -149,6 +152,9 @@ void GameState::resetParticleSystem()
 
 void GameState::dumpCollisionData() const
 {
+    using std::cout;
+    using std::endl;
+
     const auto dump_filter_data = [](const b2Body& body) -> void
     {
         size_t count = 5;
@@ -163,7 +169,7 @@ void GameState::dumpCollisionData() const
         if (!count) cout << "  ...." << endl;
     };
 
-    cout << "========== category & collision mask" << endl;
+    cout << "** category & collision mask" << endl;
 
     if (ground)
     {
@@ -274,9 +280,13 @@ void GameState::resetShip()
     ship_touched_wall = false;
 }
 
-void GameState::addWater(const b2Vec2 position, const b2Vec2 size, const size_t seed, const uint flags)
+void GameState::addWater(const b2Vec2 position, const b2Vec2 size, const size_t seed, const unsigned int flags)
 {
-    cout << "flop ";
+    using std::cout;
+    using std::endl;
+
+    cout << "** flop ";
+
     std::default_random_engine rng(seed);
     std::uniform_real_distribution<float32> dist(0, 255u);
     const float32 rr = dist(rng);

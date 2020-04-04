@@ -13,6 +13,7 @@
 RasterWindowOpenGL::RasterWindowOpenGL(QWindow* parent)
     : QOpenGLWindow(QOpenGLWindow::NoPartialUpdate, parent)
 {
+    registerFreeKey(Qt::Key_A);
 }
 
 void RasterWindowOpenGL::assertNoError()
@@ -90,14 +91,34 @@ void RasterWindowOpenGL::addSlider(const std::string& label, const float& min, c
     std::get<4>(state)(std::get<3>(state));
 }
 
+void RasterWindowOpenGL::enforceCallbackValues() const
+{
+    using std::get;
+
+    for (const auto& state : float_states)
+        get<4>(state)(get<3>(state));
+
+    for (const auto& pair : checkbox_states)
+    {
+        const auto& state = pair.second;
+        get<3>(state)(get<2>(state));
+    }
+}
+
 // keyboard controls
 
 bool RasterWindowOpenGL::isKeyFree(const int key) const
 {
-    if (key == Qt::Key_A) return false;
+    if (other_keys.find(key) != std::cend(other_keys)) return false;
     if (button_states.find(key) != std::cend(button_states)) return false;
     if (checkbox_states.find(key) != std::cend(checkbox_states)) return false;
     return true;
+}
+
+void RasterWindowOpenGL::registerFreeKey(const int key)
+{
+    assert(isKeyFree(key));
+    other_keys.emplace(key);
 }
 
 void RasterWindowOpenGL::keyPressEvent(QKeyEvent* event)
@@ -314,7 +335,7 @@ void RasterWindowOpenGL::initializeGL()
 
     {
         const auto version = QOpenGLContext::currentContext()->format().version();
-        cout << "glversion " << version.first << "." << version.second << endl;
+        cout << "gl_version " << version.first << "." << version.second << endl;
     }
 
     initializeOpenGLFunctions();
@@ -348,6 +369,8 @@ void RasterWindowOpenGL::ImGuiCallbacks()
             pairs.emplace_back(get<0>(pair.second), pair.first);
         std::sort(std::begin(pairs), std::end(pairs), [](const Pair& aa, const Pair& bb) -> bool { return get<0>(aa) < get<0>(bb); });
 
+        size_t kk = 0;
+        const size_t kk_max = pairs.size();
         for (auto& pair_ : pairs)
         {
             auto pair = checkbox_states.find(get<1>(pair_));
@@ -360,7 +383,11 @@ void RasterWindowOpenGL::ImGuiCallbacks()
             std::stringstream ss;
             ss << get<1>(state) << " (" << key_name << ")";
             ImGui::Checkbox(ss.str().c_str(), &get<2>(state));
-            if (prev != std::get<2>(state)) std::get<3>(state)(std::get<2>(state));
+            if (prev != std::get<2>(state))
+                std::get<3>(state)(std::get<2>(state));
+
+            if (kk % 2 != 1 && kk != kk_max - 1) ImGui::SameLine(150);
+            kk++;
         }
     }
 
@@ -383,10 +410,10 @@ void RasterWindowOpenGL::ImGuiCallbacks()
             const std::string key_name = QKeySequence(pair->first).toString().toStdString();
             std::stringstream ss;
             ss << get<1>(state) << " (" << key_name << ")";
-            if (ImGui::Button(ss.str().c_str(), { 163, 19 }))
+            if (ImGui::Button(ss.str().c_str(), { 139, 20 }))
                 get<2>(state)();
 
-            if (kk % 2 != 1 && kk != kk_max - 1) ImGui::SameLine();
+            if (kk % 2 != 1 && kk != kk_max - 1) ImGui::SameLine(150);
             kk++;
         }
     }
@@ -424,11 +451,13 @@ void RasterWindowOpenGL::paintGL()
     assertNoError();
 
     paintScene();
+    assertNoError();
 
     QtImGui::newFrame();
     if (display_ui)
         paintUI();
     ImGui::Render();
+    assertNoError();
 
     frame_counter++;
 
