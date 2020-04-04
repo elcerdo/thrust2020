@@ -81,12 +81,12 @@ int main(int argc, char* argv[])
     cout << std::boolalpha;
 
     QApplication app(argc, argv);
-    check_non_null_decomposition(":map1.svg");
-    check_non_null_decomposition(":map2.svg");
-    check_non_null_decomposition(":map3.svg");
-    check_non_null_decomposition(":map4.svg");
-    check_non_null_decomposition(":map5.svg");
-    check_non_null_decomposition(":map6.svg");
+    check_non_null_decomposition(":/levels/map1.svg");
+    check_non_null_decomposition(":/levels/map2.svg");
+    check_non_null_decomposition(":/levels/map3.svg");
+    check_non_null_decomposition(":/levels/map4.svg");
+    check_non_null_decomposition(":/levels/map5.svg");
+    check_non_null_decomposition(":/levels/map6.svg");
 
     return 0;
 }

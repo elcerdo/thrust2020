@@ -459,8 +459,6 @@ void RasterWindowOpenGL::paintGL()
     ImGui::Render();
     assertNoError();
 
-    frame_counter++;
-
     if (is_animated)
         update();
 }

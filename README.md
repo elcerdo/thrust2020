@@ -16,12 +16,12 @@ Use cursor keys to move ship, space to grab/release the ball.
 
 ## Adding new level
 
-* Copy existing `map*.svg`
+* Copy existing `data/levels/map*.svg`
 * Edit new svg file with inkscape for example. Horizontal guide is located at horizon.
 * Black filled polygon are solid in game.
 * Save file in repository root directory.
-* Add svg file in `rocket.qrc` resource file
-* Add level description in `levels.json`
+* Add svg file in `data/levels/levels.qrc` resource file
+* Add level description in `data/levels/levels.json`
     * `name` is displayed on the UI
     * `map` refers to the svg file preceded by a semicolon.
     * Add doors and and paths optionally.

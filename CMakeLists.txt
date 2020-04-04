@@ -1,11 +1,13 @@
 cmake_minimum_required(VERSION 3.10.0)
 
-project(rocket)
+project(thrust2020)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
+
+enable_testing()
 
 if(WIN32)
     add_definitions(-D_USE_MATH_DEFINES)
@@ -18,8 +20,6 @@ set(BOX2D_BUILD_STATIC TRUE)
 add_subdirectory(liquidfun/liquidfun/Box2D/Box2D)
 include_directories(liquidfun/liquidfun/Box2D)
 include_directories(imgui)
-
-enable_testing()
 
 add_library(acd2d STATIC
     acd2d/src/acd2d_data.cpp
@@ -35,16 +35,35 @@ target_include_directories(acd2d
     acd2d/src/edge_visibility
     )
 
-add_executable(test_level
-    load_levels.cpp
-    test_level.cpp
-    rocket.qrc
+add_library(imgui_qt STATIC
+    imgui/imgui.cpp
+    imgui/imgui_draw.cpp
+    imgui/imgui_demo.cpp
+    imgui/imgui_widgets.cpp
+    imgui_qt/QtImGui.cpp
+    imgui_qt/ImGuiRenderer.cpp
     )
-target_link_libraries(test_level
+target_link_libraries(imgui_qt
+    PUBLIC
+    Qt5::Widgets
+    Qt5::OpenGL
+    )
+target_include_directories(imgui_qt
+    PUBLIC
+    imgui
+    imgui_qt
+    )
+
+add_executable(test_levels
+    load_levels.cpp
+    test_levels.cpp
+    data/levels/levels.qrc
+    )
+target_link_libraries(test_levels
     Qt5::Core
     )
-add_test(test_level
-    test_level
+add_test(test_levels
+    test_levels
     )
 
 add_executable(test_convex_decomposition
@@ -64,7 +83,7 @@ add_executable(test_extract_polygons
     extract_polygons.cpp
     decompose_polygons.cpp
     test_extract_polygons.cpp
-    rocket.qrc
+    data/levels/levels.qrc
     )
 target_link_libraries(test_extract_polygons
     Qt5::Core
@@ -75,33 +94,20 @@ add_test(test_extract_polygons
     test_extract_polygons
     )
 
-add_executable(test_imgui
-    imgui/imgui.cpp
-    imgui/imgui_draw.cpp
-    imgui/imgui_demo.cpp
-    imgui/imgui_widgets.cpp
-    QtImGui.cpp
-    ImGuiRenderer.cpp
-    test_imgui.cpp
+add_executable(test_imgui_qt
+    test_imgui_qt.cpp
     )
-target_link_libraries(test_imgui
-    Qt5::Widgets
-    Qt5::OpenGL
+target_link_libraries(test_imgui_qt
+    imgui_qt
     )
 
 add_executable(test_raster_window
-    imgui/imgui.cpp
-    imgui/imgui_draw.cpp
-    imgui/imgui_widgets.cpp
-    QtImGui.cpp
-    ImGuiRenderer.cpp
     RasterWindowOpenGL.cpp
     test_raster_window.cpp
-    rocket.qrc
+    data/shaders/shaders.qrc
     )
 target_link_libraries(test_raster_window
-    Qt5::Widgets
-    Qt5::OpenGL
+    imgui_qt
     )
 
 add_executable(rocket
@@ -109,25 +115,19 @@ add_executable(rocket
     data_polygons.cpp
     extract_polygons.cpp
     decompose_polygons.cpp
-    imgui/imgui.cpp
-    imgui/imgui_draw.cpp
-    imgui/imgui_widgets.cpp
-    QtImGui.cpp
-    ImGuiRenderer.cpp
     RasterWindowOpenGL.cpp
     GameWindowOpenGL.cpp
     GameState.cpp
     main.cpp
-    #mainwindow.ui
-    #mainwindow.cpp
-    rocket.qrc
+    data/sounds/sounds.qrc
+    data/shaders/shaders.qrc
+    data/levels/levels.qrc
     )
 target_link_libraries(rocket
     Box2D
-    Qt5::Widgets
     Qt5::Multimedia
-    Qt5::OpenGL
     Qt5::Svg
     acd2d
+    imgui_qt
     )
 

@@ -74,10 +74,12 @@ int main(int argc, char* argv[])
     view.addCheckbox("world view", Qt::Key_W, false, [&view](const bool checked) -> void {
         view.is_zoom_out = checked;
     });
-    view.addCheckbox("pause", Qt::Key_O, false, [&view](const bool checked) -> void {
-        view.is_paused = checked;
+    view.addCheckbox("pause", Qt::Key_X, false, [&view](const bool checked) -> void {
+        view.skip_state_step = checked;
     });
-
+    view.addCheckbox("painter", Qt::Key_C, true, [&view](const bool checked) -> void {
+        view.use_painter = checked;
+    });
 
     std::default_random_engine rng;
     view.addButton("drop water", Qt::Key_E, [&view, &rng]() -> void {
