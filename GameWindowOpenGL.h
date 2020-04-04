@@ -40,6 +40,8 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         std::default_random_engine flame_rng;
         std::array<float, 4> water_color = { 108 / 255., 195 / 255., 246 / 255., 1 };
         std::array<float, 4> foam_color = { 1, 1, 1, 1 };
+        std::array<float, 4> halo_out_color = { 0, 0, 1, .6 };
+        std::array<float, 4> halo_in_color = { 0, 0, 1, .2 };
         bool draw_debug = false;
         bool is_zoom_out = true;
         int shader_selection = 6;
@@ -59,6 +61,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
 
         QSvgRenderer map_renderer;
 
+        float world_time = 0;
         bool is_muted = false;
 
         int level_current = -1;
@@ -76,6 +79,13 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         int ball_pos_attr = -1;
         int ball_mat_unif = -1;
         int ball_angular_speed_unif = -1;
+
+        std::unique_ptr<QOpenGLShaderProgram> grab_program = nullptr;
+        int grab_pos_attr = -1;
+        int grab_mat_unif = -1;
+        int grab_time_unif = -1;
+        int grab_halo_out_color_unif = -1;
+        int grab_halo_in_color_unif = -1;
 
         std::unique_ptr<QOpenGLShaderProgram> particle_program = nullptr;
         int particle_pos_attr = -1;

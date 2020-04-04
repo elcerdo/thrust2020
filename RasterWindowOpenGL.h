@@ -92,8 +92,6 @@ class RasterWindowOpenGL : public QOpenGLWindow, public QOpenGLExtraFunctions
         ButtonStates button_states;
         std::unordered_set<int> other_keys;
 
-        size_t frame_counter = 0;
-
         GLuint vao = 0;
         std::vector<GLuint> vbos;
 };

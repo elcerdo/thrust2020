@@ -8,6 +8,9 @@
 
 class TestWindowOpenGL : public RasterWindowOpenGL
 {
+    public:
+        float angle = 0;
+
     protected:
         std::unique_ptr<QOpenGLShaderProgram> base_program = nullptr;
         int base_pos_attr = -1;
@@ -100,7 +103,7 @@ class TestWindowOpenGL : public RasterWindowOpenGL
                     auto matrix = world_matrix;
                     //matrix.translate(0, 10);
                     //matrix.scale(3, 3, 3);
-                    matrix.rotate(frame_counter, 1, 1, 1);
+                    matrix.rotate(angle, 1, 1, 1);
                     base_program->setUniformValue(base_mat_unif, matrix);
 
                     blit_cube();
@@ -135,8 +138,9 @@ int main(int argc, char* argv[])
     view.resize(1280, 720);
     view.show();
 
-    view.addSlider("slider", 0, 1, .5, [](const float value) -> void {
+    view.addSlider("slider", 0, 360, 30, [&view](const float value) -> void {
         cout << "slider " << value << endl;
+        view.angle = value;
     });
 
     view.addCheckbox("checkbox", Qt::Key_Q, true, [](const bool checked) -> void {

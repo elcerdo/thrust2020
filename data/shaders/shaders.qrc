@@ -9,5 +9,7 @@
         <file>particle_fragment.glsl</file>
         <file alias="ball_vertex.glsl">base_vertex.glsl</file>
         <file>ball_fragment.glsl</file>
+        <file alias="grab_vertex.glsl">base_vertex.glsl</file>
+        <file>grab_fragment.glsl</file>
     </qresource>
 </RCC>
