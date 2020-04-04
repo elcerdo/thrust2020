@@ -19,6 +19,7 @@
 #include <sstream>
 #include <unordered_set>
 #include <bitset>
+#include <iomanip>
 
 const float camera_world_zoom = 1.5;
 const QVector2D camera_world_center { 0, -120 };
@@ -70,16 +71,16 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
 
 void GameWindowOpenGL::resetLevel(const int level)
 {
+    using std::cout;
+    using std::endl;
     using std::get;
-    qDebug() << "reset level" << level << level_current;
 
     if (level == level_current)
         return;
 
     if (level < 0)
     {
-        state = std::make_unique<GameState>();
-        state->dumpCollisionData();
+        state = nullptr;
         level_current = level;
         return;
     }
@@ -88,7 +89,7 @@ void GameWindowOpenGL::resetLevel(const int level)
     assert(level < static_cast<int>(level_datas.size()));
     const auto& level_data = level_datas[level];
 
-    qDebug() << "loading" << QString::fromStdString(level_data.name);
+    cout << "========== loading " << std::quoted(level_data.name) << endl;
 
     state = std::make_unique<GameState>();
     state->resetGround(level_data.map_filename);
@@ -454,15 +455,18 @@ void GameWindowOpenGL::paintUI()
         ImGuiCallbacks();
         ImGui::Separator();
 
-        assert(state);
         ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::Text("ship %.2f %.2f", state->ship->GetPosition().x, state->ship->GetPosition().y);
-        if (state->system) ImGui::Text("particles %d(%d)", state->system->GetParticleCount(), state->system->GetStuckCandidateCount());
-        ImGui::Text("crates %d", static_cast<int>(state->crates.size()));
-        ImGui::Text("contact %d", state->all_accum_contact);
-        ImGui::Text("ship mass %f", state->ship->GetMass());
-        ImGui::Text("ball mass %f", state->ball->GetMass());
-        ImGui::Text(state->ship_touched_wall ? "!!!!BOOOM!!!!" : "<3<3<3<3");
+        if (state)
+        {
+            assert(state);
+            ImGui::Text("ship %.2f %.2f", state->ship->GetPosition().x, state->ship->GetPosition().y);
+            if (state->system) ImGui::Text("particles %d(%d)", state->system->GetParticleCount(), state->system->GetStuckCandidateCount());
+            ImGui::Text("crates %d", static_cast<int>(state->crates.size()));
+            ImGui::Text("contact %d", state->all_accum_contact);
+            ImGui::Text("ship mass %f", state->ship->GetMass());
+            ImGui::Text("ball mass %f", state->ball->GetMass());
+            ImGui::Text(state->ship_touched_wall ? "!!!!BOOOM!!!!" : "<3<3<3<3");
+        }
 
         ImGui::End();
     }
@@ -492,8 +496,10 @@ void GameWindowOpenGL::paintUI()
         ImGui::SliderFloat("alpha", &shading_alpha, 0, 10);
         ImGui::SliderFloat("max speed", &shading_max_speed, 0, 100);
 
-        ImGui::Separator();
+        if (state && state->system)
         {
+						ImGui::Separator();
+
             assert(state);
             assert(state->system);
             const b2Vec2* speeds = state->system->GetVelocityBuffer();
@@ -507,6 +513,7 @@ void GameWindowOpenGL::paintUI()
         ImGui::End();
     }
 
+    if (state && state->system)
     { // particle system control
         ImGui::SetNextWindowPos(ImVec2(width() - 330 - 5, 225), ImGuiCond_Once);
         ImGui::Begin("Particle system", &display_ui, ui_window_flags);
@@ -618,100 +625,106 @@ void GameWindowOpenGL::paintUI()
 
 void GameWindowOpenGL::paintScene()
 {
+    if (!state)
+        return;
+
     const double dt_ = std::min(50e-3, 1. / ImGui::GetIO().Framerate);
     state->step(dt_);
 
-    glBindVertexArray(0);
+    { // draw with qt painter
+        glBindVertexArray(0);
 
-    if (!device)
-        device = new QOpenGLPaintDevice;
+        if (!device)
+            device = new QOpenGLPaintDevice;
 
-    device->setSize(size() * devicePixelRatio());
-    device->setDevicePixelRatio(devicePixelRatio());
+        device->setSize(size() * devicePixelRatio());
+        device->setDevicePixelRatio(devicePixelRatio());
 
-    QPainter painter(device);
-    painter.setRenderHint(QPainter::Antialiasing);
+        QPainter painter(device);
+        painter.setRenderHint(QPainter::Antialiasing);
 
-    { // background gradient
-        QLinearGradient linearGrad(QPointF(0, 0), QPointF(0, height()));
-        linearGrad.setColorAt(0, QColor(0x33, 0x08, 0x67)); // morpheus den gradient
-        linearGrad.setColorAt(1, QColor(0x30, 0xcf, 0xd0));
-        painter.fillRect(0, 0, width(), height(), linearGrad);
-    }
-
-    { // world
-        painter.save();
-        painter.translate(width() / 2, height() / 2);
-        painter.scale(1., -1);
-
-        if (!is_zoom_out)
-        {
-            const auto& pos = state->ship->GetPosition();
-            const int side = qMin(width(), height());
-            const double ship_height =  75 * std::max(1., pos.y / 40.);
-            painter.scale(side / ship_height, side / ship_height);
-            painter.translate(-pos.x, -std::min(20.f, pos.y));
-        }
-        else
-        {
-            painter.scale(camera_world_zoom, camera_world_zoom);
-            painter.translate(-camera_world_center.toPoint());
+        { // background gradient
+            QLinearGradient linearGrad(QPointF(0, 0), QPointF(0, height()));
+            linearGrad.setColorAt(0, QColor(0x33, 0x08, 0x67)); // morpheus den gradient
+            linearGrad.setColorAt(1, QColor(0x30, 0xcf, 0xd0));
+            painter.fillRect(0, 0, width(), height(), linearGrad);
         }
 
-        //{
-        //    const QTransform tt = painter.worldTransform();
-        //    const std::array<float, 9> tt_values {
-        //        static_cast<float>(tt.m11()), static_cast<float>(tt.m21()), static_cast<float>(tt.m31()),
-        //        static_cast<float>(tt.m12()), static_cast<float>(tt.m22()), static_cast<float>(tt.m32()),
-        //        static_cast<float>(tt.m13()), static_cast<float>(tt.m23()), static_cast<float>(tt.m33())
-        //    };
-        //    const QMatrix3x3 foo(tt_values.data());
-        //    qDebug() << foo << world_matrix;
-        //}
-
-        { // svg
-            constexpr double scale = 600;
+        { // world
             painter.save();
-            painter.scale(scale, scale);
-            map_renderer.render(&painter, QRectF(-.5, -.75, 1, -1));
+            painter.translate(width() / 2, height() / 2);
+            painter.scale(1., -1);
+
+            if (!is_zoom_out)
+            {
+                const auto& pos = state->ship->GetPosition();
+                const int side = qMin(width(), height());
+                const double ship_height = 75 * std::max(1., pos.y / 40.);
+                painter.scale(side / ship_height, side / ship_height);
+                painter.translate(-pos.x, -std::min(20.f, pos.y));
+            }
+            else
+            {
+                painter.scale(camera_world_zoom, camera_world_zoom);
+                painter.translate(-camera_world_center.toPoint());
+            }
+
+            //{
+            //    const QTransform tt = painter.worldTransform();
+            //    const std::array<float, 9> tt_values {
+            //        static_cast<float>(tt.m11()), static_cast<float>(tt.m21()), static_cast<float>(tt.m31()),
+            //        static_cast<float>(tt.m12()), static_cast<float>(tt.m22()), static_cast<float>(tt.m32()),
+            //        static_cast<float>(tt.m13()), static_cast<float>(tt.m23()), static_cast<float>(tt.m33())
+            //    };
+            //    const QMatrix3x3 foo(tt_values.data());
+            //    qDebug() << foo << world_matrix;
+            //}
+
+            { // svg
+                constexpr double scale = 600;
+                painter.save();
+                painter.scale(scale, scale);
+                map_renderer.render(&painter, QRectF(-.5, -.75, 1, -1));
+                painter.restore();
+            }
+
+            drawOrigin(painter);
+            if (draw_debug)
+                drawBody(painter, *state->ground);
+
+            for (auto& crate : state->crates)
+                drawBody(painter, *crate);
+
+            for (auto& door : state->doors)
+                drawBody(painter, *std::get<0>(door), Qt::yellow);
+
+            //drawParticleSystem(painter, state->system);
+
+            if (state->link)
+            { // joint line
+                assert(state->link);
+                painter.save();
+                const auto& anchor_aa = state->link->GetAnchorA();
+                const auto& anchor_bb = state->link->GetAnchorB();
+                painter.setBrush(Qt::NoBrush);
+                painter.setPen(QPen(Qt::white, 0));
+                painter.drawLine(QPointF(anchor_aa.x, anchor_aa.y), QPointF(anchor_bb.x, anchor_bb.y));
+                painter.restore();
+            }
+
+            if (draw_debug)
+            {
+                assert(state->ball);
+                const bool is_fast = state->ball->GetLinearVelocity().Length() > 30;
+                drawBody(painter, *state->ball, is_fast ? QColor(0xfd, 0xa0, 0x85) : Qt::black);
+            }
+
+            drawShip(painter);
+
             painter.restore();
         }
-
-        drawOrigin(painter);
-        if (draw_debug)
-            drawBody(painter, *state->ground);
-
-        for (auto& crate : state->crates)
-            drawBody(painter, *crate);
-
-        for (auto& door : state->doors)
-            drawBody(painter, *std::get<0>(door), Qt::yellow);
-
-        //drawParticleSystem(painter, state->system);
-
-        if (state->link)
-        { // joint line
-            assert(state->link);
-            painter.save();
-            const auto& anchor_aa = state->link->GetAnchorA();
-            const auto& anchor_bb = state->link->GetAnchorB();
-            painter.setBrush(Qt::NoBrush);
-            painter.setPen(QPen(Qt::white, 0));
-            painter.drawLine(QPointF(anchor_aa.x, anchor_aa.y), QPointF(anchor_bb.x, anchor_bb.y));
-            painter.restore();
-        }
-
-        if (draw_debug)
-        {
-            assert(state->ball);
-            const bool is_fast = state->ball->GetLinearVelocity().Length() > 30;
-            drawBody(painter, *state->ball, is_fast ? QColor(0xfd, 0xa0, 0x85) : Qt::black);
-        }
-
-        drawShip(painter);
-
-        painter.restore();
     }
+    assertNoError();
 
     glClear(GL_DEPTH_BUFFER_BIT);
 

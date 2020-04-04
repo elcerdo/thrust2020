@@ -335,7 +335,7 @@ void RasterWindowOpenGL::initializeGL()
 
     {
         const auto version = QOpenGLContext::currentContext()->format().version();
-        cout << "glversion " << version.first << "." << version.second << endl;
+        cout << "gl_version " << version.first << "." << version.second << endl;
     }
 
     initializeOpenGLFunctions();
@@ -451,11 +451,13 @@ void RasterWindowOpenGL::paintGL()
     assertNoError();
 
     paintScene();
+    assertNoError();
 
     QtImGui::newFrame();
     if (display_ui)
         paintUI();
     ImGui::Render();
+    assertNoError();
 
     frame_counter++;
 

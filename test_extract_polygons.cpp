@@ -36,18 +36,16 @@ void dump_poly_to_colors(const polygons::PolyToColors& poly_to_pen_colors)
     }
 }
 
-int main(int argc, char* argv[])
+void
+check_non_null_decomposition(const std::string& map)
 {
     using std::cout;
     using std::endl;
     using std::get;
 
-    cout << std::boolalpha;
+    const auto polys = polygons::extract(map);
 
-    QApplication app(argc, argv);
-
-    const auto polys = polygons::extract(":map.svg");
-
+    cout << "==================== " << std::quoted(map) << endl;
     cout << "poly_to_pen_colors " << get<0>(polys).size() << endl;
     dump_poly_to_colors(get<0>(polys));
 
@@ -59,7 +57,7 @@ int main(int argc, char* argv[])
         if (!polygons::isForeground(poly_color.second))
             continue;
 
-        const auto subpolys = polygons::decompose(poly_color.first, 1e-2);
+        const auto subpolys = polygons::decompose(polygons::ensure_cw(poly_color.first), 1e-2);
         cout << "decomp " << poly_color.first.size() << " " << subpolys.size() << " ";
         size_t accum = 0;
         bool first = true;
@@ -70,7 +68,25 @@ int main(int argc, char* argv[])
             first = false;
         }
         cout << "]" << endl;
+
+        if (subpolys.empty())
+            std::exit(1);
     }
+}
+
+int main(int argc, char* argv[])
+{
+    using std::cout;
+
+    cout << std::boolalpha;
+
+    QApplication app(argc, argv);
+    check_non_null_decomposition(":map1.svg");
+    check_non_null_decomposition(":map2.svg");
+    check_non_null_decomposition(":map3.svg");
+    check_non_null_decomposition(":map4.svg");
+    check_non_null_decomposition(":map5.svg");
+    check_non_null_decomposition(":map6.svg");
 
     return 0;
 }

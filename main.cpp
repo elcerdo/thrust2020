@@ -22,18 +22,23 @@ int main(int argc, char* argv[])
 
     QApplication app(argc, argv);
     GameWindowOpenGL view;
-    view.resetLevel(5); // default level
 
     view.setAnimated(true);
     view.resize(1280, 720);
     view.show();
 
+    //view.resetLevel(5); // default level
+
     view.addSlider("thrust", .5, 10, 5, [&view](const float value) -> void {
+        if (!view.state)
+            return;
         assert(view.state);
         qDebug() << "change thrust" << value;
         view.state->ship_thrust_factor = value;
     });
     view.addSlider("ball density", .1, 2, .2, [&view](const float value) -> void {
+        if (!view.state)
+            return;
         assert(view.state);
         const auto& body = view.state->ball;
         assert(body);
@@ -44,6 +49,8 @@ int main(int argc, char* argv[])
         body->ResetMassData();
     });
     view.addSlider("ship density", .1, 2, 1, [&view](const float value) -> void {
+        if (!view.state)
+            return;
         assert(view.state);
         const auto& body = view.state->ship;
         assert(body);
@@ -55,6 +62,8 @@ int main(int argc, char* argv[])
     });
 
     view.addCheckbox("gravity", Qt::Key_G, true, [&view](const bool checked) -> void {
+        if (!view.state)
+            return;
         assert(view.state);
         view.state->world.SetGravity(checked ? b2Vec2 { 0, -10 } : b2Vec2 {0, 0});
     });
@@ -70,14 +79,20 @@ int main(int argc, char* argv[])
 
     std::default_random_engine rng;
     view.addButton("drop water", Qt::Key_E, [&view, &rng]() -> void {
+        if (!view.state)
+            return;
         assert(view.state);
         view.state->addWater({ 0, 70 }, { 10, 10 }, rng(), view.water_flags);
     });
     view.addButton("clear water", Qt::Key_D, [&view]() -> void {
+        if (!view.state)
+            return;
         assert(view.state);
         view.state->clearWater();
     });
     view.addButton("drop crate", Qt::Key_R, [&view, &rng]() -> void {
+        if (!view.state)
+            return;
         assert(view.state);
         std::uniform_real_distribution<double> dist_angle(0, 2 * M_PI);
         const auto angle = dist_angle(rng);
@@ -87,18 +102,26 @@ int main(int argc, char* argv[])
         return;
     });
     view.addButton("clear crates", Qt::Key_F, [&view]() -> void {
+        if (!view.state)
+            return;
         assert(view.state);
         view.state->clearCrates();
     });
     view.addButton("reset ship", Qt::Key_S, [&view]() -> void {
+        if (!view.state)
+            return;
         assert(view.state);
         view.state->resetShip();
     });
     view.addButton("reset ball", Qt::Key_B, [&view]() -> void {
+        if (!view.state)
+            return;
         assert(view.state);
         view.state->resetBall();
     });
     view.addButton("toggle doors", Qt::Key_T, [&view]() -> void {
+        if (!view.state)
+            return;
         assert(view.state);
         using std::get;
         for (auto& door : view.state->doors)
@@ -109,6 +132,9 @@ int main(int argc, char* argv[])
             qDebug() << "target" << target;
         }
         return;
+    });
+    view.addButton("clear level", Qt::Key_Y, [&view]() -> void {
+        view.resetLevel(-1);
     });
 
     return app.exec();
