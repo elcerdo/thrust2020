@@ -498,7 +498,7 @@ void GameWindowOpenGL::paintUI()
 
         if (state && state->system)
         {
-						ImGui::Separator();
+            ImGui::Separator();
 
             assert(state);
             assert(state->system);
