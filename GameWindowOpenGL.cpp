@@ -635,6 +635,9 @@ void GameWindowOpenGL::paintUI()
         {
             water_flags = 0;
 
+            const auto ww = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) / 2.f;
+            const auto ww_ = ww + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().WindowPadding.x;
+
             {
                 static bool state = false;
                 ImGui::Checkbox("spring", &state);
@@ -643,7 +646,7 @@ void GameWindowOpenGL::paintUI()
 
             {
                 static bool state = false;
-                ImGui::SameLine(150);
+                ImGui::SameLine(ww_);
                 ImGui::Checkbox("elastic", &state);
                 if (state) water_flags |= b2_elasticParticle;
             }
@@ -656,7 +659,7 @@ void GameWindowOpenGL::paintUI()
 
             {
                 static bool state = false;
-                ImGui::SameLine(150);
+                ImGui::SameLine(ww_);
                 ImGui::Checkbox("powder", &state);
                 if (state) water_flags |= b2_powderParticle;
             }
@@ -669,7 +672,7 @@ void GameWindowOpenGL::paintUI()
 
             {
                 static bool state = false;
-                ImGui::SameLine(150);
+                ImGui::SameLine(ww_);
                 ImGui::Checkbox("color mixing", &state);
                 if (state) water_flags |= b2_colorMixingParticle;
             }
@@ -682,7 +685,7 @@ void GameWindowOpenGL::paintUI()
 
             {
                 static bool state = false;
-                ImGui::SameLine(150);
+                ImGui::SameLine(ww_);
                 ImGui::Checkbox("repulsive", &state);
                 if (state) water_flags |= b2_repulsiveParticle;
             }

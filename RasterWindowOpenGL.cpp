@@ -350,6 +350,9 @@ void RasterWindowOpenGL::ImGuiCallbacks()
 {
     using std::get;
 
+    const auto ww = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) / 2.f;
+    const auto ww_ = ww + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().WindowPadding.x;
+
     {
 
         using Pair = std::tuple<size_t, int>;
@@ -375,7 +378,7 @@ void RasterWindowOpenGL::ImGuiCallbacks()
             if (prev != std::get<2>(state))
                 std::get<3>(state)(std::get<2>(state));
 
-            if (kk % 2 != 1 && kk != kk_max - 1) ImGui::SameLine(150);
+            if (kk % 2 != 1 && kk != kk_max - 1) ImGui::SameLine(ww_);
             kk++;
         }
     }
@@ -399,10 +402,10 @@ void RasterWindowOpenGL::ImGuiCallbacks()
             const std::string key_name = QKeySequence(pair->first).toString().toStdString();
             std::stringstream ss;
             ss << get<1>(state) << " (" << key_name << ")";
-            if (ImGui::Button(ss.str().c_str(), { 139, 20 }))
+            if (ImGui::Button(ss.str().c_str(), { ww, 0 }))
                 get<2>(state)();
 
-            if (kk % 2 != 1 && kk != kk_max - 1) ImGui::SameLine(150);
+            if (kk % 2 != 1 && kk != kk_max - 1) ImGui::SameLine();
             kk++;
         }
     }
