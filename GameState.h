@@ -28,7 +28,7 @@ struct GameState : public b2ContactListener
     void clearCrates();
 
     void addWater(const b2Vec2 pos, const b2Vec2 size, const size_t seed, const unsigned int flags);
-    void clearWater();
+    void clearWater(const int group_count);
 
     void addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 delta);
     void addPath(const std::vector<b2Vec2>& positions, const b2Vec2 size);

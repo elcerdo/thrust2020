@@ -298,13 +298,21 @@ void GameState::addWater(const b2Vec2 position, const b2Vec2 size, const size_t 
     system->CreateParticleGroup(group_def);
 }
 
-void GameState::clearWater()
+void GameState::clearWater(const int group_count)
 {
+    using std::cout;
+    using std::endl;
+
+    cout << "** clearWater " << group_count << endl;
+
     assert(system);
+    unsigned int count = 0;
     for (auto* group = system->GetParticleGroupList(); group; group = group->GetNext())
     {
-        group->SetGroupFlags(group->GetGroupFlags() & ~b2_particleGroupCanBeEmpty);
+        if (group_count >= 0 && count >= group_count)
+            break;
         group->DestroyParticles(false);
+        count++;
     }
 }
 
@@ -381,6 +389,8 @@ void GameState::step(const float dt)
     }
 
     { // step
+        ship_state.accum_contact = 0;
+        all_accum_contact = 0;
         int velocityIterations = 6;
         int positionIterations = 2;
         int particleIterations = std::min(world.CalculateReasonableParticleIterations(dt), 4);

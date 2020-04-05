@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
     view.addCheckbox("pause", Qt::Key_X, false, [&view](const bool checked) -> void {
         view.skip_state_step = checked;
     });
-    view.addCheckbox("painter", Qt::Key_C, true, [&view](const bool checked) -> void {
+    view.addCheckbox("painter", Qt::Key_O, true, [&view](const bool checked) -> void {
         view.use_painter = checked;
     });
 
@@ -52,12 +52,6 @@ int main(int argc, char* argv[])
             return;
         assert(view.state);
         view.state->addWater({ 0, 70 }, { view.water_drop_size[0], view.water_drop_size[1] }, rng(), view.water_flags);
-    });
-    view.addButton("clear water", Qt::Key_D, [&view]() -> void {
-        if (!view.state)
-            return;
-        assert(view.state);
-        view.state->clearWater();
     });
     view.addButton("drop crate", Qt::Key_R, [&view, &rng]() -> void {
         if (!view.state)
@@ -70,11 +64,27 @@ int main(int argc, char* argv[])
         view.state->addCrate({ 0, 10 }, velocity, angle);
         return;
     });
-    view.addButton("clear crates", Qt::Key_F, [&view]() -> void {
+    view.addButton("clear all water", Qt::Key_D, [&view]() -> void {
+        if (!view.state)
+            return;
+        assert(view.state);
+        view.state->clearWater(-1);
+    });
+    view.addButton("clear all crates", Qt::Key_F, [&view]() -> void {
         if (!view.state)
             return;
         assert(view.state);
         view.state->clearCrates();
+    });
+    view.addButton("clear last water", Qt::Key_C, [&view]() -> void {
+        if (!view.state)
+            return;
+        assert(view.state);
+        view.state->clearWater(1);
+    });
+    view.addButton("clear level", Qt::Key_Y, [&view]() -> void {
+        view.level_selection = -1;
+        view.resetLevel();
     });
     view.addButton("reset ship", Qt::Key_S, [&view]() -> void {
         if (!view.state)
@@ -101,10 +111,6 @@ int main(int argc, char* argv[])
             qDebug() << "target" << target;
         }
         return;
-    });
-    view.addButton("clear level", Qt::Key_Y, [&view]() -> void {
-        view.level_selection = -1;
-        view.resetLevel();
     });
 
     return app.exec();

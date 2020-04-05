@@ -560,16 +560,21 @@ void GameWindowOpenGL::paintUI()
         {
             const auto& io = ImGui::GetIO();
             ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-            ImGui::Text("left %d right %d", io.KeysDown[ImGuiKey_LeftArrow], io.KeysDown[ImGuiKey_RightArrow]);
+            //ImGui::Text("left %d right %d", io.KeysDown[ImGuiKey_LeftArrow], io.KeysDown[ImGuiKey_RightArrow]);
         }
 
         if (state)
         {
             assert(state);
             ImGui::Text("ship %.2f %.2f", state->ship->GetPosition().x, state->ship->GetPosition().y);
-            if (state->system) ImGui::Text("particles %d(%d)", state->system->GetParticleCount(), state->system->GetStuckCandidateCount());
+            if (state->system) ImGui::Text("particles %d %d(%d)", state->system->GetParticleGroupCount(), state->system->GetParticleCount(), state->system->GetStuckCandidateCount());
             ImGui::Text("crates %d", static_cast<int>(state->crates.size()));
-            ImGui::Text("contact %d", state->all_accum_contact);
+            {
+                std::stringstream ss;
+                for (unsigned int kk=0, kk_max=std::min(state->all_accum_contact, 10u); kk<kk_max; kk++)
+                    ss << "*";
+                ImGui::Text("contact %s", ss.str().c_str());
+            }
             ImGui::Text("ship mass %f", state->ship->GetMass());
             ImGui::Text("ball mass %f", state->ball->GetMass());
             ImGui::Text(state->ship_state.touched_wall ? "!!!!BOOOM!!!!" : "<3<3<3<3");
@@ -1160,12 +1165,6 @@ void GameWindowOpenGL::paintScene()
         //back_click_sfx.setVolume(volume);
         //if (state->all_accum_contact > 0)
         //    back_click_sfx.play();
-    }
-
-    { // reset accum
-        assert(state);
-        state->ship_state.accum_contact = 0;
-        state->all_accum_contact = 0;
     }
 }
 
