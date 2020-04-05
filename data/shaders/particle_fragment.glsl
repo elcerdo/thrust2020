@@ -40,14 +40,17 @@ void main()
   vec4 flag_left_color = is_stuck ? vec4(1, 0, 0, 1) : vec4(0, 1, 0, 1);
   bool is_springy = is_flag_set(flag, spring_flag) || is_flag_set(flag, elastic_flag);
   bool is_powdery = is_flag_set(flag, powder_flag);
-  bool is_repulsivy = is_flag_set(flag, repulsive_flag);
+  bool is_repulsive = is_flag_set(flag, repulsive_flag);
   vec4 flag_right_color =
     is_springy ? vec4(1, 0, 1, 1) :
     is_powdery ? vec4(1, 1, 0, 1) :
-    is_repulsivy ? vec4(0, 1, 1, 1) :
+    is_repulsive ? vec4(0, 1, 1, 1) :
     vec4(0, 0, 1, 1);
-  if (is_flag_set(flag, viscous_flag)) flag_right_color = mix(flag_right_color, viscousColor, mixColor);
-  if (is_flag_set(flag, tensible_flag)) flag_right_color = mix(flag_right_color, tensibleColor, mixColor);
+  bool is_viscous = is_flag_set(flag, viscous_flag);
+  bool is_tensible = is_flag_set(flag, tensible_flag);
+  if (is_viscous && !is_tensible) flag_right_color = mix(flag_right_color, viscousColor, mixColor);
+  if (!is_viscous && is_tensible) flag_right_color = mix(flag_right_color, tensibleColor, mixColor);
+  if (is_viscous && is_tensible) flag_right_color = mix(flag_right_color, mix(viscousColor, tensibleColor, .5), mixColor);
 /*
   finalColor = is_stuck ? vec4(1, 0, 0, 1) : vec4(0, 1, 0, 1);
   finalColor += 1e-9 * col;
