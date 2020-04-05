@@ -1,9 +1,6 @@
 #include "GameWindowOpenGL.h"
 
 #include <QApplication>
-#include <QDebug>
-
-#include "Box2D/Dynamics/b2Fixture.h"
 
 int main(int argc, char* argv[])
 {
@@ -54,7 +51,7 @@ int main(int argc, char* argv[])
         if (!view.state)
             return;
         assert(view.state);
-        view.state->addWater({ 0, 70 }, { 10, 10 }, rng(), view.water_flags);
+        view.state->addWater({ 0, 70 }, { view.water_drop_size[0], view.water_drop_size[1] }, rng(), view.water_flags);
     });
     view.addButton("clear water", Qt::Key_D, [&view]() -> void {
         if (!view.state)

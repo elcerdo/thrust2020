@@ -459,6 +459,14 @@ void GameWindowOpenGL::drawShip(QPainter& painter)
     }
 }
 
+void GameWindowOpenGL::initializeUI()
+{
+    ImVec4* colors = ImGui::GetStyle().Colors;
+    colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.67f);
+
+    ImGui::SetColorEditOptions(ImGuiColorEditFlags_Float | ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_PickerHueWheel);
+}
+
 void GameWindowOpenGL::paintUI()
 {
     int left_offset = ui_window_spacing;
@@ -699,6 +707,7 @@ void GameWindowOpenGL::paintUI()
             system.SetDensity(value);
         }
 
+        ImGui::SliderFloat2("drop size", water_drop_size.data(), 0, 20);
         ImGui::Checkbox("clean stuck in door", &state->clean_stuck_in_door);
 
         {

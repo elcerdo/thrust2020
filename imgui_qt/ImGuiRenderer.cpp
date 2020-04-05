@@ -322,7 +322,6 @@ void ImGuiRenderer::onWheel(QWheelEvent *event)
     const auto delta = QPointF(event->angleDelta()) / 8.;
 
     // 5 lines per unit
-    qDebug() << "wheel_delta" << delta << ImGui::GetTextLineHeight();
     g_MouseWheelH += delta.x() / (ImGui::GetTextLineHeight());
     g_MouseWheel += delta.y() / (5.0 * ImGui::GetTextLineHeight());
 }

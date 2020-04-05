@@ -113,7 +113,6 @@ void RasterWindowOpenGL::registerFreeKey(const int key)
 
 void RasterWindowOpenGL::keyPressEvent(QKeyEvent* event)
 {
-
     if (event->modifiers() == Qt::NoModifier)
     {
         const auto key = event->key();
@@ -338,6 +337,7 @@ void RasterWindowOpenGL::initializeGL()
     QtImGui::initialize(this);
     assertNoError();
 
+    initializeUI();
     initializePrograms();
 
     {

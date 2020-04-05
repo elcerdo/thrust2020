@@ -61,6 +61,8 @@ class RasterWindowOpenGL : public QOpenGLWindow, public QOpenGLExtraFunctions
         std::unique_ptr<QOpenGLShaderProgram> loadAndCompileProgram(const std::string& vertex_filename, const std::string& fragment_filename, const std::string& geometry_filename = "");
         virtual void initializePrograms() = 0;
 
+        virtual void initializeUI() = 0;
+
         class ProgramBinder
         {
             public:

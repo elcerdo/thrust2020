@@ -272,7 +272,7 @@ void GameState::addWater(const b2Vec2 position, const b2Vec2 size, const size_t 
     using std::cout;
     using std::endl;
 
-    cout << "** flop ";
+    cout << "** addWater ";
 
     std::default_random_engine rng(seed);
     std::uniform_real_distribution<float32> dist(0, 255u);

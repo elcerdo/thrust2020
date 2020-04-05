@@ -28,6 +28,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         void drawShip(QPainter& painter);
         void drawFlame(QPainter& painter);
 
+        void initializeUI() override;
         void initializeBuffers(BufferLoader& loader) override;
         void initializePrograms() override;
         void paintUI() override;
@@ -52,6 +53,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         unsigned int water_flags = 0;
         bool skip_state_step = false;
         bool use_painter = true;
+        std::array<float, 2> water_drop_size = { 10, 10 };
 
     protected:
         QOpenGLPaintDevice* device = nullptr;

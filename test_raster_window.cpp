@@ -10,11 +10,18 @@ class TestWindowOpenGL : public RasterWindowOpenGL
 {
     public:
         float angle = 30;
+        bool show_demo_window = false;
 
     protected:
         std::unique_ptr<QOpenGLShaderProgram> base_program = nullptr;
         int base_pos_attr = -1;
         int base_mat_unif = -1;
+
+        void initializeUI() override
+        {
+            ImVec4* colors = ImGui::GetStyle().Colors;
+            colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.67f);
+        }
 
         void initializePrograms() override
         {
@@ -69,6 +76,9 @@ class TestWindowOpenGL : public RasterWindowOpenGL
             }
 
             ImGui::End();
+
+            if (show_demo_window)
+                ImGui::ShowDemoWindow();
 
         }
 
@@ -145,8 +155,8 @@ int main(int argc, char* argv[])
     view.resize(1280, 720);
     view.show();
 
-    view.addCheckbox("checkbox", Qt::Key_Q, true, [](const bool checked) -> void {
-        cout << "checkbox " << checked << endl;
+    view.addCheckbox("imgui demo", Qt::Key_Q, false, [&view](const bool checked) -> void {
+        view.show_demo_window = checked;
     });
 
     view.addButton("button0", Qt::Key_Z, []() -> void {

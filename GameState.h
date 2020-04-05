@@ -54,7 +54,6 @@ struct GameState : public b2ContactListener
     std::vector<UniqueBody> crates;
     std::vector<std::tuple<UniqueBody, std::vector<b2Vec2>, size_t>> doors;
 
-
     struct ShipState
     {
         bool firing_thruster = false;
