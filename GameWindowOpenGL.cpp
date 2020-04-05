@@ -23,7 +23,7 @@
 
 const float camera_world_zoom = 1.5;
 const QVector2D camera_world_center { 0, -120 };
-const char* shader_names[] = { "full grprng + center dot", "full grprng", "full uniform", "dot grprng", "dot uniform", "dot stuck", "dot flag", "default" };
+const char* shader_names[] = { "out group + dot speed", "out speed + dot flag", "out flag + dot speed", "out flag + dot group", "dot group", "dot uniform", "dot stuck", "dot flag", "dot speed" };
 const int shader_switch_key = Qt::Key_Q;
 const int level_switch_key = Qt::Key_L;
 

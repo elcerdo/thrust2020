@@ -47,7 +47,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         float mix_ratio = .2;
         bool draw_debug = false;
         bool is_zoom_out = true;
-        int shader_selection = 7;
+        int shader_selection = 8;
         int poly_selection = 3;
         int level_selection = -1;
         float radius_factor = 1;
