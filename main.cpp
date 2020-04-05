@@ -106,7 +106,8 @@ int main(int argc, char* argv[])
         return;
     });
     view.addButton("clear level", Qt::Key_Y, [&view]() -> void {
-        view.resetLevel(-1);
+        view.level_selection = -1;
+        view.resetLevel();
     });
 
     return app.exec();

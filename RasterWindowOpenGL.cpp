@@ -113,32 +113,38 @@ void RasterWindowOpenGL::registerFreeKey(const int key)
 
 void RasterWindowOpenGL::keyPressEvent(QKeyEvent* event)
 {
-    if (event->key() == Qt::Key_A)
-    {
-        display_ui ^= 1;
-        return;
-    }
 
-    for (auto& pair : checkbox_states)
+    if (event->modifiers() == Qt::NoModifier)
     {
-        using std::get;
-        auto& state = pair.second;
-        if (event->key() == pair.first)
+        const auto key = event->key();
+
+        if (key == Qt::Key_A)
         {
-            get<2>(state) ^= 1;
-            get<3>(state)(get<2>(state));
+            display_ui ^= 1;
             return;
         }
-    }
 
-    for (const auto& pair : button_states)
-    {
-        using std::get;
-        const auto& state = pair.second;
-        if (event->key() == pair.first)
+        for (auto& pair : checkbox_states)
         {
-            get<2>(state)();
-            return;
+            using std::get;
+            auto& state = pair.second;
+            if (key == pair.first)
+            {
+                get<2>(state) ^= 1;
+                get<3>(state)(get<2>(state));
+                return;
+            }
+        }
+
+        for (const auto& pair : button_states)
+        {
+            using std::get;
+            const auto& state = pair.second;
+            if (key == pair.first)
+            {
+                get<2>(state)();
+                return;
+            }
         }
     }
 

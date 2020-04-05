@@ -23,11 +23,15 @@
 
 const float camera_world_zoom = 1.5;
 const QVector2D camera_world_center { 0, -120 };
+const char* shader_names[] = { "full grprng + center dot", "full grprng", "full uniform", "dot grprng", "dot uniform", "stuck", "default" };
+const int shader_switch_key = Qt::Key_Q;
+const int level_switch_key = Qt::Key_L;
 
 GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
     : RasterWindowOpenGL(parent)
 {
-    registerFreeKey(Qt::Key_Q);
+    registerFreeKey(shader_switch_key);
+    registerFreeKey(level_switch_key);
     registerFreeKey(Qt::Key_Space);
     registerFreeKey(Qt::Key_Left);
     registerFreeKey(Qt::Key_Right);
@@ -73,25 +77,22 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
     }*/
 }
 
-void GameWindowOpenGL::resetLevel(const int level)
+void GameWindowOpenGL::resetLevel()
 {
     using std::cout;
     using std::endl;
     using std::get;
 
-    if (level == level_current)
-        return;
-
-    if (level < 0)
+    if (level_selection < 0)
     {
+        level_selection = -1;
         state = nullptr;
-        level_current = level;
         return;
     }
 
-    assert(level >= 0 );
-    assert(level < static_cast<int>(level_datas.size()));
-    const auto& level_data = level_datas[level];
+    assert(level_selection >= 0 );
+    assert(level_selection < static_cast<int>(level_datas.size()));
+    const auto& level_data = level_datas[level_selection];
 
     cout << "========== loading " << std::quoted(level_data.name) << endl;
 
@@ -106,7 +107,6 @@ void GameWindowOpenGL::resetLevel(const int level)
         state->addPath(get<0>(path), get<1>(path));
 
     state->dumpCollisionData();
-    level_current = level;
 
     enforceCallbackValues();
 
@@ -471,10 +471,14 @@ void GameWindowOpenGL::paintUI()
             for (const auto& level_data : level_datas)
                 level_names.emplace_back(level_data.name.c_str());
 
-            int level_current_ = level_current;
-            ImGui::Combo("level", &level_current_, level_names.data(), level_names.size());
-            if (level_current_ != level_current)
-                resetLevel(level_current_);
+            const auto level_selection_prev = level_selection;
+
+            const std::string key_name = QKeySequence(level_switch_key).toString().toStdString();
+            std::stringstream ss;
+            ss << "level (" << key_name << ")";
+            ImGui::Combo(ss.str().c_str(), &level_selection, level_names.data(), level_names.size());
+            if (level_selection_prev != level_selection)
+                resetLevel();
         }
         ImGui::Separator();
 
@@ -516,7 +520,6 @@ void GameWindowOpenGL::paintUI()
                 }
             }
         }
-
         ImGuiCallbacks();
         ImGui::Separator();
 
@@ -552,9 +555,12 @@ void GameWindowOpenGL::paintUI()
         ImGui::ColorEdit4("halo in color", halo_in_color.data());
 
         {
-            const char* shader_names[] = { "full grprng + center dot", "full grprng", "full uniform", "dot grprng", "dot uniform", "stuck", "default" };
             shader_selection %= IM_ARRAYSIZE(shader_names);
-            ImGui::Combo("shader (Q)", &shader_selection, shader_names, IM_ARRAYSIZE(shader_names));
+            const std::string key_name = QKeySequence(shader_switch_key).toString().toStdString();
+            std::stringstream ss;
+            ss << "shader (" << key_name << ")";
+            ImGui::Combo(ss.str().c_str(), &shader_selection, shader_names, IM_ARRAYSIZE(shader_names));
+            shader_selection %= IM_ARRAYSIZE(shader_names);
         }
 
         {
@@ -1129,10 +1135,57 @@ void GameWindowOpenGL::paintScene()
 
 void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
 {
-    if (event->key() == Qt::Key_Q)
+    if (event->key() == shader_switch_key)
     {
-        shader_selection++;
-        return;
+        assert(IM_ARRAYSIZE(shader_names) > 0);
+        const auto modifiers = event->modifiers();
+        if (modifiers == Qt::ShiftModifier)
+        {
+            shader_selection += IM_ARRAYSIZE(shader_names) - 1;
+            shader_selection %= IM_ARRAYSIZE(shader_names);
+            return;
+        }
+        if (modifiers == Qt::NoModifier)
+        {
+            shader_selection++;
+            shader_selection %= IM_ARRAYSIZE(shader_names);
+            return;
+        }
+    }
+
+    if (event->key() == level_switch_key)
+    {
+        assert(!level_datas.empty());
+        const auto modifiers = event->modifiers();
+        if (modifiers == Qt::ShiftModifier)
+            if (level_selection >= 0)
+            {
+                level_selection += level_datas.size() - 1;
+                level_selection %= level_datas.size();
+                resetLevel();
+                return;
+            }
+            else
+            {
+                level_selection = level_datas.size() - 1;
+                resetLevel();
+                return;
+            }
+
+        if (modifiers == Qt::NoModifier)
+            if (level_selection >= 0)
+            {
+                level_selection++;
+                level_selection %= level_datas.size();
+                resetLevel();
+                return;
+            }
+            else
+            {
+                level_selection = 0;
+                resetLevel();
+                return;
+            }
     }
 
     if (event->key() == Qt::Key_Space)

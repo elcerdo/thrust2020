@@ -17,7 +17,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         GameWindowOpenGL(QWindow* parent = nullptr);
         void setMuted(const bool muted);
         void loadBackground(const std::string& map_filename);
-        void resetLevel(const int level);
+        void resetLevel();
 
     protected:
         void keyPressEvent(QKeyEvent* event) override;
@@ -45,6 +45,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         bool is_zoom_out = true;
         int shader_selection = 6;
         int poly_selection = 3;
+        int level_selection = -1;
         float radius_factor = 1;
         float shading_max_speed = 60;
         float shading_alpha = -.65;
@@ -63,8 +64,6 @@ class GameWindowOpenGL : public RasterWindowOpenGL
 
         float world_time = 0;
         bool is_muted = false;
-
-        int level_current = -1;
 
         std::unique_ptr<QOpenGLShaderProgram> base_program = nullptr;
         int base_pos_attr = -1;
