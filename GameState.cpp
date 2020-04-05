@@ -20,22 +20,7 @@ const float default_density = 0.2;
 const float default_friction = 0.1;
 const float default_restitution = 0.5;
 
-GameState::GameState() :
-    world(b2Vec2(0, -8)),
-    ground(nullptr),
-    ship(nullptr),
-    ball(nullptr),
-    link(nullptr),
-    system(nullptr),
-    ship_firing(false),
-    ship_target_angular_velocity(0),
-    ship_target_angle(0),
-    ship_touched_wall(false),
-    ship_thrust_factor(1.),
-    ship_accum_contact(0),
-    all_accum_contact(0),
-    all_energy(0),
-    clean_stuck_in_door(true)
+GameState::GameState()
 {
     resetShip();
     resetBall();
@@ -269,7 +254,7 @@ void GameState::resetShip()
 
     b2FixtureDef fixture;
     fixture.shape = &shape;
-    fixture.density = default_density;
+    fixture.density = default_density * 5;
     fixture.friction = default_friction;
     fixture.restitution = default_restitution;
     fixture.filter.categoryBits = object_category;
@@ -279,8 +264,7 @@ void GameState::resetShip()
     body->CreateFixture(&fixture);
 
     ship = UniqueBody(body, [this](b2Body* body) -> void { world.DestroyBody(body); });
-    ship_target_angle = 0;
-    ship_touched_wall = false;
+    ship_state = ShipState();
 }
 
 void GameState::addWater(const b2Vec2 position, const b2Vec2 size, const size_t seed, const unsigned int flags)
@@ -288,16 +272,16 @@ void GameState::addWater(const b2Vec2 position, const b2Vec2 size, const size_t 
     using std::cout;
     using std::endl;
 
-    cout << "** flop ";
+    cout << "** addWater ";
 
     std::default_random_engine rng(seed);
     std::uniform_real_distribution<float32> dist(0, 255u);
     const float32 rr = dist(rng);
     const float32 gg = dist(rng);
     const float32 bb = dist(rng);
-    cout << rr << " ";
-    cout << gg << " ";
-    cout << bb << " ";
+    cout << std::setw(3) << std::setfill('0') << static_cast<int>(rr) << " ";
+    cout << std::setw(3) << std::setfill('0') << static_cast<int>(gg) << " ";
+    cout << std::setw(3) << std::setfill('0') << static_cast<int>(bb) << " ";
 
     assert(system);
 
@@ -314,13 +298,21 @@ void GameState::addWater(const b2Vec2 position, const b2Vec2 size, const size_t 
     system->CreateParticleGroup(group_def);
 }
 
-void GameState::clearWater()
+void GameState::clearWater(const int group_count)
 {
+    using std::cout;
+    using std::endl;
+
+    cout << "** clearWater " << group_count << endl;
+
     assert(system);
+    unsigned int count = 0;
     for (auto* group = system->GetParticleGroupList(); group; group = group->GetNext())
     {
-        group->SetGroupFlags(group->GetGroupFlags() & ~b2_particleGroupCanBeEmpty);
+        if (group_count >= 0 && count >= group_count)
+            break;
         group->DestroyParticles(false);
+        count++;
     }
 }
 
@@ -381,13 +373,24 @@ void GameState::step(const float dt)
     { // ship
         assert(ship);
         const auto angle = ship->GetAngle();
-        const auto thrust = ship_thrust_factor * (isGrabbed() ? 50. : 40.) * b2Rot(angle).GetYAxis();
-        if (ship_firing) ship->ApplyForceToCenter(ship->GetMass() * thrust, true);
-        ship_target_angle += ship_target_angular_velocity * dt;
-        ship->SetAngularVelocity((ship_target_angle - angle) / .05);
+        if (ship_state.firing_thruster)
+        {
+            const auto thrust = ship_state.thrust_factor * 2 * (isGrabbed() ? 50. : 40.) * b2Rot(angle).GetYAxis();
+            ship->ApplyForceToCenter(ship->GetMass() * thrust, true);
+        }
+
+        const auto target_angular_velocity = (
+            ship_state.turning_right && !ship_state.turning_left ? -1 :
+            !ship_state.turning_right && ship_state.turning_left ? 1 :
+            0) * (isGrabbed() ? 2. : 2.6) * M_PI / 2.;
+
+        ship_state.target_angle += target_angular_velocity * dt;
+        ship->SetAngularVelocity((ship_state.target_angle - angle) / .05);
     }
 
     { // step
+        ship_state.accum_contact = 0;
+        all_accum_contact = 0;
         int velocityIterations = 6;
         int positionIterations = 2;
         int particleIterations = std::min(world.CalculateReasonableParticleIterations(dt), 4);
@@ -426,23 +429,22 @@ void GameState::BeginContact(b2Contact* contact)
     const bool aa_is_ship = aa == ship.get();
     //const bool aa_is_ball = aa == ball.get();
     const bool aa_is_wall = aa == ground.get();
-    const double aa_energy = .5 * aa->GetMass() * aa->GetLinearVelocity().LengthSquared();
+    //const double aa_energy = .5 * aa->GetMass() * aa->GetLinearVelocity().LengthSquared();
 
     const auto* bb = contact->GetFixtureB()->GetBody();
     assert(bb);
     const bool bb_is_ship = bb == ship.get();
     //const bool bb_is_ball = bb == ball.get();
     const bool bb_is_wall = bb == ground.get();
-    const double bb_energy = .5 * bb->GetMass() * bb->GetLinearVelocity().LengthSquared();
+    //const double bb_energy = .5 * bb->GetMass() * bb->GetLinearVelocity().LengthSquared();
 
     const bool any_ship = aa_is_ship || bb_is_ship;
     //const bool any_ball = aa_is_ball || bb_is_ball;
     const bool any_wall = aa_is_wall || bb_is_wall;
 
-    ship_touched_wall |= any_ship && any_wall;
-    if (any_ship) ship_accum_contact++;
+    ship_state.touched_wall |= any_ship && any_wall;
+    if (any_ship) ship_state.accum_contact++;
     all_accum_contact++;
-    all_energy += aa_energy + bb_energy;
 }
 
 void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 delta)
@@ -499,16 +501,12 @@ void GameState::addPath(const std::vector<b2Vec2>& positions, const b2Vec2 size)
     assert(!positions.empty());
     const auto& p0 = positions.front();
 
-//    auto positions_ = positions;
-//    for (auto& pp : positions_)
-//        pp -= p0;
-
     UniqueBody door = nullptr;
     {
         b2BodyDef def;
         def.type = b2_kinematicBody;
         def.position = p0;
-        def.angle = 0;//atan2(delta.y, delta.x) + M_PI / 2.f;
+        def.angle = 0;
 
         b2PolygonShape shape;
         shape.SetAsBox(size.x, size.y);

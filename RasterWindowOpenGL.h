@@ -21,13 +21,8 @@ class RasterWindowOpenGL : public QOpenGLWindow, public QOpenGLExtraFunctions
         using BoolState = std::tuple<size_t, std::string, bool, BoolCallback>;
         using BoolStates = std::unordered_map<int, BoolState>;
 
-        using FloatCallback = std::function<void(float)>;
-        using FloatState = std::tuple<std::string, float, float, float, FloatCallback>;
-        using FloatStates = std::vector<FloatState>;
-
         RasterWindowOpenGL(QWindow* parent = nullptr);
         void setAnimated(const bool value);
-        void addSlider(const std::string& label, const float& min, const float& max, const float& value, const FloatCallback& callback);
         void addCheckbox(const std::string& label, const int key, const bool& value, const BoolCallback& callback);
         void addButton(const std::string& label, const int key, const VoidCallback& callback);
         bool isKeyFree(const int key) const;
@@ -66,6 +61,8 @@ class RasterWindowOpenGL : public QOpenGLWindow, public QOpenGLExtraFunctions
         std::unique_ptr<QOpenGLShaderProgram> loadAndCompileProgram(const std::string& vertex_filename, const std::string& fragment_filename, const std::string& geometry_filename = "");
         virtual void initializePrograms() = 0;
 
+        virtual void initializeUI() = 0;
+
         class ProgramBinder
         {
             public:
@@ -88,7 +85,6 @@ class RasterWindowOpenGL : public QOpenGLWindow, public QOpenGLExtraFunctions
 
     protected:
         BoolStates checkbox_states;
-        FloatStates float_states;
         ButtonStates button_states;
         std::unordered_set<int> other_keys;
 

@@ -17,11 +17,10 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         GameWindowOpenGL(QWindow* parent = nullptr);
         void setMuted(const bool muted);
         void loadBackground(const std::string& map_filename);
-        void resetLevel(const int level);
+        void resetLevel();
 
     protected:
         void keyPressEvent(QKeyEvent* event) override;
-        void keyReleaseEvent(QKeyEvent* event) override;
 
         void drawOrigin(QPainter& painter) const;
         void drawBody(QPainter& painter, const b2Body& body, const QColor& color = Qt::black) const;
@@ -29,6 +28,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         void drawShip(QPainter& painter);
         void drawFlame(QPainter& painter);
 
+        void initializeUI() override;
         void initializeBuffers(BufferLoader& loader) override;
         void initializePrograms() override;
         void paintUI() override;
@@ -42,16 +42,21 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         std::array<float, 4> foam_color = { 1, 1, 1, 1 };
         std::array<float, 4> halo_out_color = { 0, 0, 1, .6 };
         std::array<float, 4> halo_in_color = { 0, 0, 1, .2 };
+        std::array<float, 4> viscous_color = { 1, 0, 1, 1 };
+        std::array<float, 4> tensible_color = { 0, 1, 1, 1 };
+        float mix_ratio = .2;
         bool draw_debug = false;
         bool is_zoom_out = true;
-        int shader_selection = 6;
+        int shader_selection = 8;
         int poly_selection = 3;
+        int level_selection = -1;
         float radius_factor = 1;
         float shading_max_speed = 60;
         float shading_alpha = -.65;
         unsigned int water_flags = 0;
         bool skip_state_step = false;
         bool use_painter = true;
+        std::array<float, 2> water_drop_size = { 10, 10 };
 
     protected:
         QOpenGLPaintDevice* device = nullptr;
@@ -64,8 +69,6 @@ class GameWindowOpenGL : public RasterWindowOpenGL
 
         float world_time = 0;
         bool is_muted = false;
-
-        int level_current = -1;
 
         std::unique_ptr<QOpenGLShaderProgram> base_program = nullptr;
         int base_pos_attr = -1;
@@ -102,6 +105,9 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         int particle_poly_unif = -1;
         int particle_max_speed_unif = -1;
         int particle_alpha_unif = -1;
+        int particle_viscous_color_unif = -1;
+        int particle_tensible_color_unif = -1;
+        int particle_mix_unif = -1;
 };
 
 

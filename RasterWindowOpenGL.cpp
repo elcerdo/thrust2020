@@ -84,19 +84,9 @@ void RasterWindowOpenGL::addCheckbox(const std::string& label, const int key, co
     std::get<3>(state)(std::get<2>(state));
 }
 
-void RasterWindowOpenGL::addSlider(const std::string& label, const float& min, const float& max, const float& value, const FloatCallback& callback)
-{
-    auto state = std::make_tuple(label, min, max, value, callback);
-    float_states.emplace_back(state);
-    std::get<4>(state)(std::get<3>(state));
-}
-
 void RasterWindowOpenGL::enforceCallbackValues() const
 {
     using std::get;
-
-    for (const auto& state : float_states)
-        get<4>(state)(get<3>(state));
 
     for (const auto& pair : checkbox_states)
     {
@@ -123,32 +113,37 @@ void RasterWindowOpenGL::registerFreeKey(const int key)
 
 void RasterWindowOpenGL::keyPressEvent(QKeyEvent* event)
 {
-    if (event->key() == Qt::Key_A)
+    if (event->modifiers() == Qt::NoModifier)
     {
-        display_ui ^= 1;
-        return;
-    }
+        const auto key = event->key();
 
-    for (auto& pair : checkbox_states)
-    {
-        using std::get;
-        auto& state = pair.second;
-        if (event->key() == pair.first)
+        if (key == Qt::Key_A)
         {
-            get<2>(state) ^= 1;
-            get<3>(state)(get<2>(state));
+            display_ui ^= 1;
             return;
         }
-    }
 
-    for (const auto& pair : button_states)
-    {
-        using std::get;
-        const auto& state = pair.second;
-        if (event->key() == pair.first)
+        for (auto& pair : checkbox_states)
         {
-            get<2>(state)();
-            return;
+            using std::get;
+            auto& state = pair.second;
+            if (key == pair.first)
+            {
+                get<2>(state) ^= 1;
+                get<3>(state)(get<2>(state));
+                return;
+            }
+        }
+
+        for (const auto& pair : button_states)
+        {
+            using std::get;
+            const auto& state = pair.second;
+            if (key == pair.first)
+            {
+                get<2>(state)();
+                return;
+            }
         }
     }
 
@@ -342,6 +337,7 @@ void RasterWindowOpenGL::initializeGL()
     QtImGui::initialize(this);
     assertNoError();
 
+    initializeUI();
     initializePrograms();
 
     {
@@ -354,12 +350,8 @@ void RasterWindowOpenGL::ImGuiCallbacks()
 {
     using std::get;
 
-    for (auto& state : float_states)
-    {
-        const auto prev = get<3>(state);
-        ImGui::SliderFloat(get<0>(state).c_str(), &get<3>(state), get<1>(state), get<2>(state));
-        if (prev != get<3>(state)) get<4>(state)(get<3>(state));
-    }
+    const auto ww = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) / 2.f;
+    const auto ww_ = ww + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().WindowPadding.x;
 
     {
 
@@ -386,7 +378,7 @@ void RasterWindowOpenGL::ImGuiCallbacks()
             if (prev != std::get<2>(state))
                 std::get<3>(state)(std::get<2>(state));
 
-            if (kk % 2 != 1 && kk != kk_max - 1) ImGui::SameLine(150);
+            if (kk % 2 != 1 && kk != kk_max - 1) ImGui::SameLine(ww_);
             kk++;
         }
     }
@@ -410,10 +402,10 @@ void RasterWindowOpenGL::ImGuiCallbacks()
             const std::string key_name = QKeySequence(pair->first).toString().toStdString();
             std::stringstream ss;
             ss << get<1>(state) << " (" << key_name << ")";
-            if (ImGui::Button(ss.str().c_str(), { 139, 20 }))
+            if (ImGui::Button(ss.str().c_str(), { ww, 0 }))
                 get<2>(state)();
 
-            if (kk % 2 != 1 && kk != kk_max - 1) ImGui::SameLine(150);
+            if (kk % 2 != 1 && kk != kk_max - 1) ImGui::SameLine();
             kk++;
         }
     }

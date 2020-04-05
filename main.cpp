@@ -1,9 +1,6 @@
 #include "GameWindowOpenGL.h"
 
 #include <QApplication>
-#include <QDebug>
-
-#include "Box2D/Dynamics/b2Fixture.h"
 
 int main(int argc, char* argv[])
 {
@@ -27,38 +24,6 @@ int main(int argc, char* argv[])
     view.resize(1280, 720);
     view.show();
 
-    view.addSlider("thrust", .5, 10, 2, [&view](const float value) -> void {
-        if (!view.state)
-            return;
-        assert(view.state);
-        qDebug() << "change thrust" << value;
-        view.state->ship_thrust_factor = value;
-    });
-    view.addSlider("ball density", .1, 2, .2, [&view](const float value) -> void {
-        if (!view.state)
-            return;
-        assert(view.state);
-        const auto& body = view.state->ball;
-        assert(body);
-        const auto fixture = body->GetFixtureList();
-        assert(fixture);
-        qDebug() << "change ball density" << value << fixture->GetDensity();
-        fixture->SetDensity(value);
-        body->ResetMassData();
-    });
-    view.addSlider("ship density", .1, 2, 1, [&view](const float value) -> void {
-        if (!view.state)
-            return;
-        assert(view.state);
-        const auto& body = view.state->ship;
-        assert(body);
-        const auto fixture = body->GetFixtureList();
-        assert(fixture);
-        qDebug() << "change ship density" << value << fixture->GetDensity();
-        fixture->SetDensity(value);
-        body->ResetMassData();
-    });
-
     view.addCheckbox("gravity", Qt::Key_G, true, [&view](const bool checked) -> void {
         if (!view.state)
             return;
@@ -77,7 +42,7 @@ int main(int argc, char* argv[])
     view.addCheckbox("pause", Qt::Key_X, false, [&view](const bool checked) -> void {
         view.skip_state_step = checked;
     });
-    view.addCheckbox("painter", Qt::Key_C, true, [&view](const bool checked) -> void {
+    view.addCheckbox("painter", Qt::Key_O, true, [&view](const bool checked) -> void {
         view.use_painter = checked;
     });
 
@@ -86,13 +51,7 @@ int main(int argc, char* argv[])
         if (!view.state)
             return;
         assert(view.state);
-        view.state->addWater({ 0, 70 }, { 10, 10 }, rng(), view.water_flags);
-    });
-    view.addButton("clear water", Qt::Key_D, [&view]() -> void {
-        if (!view.state)
-            return;
-        assert(view.state);
-        view.state->clearWater();
+        view.state->addWater({ 0, 70 }, { view.water_drop_size[0], view.water_drop_size[1] }, rng(), view.water_flags);
     });
     view.addButton("drop crate", Qt::Key_R, [&view, &rng]() -> void {
         if (!view.state)
@@ -105,11 +64,27 @@ int main(int argc, char* argv[])
         view.state->addCrate({ 0, 10 }, velocity, angle);
         return;
     });
-    view.addButton("clear crates", Qt::Key_F, [&view]() -> void {
+    view.addButton("clear all water", Qt::Key_D, [&view]() -> void {
+        if (!view.state)
+            return;
+        assert(view.state);
+        view.state->clearWater(-1);
+    });
+    view.addButton("clear all crates", Qt::Key_F, [&view]() -> void {
         if (!view.state)
             return;
         assert(view.state);
         view.state->clearCrates();
+    });
+    view.addButton("clear last water", Qt::Key_C, [&view]() -> void {
+        if (!view.state)
+            return;
+        assert(view.state);
+        view.state->clearWater(1);
+    });
+    view.addButton("clear level", Qt::Key_Y, [&view]() -> void {
+        view.level_selection = -1;
+        view.resetLevel();
     });
     view.addButton("reset ship", Qt::Key_S, [&view]() -> void {
         if (!view.state)
@@ -136,9 +111,6 @@ int main(int argc, char* argv[])
             qDebug() << "target" << target;
         }
         return;
-    });
-    view.addButton("clear level", Qt::Key_Y, [&view]() -> void {
-        view.resetLevel(-1);
     });
 
     return app.exec();
