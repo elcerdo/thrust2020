@@ -44,7 +44,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         std::array<float, 4> halo_in_color = { 0, 0, 1, .2 };
         bool draw_debug = false;
         bool is_zoom_out = true;
-        int shader_selection = 6;
+        int shader_selection = 8;
         int poly_selection = 3;
         int level_selection = -1;
         float radius_factor = 1;

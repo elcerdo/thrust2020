@@ -43,6 +43,8 @@ void main()
     is_powdery ? vec4(1, 1, 0, 1) :
     is_repulsivy ? vec4(0, 1, 1, 1) :
     vec4(0, 0, 1, 1);
+  if (is_flag_set(flag, viscous_flag)) flag_right_color = mix(flag_right_color, vec4(1, 0, 0, 1), .2);
+  if (is_flag_set(flag, tensible_flag)) flag_right_color = mix(flag_right_color, vec4(0, 1, 0, 1), .2);
 /*
   finalColor = is_stuck ? vec4(1, 0, 0, 1) : vec4(0, 1, 0, 1);
   finalColor += 1e-9 * col;
@@ -57,6 +59,8 @@ void main()
     mode == 3 ? col :
     mode == 4 ? waterColor :
     mode == 5 ? pos.x < 0 ? flag_left_color : flag_right_color :
+    mode == 6 ? flag_left_color :
+    mode == 7 ? flag_right_color :
     mix(waterColor, foamColor, pow(clamp(speed / maxSpeed, 0, 1), pow(5., alpha)));
 }
 
