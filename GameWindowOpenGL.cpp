@@ -738,6 +738,7 @@ void GameWindowOpenGL::paintUI()
             ImGui::Text("15-00 %s", str.substr(16, 16).c_str());
         }
 
+        /*
         {
             ImGui::Separator();
             const auto& flags = system.GetAllParticleFlags();
@@ -748,6 +749,7 @@ void GameWindowOpenGL::paintUI()
             ImGui::Text("31-16 %s", str.substr(0, 16).c_str());
             ImGui::Text("15-00 %s", str.substr(16, 16).c_str());
         }
+        */
 
         end_right();
     }
