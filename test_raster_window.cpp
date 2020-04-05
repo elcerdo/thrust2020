@@ -60,10 +60,8 @@ class TestWindowOpenGL : public RasterWindowOpenGL
 
         void paintUI() override
         {
-            constexpr auto  ui_window_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize;
-
             ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiCond_Once);
-            ImGui::Begin("test_raster_window", &display_ui, ui_window_flags);
+            ImGui::Begin("test_raster_window", &display_ui);
             ImGui::SliderFloat("angle", &angle, 0, 360);
 
             ImGuiCallbacks();
@@ -157,6 +155,9 @@ int main(int argc, char* argv[])
 
     view.addCheckbox("imgui demo", Qt::Key_Q, false, [&view](const bool checked) -> void {
         view.show_demo_window = checked;
+    });
+    view.addCheckbox("checkbox", Qt::Key_W, false, [&view](const bool checked) -> void {
+        cout << "Checkbox " << checked << endl;
     });
 
     view.addButton("button0", Qt::Key_Z, []() -> void {
