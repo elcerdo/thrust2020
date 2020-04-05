@@ -482,23 +482,7 @@ void GameWindowOpenGL::paintUI()
         {
             assert(state);
 
-            ImGui::SliderFloat("thurst", &state->ship_state.thrust_factor, .5, 10);
-
-            { // ball density
-                const auto& body = state->ball;
-                assert(body);
-                const auto fixture = body->GetFixtureList();
-                assert(fixture);
-
-                const auto prev_value = fixture->GetDensity();
-                static auto current_value = prev_value;
-                ImGui::SliderFloat("ball density", &current_value, .1, 2);
-                if (current_value != prev_value)
-                {
-                    fixture->SetDensity(current_value);
-                    body->ResetMassData();
-                }
-            }
+            ImGui::SliderFloat("ship thrust", &state->ship_state.thrust_factor, .5, 10);
 
             { // ship density
                 const auto& body = state->ship;
@@ -509,6 +493,22 @@ void GameWindowOpenGL::paintUI()
                 const auto prev_value = fixture->GetDensity();
                 static auto current_value = prev_value;
                 ImGui::SliderFloat("ship density", &current_value, .1, 2);
+                if (current_value != prev_value)
+                {
+                    fixture->SetDensity(current_value);
+                    body->ResetMassData();
+                }
+            }
+
+            { // ball density
+                const auto& body = state->ball;
+                assert(body);
+                const auto fixture = body->GetFixtureList();
+                assert(fixture);
+
+                const auto prev_value = fixture->GetDensity();
+                static auto current_value = prev_value;
+                ImGui::SliderFloat("ball density", &current_value, .1, 2);
                 if (current_value != prev_value)
                 {
                     fixture->SetDensity(current_value);

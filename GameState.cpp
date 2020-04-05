@@ -254,7 +254,7 @@ void GameState::resetShip()
 
     b2FixtureDef fixture;
     fixture.shape = &shape;
-    fixture.density = default_density;
+    fixture.density = default_density * 5;
     fixture.friction = default_friction;
     fixture.restitution = default_restitution;
     fixture.filter.categoryBits = object_category;
