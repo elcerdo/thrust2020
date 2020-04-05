@@ -42,9 +42,12 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         std::array<float, 4> foam_color = { 1, 1, 1, 1 };
         std::array<float, 4> halo_out_color = { 0, 0, 1, .6 };
         std::array<float, 4> halo_in_color = { 0, 0, 1, .2 };
+        std::array<float, 4> viscous_color = { 1, 0, 1, 1 };
+        std::array<float, 4> tensible_color = { 0, 1, 1, 1 };
+        float mix_ratio = .2;
         bool draw_debug = false;
         bool is_zoom_out = true;
-        int shader_selection = 8;
+        int shader_selection = 7;
         int poly_selection = 3;
         int level_selection = -1;
         float radius_factor = 1;
@@ -102,6 +105,9 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         int particle_poly_unif = -1;
         int particle_max_speed_unif = -1;
         int particle_alpha_unif = -1;
+        int particle_viscous_color_unif = -1;
+        int particle_tensible_color_unif = -1;
+        int particle_mix_unif = -1;
 };
 
 

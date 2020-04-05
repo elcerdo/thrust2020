@@ -23,7 +23,7 @@
 
 const float camera_world_zoom = 1.5;
 const QVector2D camera_world_center { 0, -120 };
-const char* shader_names[] = { "full grprng + center dot", "full grprng", "full uniform", "dot grprng", "dot uniform", "stuck | flag", "stuck", "flag", "default" };
+const char* shader_names[] = { "full grprng + center dot", "full grprng", "full uniform", "dot grprng", "dot uniform", "dot stuck", "dot flag", "default" };
 const int shader_switch_key = Qt::Key_Q;
 const int level_switch_key = Qt::Key_L;
 
@@ -217,12 +217,15 @@ void GameWindowOpenGL::initializePrograms()
         particle_poly_unif = particle_program->uniformLocation("poly");
         particle_max_speed_unif = particle_program->uniformLocation("maxSpeed");
         particle_alpha_unif = particle_program->uniformLocation("alpha");
+        particle_viscous_color_unif = particle_program->uniformLocation("viscousColor");
+        particle_tensible_color_unif = particle_program->uniformLocation("tensibleColor");
+        particle_mix_unif = particle_program->uniformLocation("mixColor");
         qDebug() << "attr_locations" << particle_pos_attr << particle_col_attr << particle_speed_attr << particle_flag_attr;
         assert(particle_pos_attr >= 0);
         assert(particle_col_attr >= 0);
         assert(particle_speed_attr >= 0);
         assert(particle_flag_attr >= 0);
-        qDebug() << "unif_locations" << particle_mat_unif << particle_water_color_unif << particle_foam_color_unif << particle_radius_unif << particle_radius_factor_unif << particle_mode_unif << particle_poly_unif << particle_max_speed_unif << particle_alpha_unif;
+        qDebug() << "unif_locations" << particle_mat_unif << particle_water_color_unif << particle_foam_color_unif << particle_radius_unif << particle_radius_factor_unif << particle_mode_unif << particle_poly_unif << particle_max_speed_unif << particle_alpha_unif << particle_viscous_color_unif << particle_tensible_color_unif << particle_mix_unif;
         assert(particle_mat_unif >= 0);
         assert(particle_water_color_unif >= 0);
         assert(particle_foam_color_unif >= 0);
@@ -232,6 +235,9 @@ void GameWindowOpenGL::initializePrograms()
         assert(particle_poly_unif >= 0);
         assert(particle_max_speed_unif >= 0);
         assert(particle_alpha_unif >= 0);
+        assert(particle_viscous_color_unif >= 0);
+        assert(particle_tensible_color_unif >= 0);
+        assert(particle_mix_unif >= 0);
         assertNoError();
     }
 }
@@ -591,6 +597,9 @@ void GameWindowOpenGL::paintUI()
         ImGui::ColorEdit3("foam color", foam_color.data());
         ImGui::ColorEdit4("halo out color", halo_out_color.data());
         ImGui::ColorEdit4("halo in color", halo_in_color.data());
+        ImGui::ColorEdit3("viscous color", viscous_color.data());
+        ImGui::ColorEdit3("tensible color", tensible_color.data());
+        ImGui::SliderFloat("mix ratio", &mix_ratio, 0, 1);
 
         {
             shader_selection %= IM_ARRAYSIZE(shader_names);
@@ -968,6 +977,9 @@ void GameWindowOpenGL::paintScene()
             //            const auto& color = QColor::fromRgb(0x6cu, 0xc3u, 0xf6u, 0xffu);
             particle_program->setUniformValue(particle_water_color_unif, QColor::fromRgbF(water_color[0], water_color[1], water_color[2], water_color[3]));
             particle_program->setUniformValue(particle_foam_color_unif, QColor::fromRgbF(foam_color[0], foam_color[1], foam_color[2], foam_color[3]));
+            particle_program->setUniformValue(particle_viscous_color_unif, QColor::fromRgbF(viscous_color[0], viscous_color[1], viscous_color[2], viscous_color[3]));
+            particle_program->setUniformValue(particle_tensible_color_unif, QColor::fromRgbF(tensible_color[0], tensible_color[1], tensible_color[2], tensible_color[3]));
+            particle_program->setUniformValue(particle_mix_unif, mix_ratio);
             particle_program->setUniformValue(particle_mat_unif, matrix);
             assertNoError();
 
