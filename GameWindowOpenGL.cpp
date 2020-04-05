@@ -27,6 +27,10 @@ const char* shader_names[] = { "full grprng + center dot", "full grprng", "full 
 const int shader_switch_key = Qt::Key_Q;
 const int level_switch_key = Qt::Key_L;
 
+constexpr auto ui_window_width = 330;
+constexpr auto ui_window_spacing = 5;
+constexpr auto ui_window_flags = ImGuiWindowFlags_AlwaysAutoResize | /*ImGuiWindowFlags_NoBackground |*/ ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
+
 GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
     : RasterWindowOpenGL(parent)
 {
@@ -457,14 +461,36 @@ void GameWindowOpenGL::drawShip(QPainter& painter)
 
 void GameWindowOpenGL::paintUI()
 {
-    constexpr auto ui_window_flags = ImGuiWindowFlags_AlwaysAutoResize | /*ImGuiWindowFlags_NoBackground |*/ ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
+    int left_offset = ui_window_spacing;
+    const auto begin_left = [&left_offset, this](const std::string& title) -> void
+    {
+        ImGui::SetNextWindowPos(ImVec2(ui_window_spacing, left_offset), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(ui_window_width, -1), ImGuiCond_Always);
+        ImGui::Begin(title.c_str(), &display_ui, ui_window_flags);
+    };
+    const auto end_left = [&left_offset]() -> void
+    {
+        left_offset += ImGui::GetWindowHeight();
+        left_offset += ui_window_spacing;
+        ImGui::End();
+    };
+
+    int right_offset = ui_window_spacing;
+    const auto begin_right = [&right_offset, this](const std::string& title) -> void
+    {
+        ImGui::SetNextWindowPos(ImVec2(width() - ui_window_spacing - ui_window_width, right_offset), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(ui_window_width, -1), ImGuiCond_Always);
+        ImGui::Begin(title.c_str(), &display_ui, ui_window_flags);
+    };
+    const auto end_right = [&right_offset]() -> void
+    {
+        right_offset += ImGui::GetWindowHeight();
+        right_offset += ui_window_spacing;
+        ImGui::End();
+    };
 
     { // callbacks and general info window
-        ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiCond_Once);
-        //ImGui::SetNextWindowSize(ImVec2(350, 440), ImGuiCond_Once);
-        //ImGui::SetNextWindowSize(ImVec2(350,400), ImGuiCond_FirstUseEver);
-        //ImGui::SetNextWindowSize(ImVec2(330,100), ImGuiCond_Always);
-        ImGui::Begin("~.: THRUST :.~", &display_ui, ui_window_flags);
+        begin_left("~.: THRUST :.~");
 
         {
             std::vector<const char*> level_names;
@@ -541,12 +567,11 @@ void GameWindowOpenGL::paintUI()
             ImGui::Text(state->ship_state.touched_wall ? "!!!!BOOOM!!!!" : "<3<3<3<3");
         }
 
-        ImGui::End();
+        end_left();
     }
 
     { // shading window
-        ImGui::SetNextWindowPos(ImVec2(width() - 330 - 5, 5), ImGuiCond_Once);
-        ImGui::Begin("Shading", &display_ui, ui_window_flags);
+        begin_right("Shading");
 
         //ImGui::Text("Hello, world!");
         ImGui::ColorEdit3("water color", water_color.data());
@@ -588,13 +613,12 @@ void GameWindowOpenGL::paintUI()
             ImGui::Text("max speed %f", max_speed);
         }
 
-        ImGui::End();
+        end_right();
     }
 
     if (state && state->system)
     { // particle system control
-        ImGui::SetNextWindowPos(ImVec2(width() - 330 - 5, 240), ImGuiCond_Once);
-        ImGui::Begin("Particle system", &display_ui, ui_window_flags);
+        begin_right("Particle system");
 
         assert(state);
         assert(state->system);
@@ -697,7 +721,7 @@ void GameWindowOpenGL::paintUI()
             ImGui::Text("15-00 %s", str.substr(16, 16).c_str());
         }
 
-        ImGui::End();
+        end_right();
     }
 }
 
