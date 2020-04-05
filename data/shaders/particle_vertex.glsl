@@ -12,7 +12,7 @@ out vec4 colAttr_;
 void main()
 {
   speedAmpl_ = length(speedAttr);
-  colAttr_ = colAttr / 255.f;
+  colAttr_ = colAttr;
   flagAttr_ = flagAttr;
   gl_Position = vec4(posAttr, 0, 1);
 }

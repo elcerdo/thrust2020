@@ -724,6 +724,7 @@ void GameWindowOpenGL::paintUI()
             const auto str = std::bitset<32>(flags).to_string();
             assert(str.size() == 32);
             ImGui::Text("next drop flags %d", flags);
+            ImGui::Text("      fedcba9876543210");
             ImGui::Text("31-16 %s", str.substr(0, 16).c_str());
             ImGui::Text("15-00 %s", str.substr(16, 16).c_str());
         }
@@ -734,6 +735,7 @@ void GameWindowOpenGL::paintUI()
             const auto str = std::bitset<32>(flags).to_string();
             assert(str.size() == 32);
             ImGui::Text("all particle flags %d", flags);
+            ImGui::Text("      fedcba9876543210");
             ImGui::Text("31-16 %s", str.substr(0, 16).c_str());
             ImGui::Text("15-00 %s", str.substr(16, 16).c_str());
         }
@@ -939,16 +941,19 @@ void GameWindowOpenGL::paintScene()
             const b2Vec2* positions = system->GetPositionBuffer();
             const b2ParticleColor* colors = system->GetColorBuffer();
             const b2Vec2* speeds = system->GetVelocityBuffer();
-            const auto kk_max = system->GetParticleCount();
-            const auto radius = system->GetRadius();
 
+            const auto kk_max = system->GetParticleCount();
             std::vector<GLuint> flags(kk_max);
             {
-                std::fill(std::begin(flags), std::end(flags), 0);
+                static_assert(sizeof(GLuint) == sizeof(uint32), "mismatching size");
+                const GLuint* flags_ = system->GetFlagsBuffer();
+                std::copy(flags_, flags_ + kk_max, std::begin(flags));
                 const auto candidates = system->GetStuckCandidates();
                 for (auto ll=0, ll_max=system->GetStuckCandidateCount(); ll < ll_max; ll++)
-                    flags[candidates[ll]] = 1;
+                    flags[candidates[ll]] |= 1 << 31;
             }
+
+            const auto radius = system->GetRadius();
 
             QMatrix4x4 matrix = world_matrix;
             matrix.translate(0, 0, -1e-5);
@@ -976,19 +981,19 @@ void GameWindowOpenGL::paintScene()
 
             glBindBuffer(GL_ARRAY_BUFFER, vbos[7]);
             glBufferData(GL_ARRAY_BUFFER, kk_max * 4 * sizeof(GLubyte), colors, GL_DYNAMIC_DRAW);
-            glVertexAttribPointer(particle_col_attr, 4,  GL_UNSIGNED_BYTE, GL_FALSE, 0, 0);
+            glVertexAttribPointer(particle_col_attr, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
             glEnableVertexAttribArray(particle_col_attr);
             assertNoError();
 
             glBindBuffer(GL_ARRAY_BUFFER, vbos[8]);
             glBufferData(GL_ARRAY_BUFFER, kk_max * 2 * sizeof(GLfloat), speeds, GL_DYNAMIC_DRAW);
-            glVertexAttribPointer(particle_speed_attr, 2,  GL_FLOAT, GL_FALSE, 0, 0);
+            glVertexAttribPointer(particle_speed_attr, 2, GL_FLOAT, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(particle_speed_attr);
             assertNoError();
 
             glBindBuffer(GL_ARRAY_BUFFER, vbos[9]);
             glBufferData(GL_ARRAY_BUFFER, kk_max * sizeof(GLuint), flags.data(), GL_DYNAMIC_DRAW);
-            glVertexAttribPointer(particle_flag_attr, 1,  GL_UNSIGNED_INT, GL_FALSE, 0, 0);
+            glVertexAttribIPointer(particle_flag_attr, 1, GL_UNSIGNED_INT, 0, 0);
             glEnableVertexAttribArray(particle_flag_attr);
             assertNoError();
 

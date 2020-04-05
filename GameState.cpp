@@ -279,9 +279,9 @@ void GameState::addWater(const b2Vec2 position, const b2Vec2 size, const size_t 
     const float32 rr = dist(rng);
     const float32 gg = dist(rng);
     const float32 bb = dist(rng);
-    cout << rr << " ";
-    cout << gg << " ";
-    cout << bb << " ";
+    cout << std::setw(3) << std::setfill('0') << static_cast<int>(rr) << " ";
+    cout << std::setw(3) << std::setfill('0') << static_cast<int>(gg) << " ";
+    cout << std::setw(3) << std::setfill('0') << static_cast<int>(bb) << " ";
 
     assert(system);
 
