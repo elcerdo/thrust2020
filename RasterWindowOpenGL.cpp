@@ -84,19 +84,9 @@ void RasterWindowOpenGL::addCheckbox(const std::string& label, const int key, co
     std::get<3>(state)(std::get<2>(state));
 }
 
-void RasterWindowOpenGL::addSlider(const std::string& label, const float& min, const float& max, const float& value, const FloatCallback& callback)
-{
-    auto state = std::make_tuple(label, min, max, value, callback);
-    float_states.emplace_back(state);
-    std::get<4>(state)(std::get<3>(state));
-}
-
 void RasterWindowOpenGL::enforceCallbackValues() const
 {
     using std::get;
-
-    for (const auto& state : float_states)
-        get<4>(state)(get<3>(state));
 
     for (const auto& pair : checkbox_states)
     {
@@ -353,13 +343,6 @@ void RasterWindowOpenGL::initializeGL()
 void RasterWindowOpenGL::ImGuiCallbacks()
 {
     using std::get;
-
-    for (auto& state : float_states)
-    {
-        const auto prev = get<3>(state);
-        ImGui::SliderFloat(get<0>(state).c_str(), &get<3>(state), get<1>(state), get<2>(state));
-        if (prev != get<3>(state)) get<4>(state)(get<3>(state));
-    }
 
     {
 

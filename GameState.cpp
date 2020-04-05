@@ -367,7 +367,7 @@ void GameState::step(const float dt)
         const auto angle = ship->GetAngle();
         if (ship_state.firing_thruster)
         {
-            const auto thrust = ship_state.thrust_factor * (isGrabbed() ? 50. : 40.) * b2Rot(angle).GetYAxis();
+            const auto thrust = ship_state.thrust_factor * 2 * (isGrabbed() ? 50. : 40.) * b2Rot(angle).GetYAxis();
             ship->ApplyForceToCenter(ship->GetMass() * thrust, true);
         }
 

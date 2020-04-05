@@ -29,6 +29,9 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
 {
     registerFreeKey(Qt::Key_Q);
     registerFreeKey(Qt::Key_Space);
+    registerFreeKey(Qt::Key_Left);
+    registerFreeKey(Qt::Key_Right);
+    registerFreeKey(Qt::Key_Up);
 
     qDebug() << "========== levels";
     level_datas = levels::load(":/levels/levels.json");
@@ -454,7 +457,7 @@ void GameWindowOpenGL::drawShip(QPainter& painter)
 
 void GameWindowOpenGL::paintUI()
 {
-    constexpr auto ui_window_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
+    constexpr auto ui_window_flags = ImGuiWindowFlags_AlwaysAutoResize | /*ImGuiWindowFlags_NoBackground |*/ ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
 
     { // callbacks and general info window
         ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiCond_Once);
@@ -474,6 +477,45 @@ void GameWindowOpenGL::paintUI()
                 resetLevel(level_current_);
         }
         ImGui::Separator();
+
+        if (state)
+        {
+            assert(state);
+
+            ImGui::SliderFloat("thurst", &state->ship_state.thrust_factor, .5, 10);
+
+            { // ball density
+                const auto& body = state->ball;
+                assert(body);
+                const auto fixture = body->GetFixtureList();
+                assert(fixture);
+
+                const auto prev_value = fixture->GetDensity();
+                static auto current_value = prev_value;
+                ImGui::SliderFloat("ball density", &current_value, .1, 2);
+                if (current_value != prev_value)
+                {
+                    fixture->SetDensity(current_value);
+                    body->ResetMassData();
+                }
+            }
+
+            { // ship density
+                const auto& body = state->ship;
+                assert(body);
+                const auto fixture = body->GetFixtureList();
+                assert(fixture);
+
+                const auto prev_value = fixture->GetDensity();
+                static auto current_value = prev_value;
+                ImGui::SliderFloat("ship density", &current_value, .1, 2);
+                if (current_value != prev_value)
+                {
+                    fixture->SetDensity(current_value);
+                    body->ResetMassData();
+                }
+            }
+        }
 
         ImGuiCallbacks();
         ImGui::Separator();

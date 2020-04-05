@@ -9,7 +9,7 @@
 class TestWindowOpenGL : public RasterWindowOpenGL
 {
     public:
-        float angle = 0;
+        float angle = 30;
 
     protected:
         std::unique_ptr<QOpenGLShaderProgram> base_program = nullptr;
@@ -57,6 +57,8 @@ class TestWindowOpenGL : public RasterWindowOpenGL
 
             ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiCond_Once);
             ImGui::Begin("test_raster_window", &display_ui, ui_window_flags);
+            ImGui::SliderFloat("angle", &angle, 0, 360);
+
             ImGuiCallbacks();
             ImGui::Separator();
 
@@ -142,11 +144,6 @@ int main(int argc, char* argv[])
     view.setAnimated(true);
     view.resize(1280, 720);
     view.show();
-
-    view.addSlider("slider", 0, 360, 30, [&view](const float value) -> void {
-        cout << "slider " << value << endl;
-        view.angle = value;
-    });
 
     view.addCheckbox("checkbox", Qt::Key_Q, true, [](const bool checked) -> void {
         cout << "checkbox " << checked << endl;

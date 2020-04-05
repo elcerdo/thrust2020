@@ -27,38 +27,6 @@ int main(int argc, char* argv[])
     view.resize(1280, 720);
     view.show();
 
-    view.addSlider("thrust", .5, 10, 2, [&view](const float value) -> void {
-        if (!view.state)
-            return;
-        assert(view.state);
-        qDebug() << "change thrust" << value;
-        view.state->ship_state.thrust_factor = value;
-    });
-    view.addSlider("ball density", .1, 2, .2, [&view](const float value) -> void {
-        if (!view.state)
-            return;
-        assert(view.state);
-        const auto& body = view.state->ball;
-        assert(body);
-        const auto fixture = body->GetFixtureList();
-        assert(fixture);
-        qDebug() << "change ball density" << value << fixture->GetDensity();
-        fixture->SetDensity(value);
-        body->ResetMassData();
-    });
-    view.addSlider("ship density", .1, 2, 1, [&view](const float value) -> void {
-        if (!view.state)
-            return;
-        assert(view.state);
-        const auto& body = view.state->ship;
-        assert(body);
-        const auto fixture = body->GetFixtureList();
-        assert(fixture);
-        qDebug() << "change ship density" << value << fixture->GetDensity();
-        fixture->SetDensity(value);
-        body->ResetMassData();
-    });
-
     view.addCheckbox("gravity", Qt::Key_G, true, [&view](const bool checked) -> void {
         if (!view.state)
             return;
