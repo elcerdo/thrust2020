@@ -28,6 +28,7 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
     : RasterWindowOpenGL(parent)
 {
     registerFreeKey(Qt::Key_Q);
+    registerFreeKey(Qt::Key_Space);
 
     qDebug() << "========== levels";
     level_datas = levels::load(":/levels/levels.json");
@@ -421,7 +422,7 @@ void GameWindowOpenGL::drawShip(QPainter& painter)
     const auto& body = state->ship;
     assert(body);
 
-    if (state->ship_firing)
+    if (state->ship_state.firing_thruster)
         drawFlame(painter);
 
     if (draw_debug)
@@ -445,7 +446,8 @@ void GameWindowOpenGL::drawShip(QPainter& painter)
         painter.translate(world_center.x, world_center.y);
         painter.setBrush(Qt::NoBrush);
         painter.setPen(QPen(Qt::blue, 0));
-        painter.drawLine(QPointF(0, 0), QPointF(-4 * sin(state->ship_target_angle), 4 * cos(state->ship_target_angle)));
+        const auto angle = state->ship_state.target_angle;
+        painter.drawLine(QPointF(0, 0), QPointF(-4 * sin(angle), 4 * cos(angle)));
         painter.restore();
     }
 }
@@ -491,7 +493,7 @@ void GameWindowOpenGL::paintUI()
             ImGui::Text("contact %d", state->all_accum_contact);
             ImGui::Text("ship mass %f", state->ship->GetMass());
             ImGui::Text("ball mass %f", state->ball->GetMass());
-            ImGui::Text(state->ship_touched_wall ? "!!!!BOOOM!!!!" : "<3<3<3<3");
+            ImGui::Text(state->ship_state.touched_wall ? "!!!!BOOOM!!!!" : "<3<3<3<3");
         }
 
         ImGui::End();
@@ -656,8 +658,16 @@ void GameWindowOpenGL::paintScene()
     if (!state)
         return;
 
-    const double dt = std::min(50e-3, 1. / ImGui::GetIO().Framerate);
+    const auto& io = ImGui::GetIO();
+    const double dt = std::min(50e-3, 1. / io.Framerate);
     world_time += dt;
+
+    { // ship state
+        assert(state);
+        state->ship_state.firing_thruster = io.KeysDown[ImGuiKey_UpArrow];
+        state->ship_state.turning_left = io.KeysDown[ImGuiKey_LeftArrow];
+        state->ship_state.turning_right = io.KeysDown[ImGuiKey_RightArrow];
+    }
 
     if (!skip_state_step)
         state->step(dt);
@@ -1055,18 +1065,23 @@ void GameWindowOpenGL::paintScene()
     //glDisable(GL_CULL_FACE);
 
     { // sfx
-        if (state->ship_accum_contact > 0)
+        assert(state);
+        if (state->ship_state.accum_contact > 0)
             ship_click_sfx.play();
+
+
+        if (!is_muted)
+            engine_sfx.setMuted(!state->ship_state.firing_thruster);
 
         //back_click_sfx.setVolume(volume);
         //if (state->all_accum_contact > 0)
         //    back_click_sfx.play();
     }
 
-    { // reset
-        state->ship_accum_contact = 0;
+    { // reset accum
+        assert(state);
+        state->ship_state.accum_contact = 0;
         state->all_accum_contact = 0;
-        state->all_energy = 0;
     }
 }
 
@@ -1086,47 +1101,6 @@ void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
         return;
     }
 
-    if (event->key() == Qt::Key_Up)
-    {
-        if (!state)
-            return;
-        assert(state);
-        engine_sfx.setMuted(is_muted);
-        state->ship_firing = true;
-        return;
-    }
-    if (event->key() == Qt::Key_Left || event->key() == Qt::Key_Right)
-    {
-        if (!state)
-            return;
-        assert(state);
-        state->ship_target_angular_velocity = (state->isGrabbed() ? 2. : 2.6) * M_PI / 2. * (event->key() == Qt::Key_Left ? 1. : -1.);
-        return;
-    }
-
     RasterWindowOpenGL::keyPressEvent(event);
-}
-
-void GameWindowOpenGL::keyReleaseEvent(QKeyEvent* event)
-{
-    if (event->key() == Qt::Key_Up)
-    {
-        if (!state)
-            return;
-        assert(state);
-        engine_sfx.setMuted(true);
-        state->ship_firing = false;
-        return;
-    }
-    if (event->key() == Qt::Key_Left || event->key() == Qt::Key_Right)
-    {
-        if (!state)
-            return;
-        assert(state);
-        state->ship_target_angular_velocity = 0;
-        return;
-    }
-
-    RasterWindowOpenGL::keyReleaseEvent(event);
 }
 

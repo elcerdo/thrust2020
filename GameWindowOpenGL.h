@@ -21,7 +21,6 @@ class GameWindowOpenGL : public RasterWindowOpenGL
 
     protected:
         void keyPressEvent(QKeyEvent* event) override;
-        void keyReleaseEvent(QKeyEvent* event) override;
 
         void drawOrigin(QPainter& painter) const;
         void drawBody(QPainter& painter, const b2Body& body, const QColor& color = Qt::black) const;

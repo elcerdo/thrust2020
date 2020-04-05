@@ -44,25 +44,31 @@ struct GameState : public b2ContactListener
     using UniqueDistanceJoint = std::unique_ptr<b2DistanceJoint, std::function<void(b2Joint*)>>;
     using UniqueSystem = std::unique_ptr<b2ParticleSystem, std::function<void(b2ParticleSystem*)>>;
 
-    b2World world;
-    UniqueBody ground;
-    UniqueBody ship;
-    UniqueBody ball;
+    b2World world = b2World({ 0, -8 });
+    UniqueBody ground = nullptr;
+    UniqueBody ship = nullptr;
+    UniqueBody ball = nullptr;
+    UniqueDistanceJoint link = nullptr;
+    UniqueSystem system = nullptr;
 
     std::vector<UniqueBody> crates;
     std::vector<std::tuple<UniqueBody, std::vector<b2Vec2>, size_t>> doors;
-    UniqueDistanceJoint link;
 
-    UniqueSystem system;
 
-    bool ship_firing;
-    double ship_target_angular_velocity;
-    double ship_target_angle;
-    bool ship_touched_wall;
-    double ship_thrust_factor;
-    int ship_accum_contact;
-    int all_accum_contact;
-    double all_energy;
-    bool clean_stuck_in_door;
+    struct ShipState
+    {
+        bool firing_thruster = false;
+        bool turning_left = false;
+        bool turning_right = false;
+        bool touched_wall = false;
+        float target_angle = 0;
+        float thrust_factor = 1;
+        unsigned int accum_contact = 0;
+    };
+
+    ShipState ship_state;
+
+    unsigned int all_accum_contact = 0;
+    bool clean_stuck_in_door = true;
 };
 

@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
             return;
         assert(view.state);
         qDebug() << "change thrust" << value;
-        view.state->ship_thrust_factor = value;
+        view.state->ship_state.thrust_factor = value;
     });
     view.addSlider("ball density", .1, 2, .2, [&view](const float value) -> void {
         if (!view.state)
