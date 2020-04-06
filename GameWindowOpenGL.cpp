@@ -743,7 +743,13 @@ void GameWindowOpenGL::paintScene()
     { // ship state
         assert(state);
         state->ship_state.firing_thruster = io.KeysDown[ImGuiKey_UpArrow];
+
+        const bool pressed_left = (!state->ship_state.turning_left && io.KeysDown[ImGuiKey_LeftArrow]);
+        if (pressed_left) state->ship_state.turning_left_time = world_time;
         state->ship_state.turning_left = io.KeysDown[ImGuiKey_LeftArrow];
+
+        const bool pressed_right = (!state->ship_state.turning_right && io.KeysDown[ImGuiKey_RightArrow]);
+        if (pressed_right) state->ship_state.turning_right_time = world_time;
         state->ship_state.turning_right = io.KeysDown[ImGuiKey_RightArrow];
     }
 

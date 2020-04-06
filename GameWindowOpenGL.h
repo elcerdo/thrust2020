@@ -57,6 +57,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         bool skip_state_step = false;
         bool use_painter = true;
         std::array<float, 2> water_drop_size = { 10, 10 };
+        float world_time = 0;
 
     protected:
         QOpenGLPaintDevice* device = nullptr;
@@ -67,7 +68,6 @@ class GameWindowOpenGL : public RasterWindowOpenGL
 
         QSvgRenderer map_renderer;
 
-        float world_time = 0;
         bool is_muted = false;
 
         std::unique_ptr<QOpenGLShaderProgram> base_program = nullptr;
