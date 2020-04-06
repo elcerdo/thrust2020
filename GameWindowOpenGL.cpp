@@ -21,8 +21,6 @@
 #include <bitset>
 #include <iomanip>
 
-const float camera_world_zoom = 1.5;
-const QVector2D camera_world_center { 0, -120 };
 const char* shader_names[] = { "out group + dot speed", "out speed + dot flag", "out flag + dot speed", "out flag + dot group", "dot group", "dot uniform", "dot stuck", "dot flag", "dot speed" };
 const int shader_switch_key = Qt::Key_Q;
 const int level_switch_key = Qt::Key_L;
@@ -590,6 +588,10 @@ void GameWindowOpenGL::paintUI()
     { // camera window
         begin_left("Camera");
 
+        ImGui::SliderFloat("world zoom", &world_camera_zoom, .1, 3);
+        ImGui::DragFloat2("world center", world_camera_center.data());
+        ImGui::SliderFloat("ship zoom", &ship_camera_zoom, .1, 3);
+
         end_left();
     }
 
@@ -785,18 +787,18 @@ void GameWindowOpenGL::paintScene()
             painter.translate(width() / 2, height() / 2);
             painter.scale(1., -1);
 
-            if (!is_zoom_out)
+            if (!use_world_camera)
             {
                 const auto& pos = state->ship->GetPosition();
-                const int side = qMin(width(), height());
-                const double ship_height = 75 * std::max(1., pos.y / 40.);
-                painter.scale(side / ship_height, side / ship_height);
+                const double side = ship_camera_zoom * qMin(width(), height()) / 100.;
+                const double foo = std::max(1., pos.y / 40.);
+                painter.scale(side / foo, side / foo);
                 painter.translate(-pos.x, -std::min(20.f, pos.y));
             }
             else
             {
-                painter.scale(camera_world_zoom, camera_world_zoom);
-                painter.translate(-camera_world_center.toPoint());
+                painter.scale(1.5 * world_camera_zoom, 1.5 *world_camera_zoom);
+                painter.translate(-world_camera_center[0], -world_camera_center[1]);
             }
 
             //{
@@ -876,21 +878,21 @@ void GameWindowOpenGL::paintScene()
         //matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
 
         matrix.translate(0, 0, -50);
-        matrix.scale(2, 2, 2);
+        matrix.scale(2, 2, 1);
 
-        if (!is_zoom_out)
+        if (!use_world_camera)
         {
             const auto& pos = state->ship->GetPosition();
-            const auto side = std::min(ratio, 1.);
-            const double ship_height = 75 * std::max(1., pos.y / 40.);
-            matrix.scale(side / ship_height, side / ship_height, 1);
+            const double side = ship_camera_zoom * std::min(ratio, 1.) / 100.;
+            const double foo = std::max(1., pos.y / 40.);
+            matrix.scale(side / foo, side / foo, 1);
             matrix.translate(-pos.x, -std::min(20.f, pos.y), 0);
         }
         else
         {
             const int side = qMin(width(), height());
-            matrix.scale(camera_world_zoom/side, camera_world_zoom/side, camera_world_zoom);
-            matrix.translate(-camera_world_center);
+            matrix.scale(1.5 * world_camera_zoom / side, 1.5 * world_camera_zoom / side, 1.);
+            matrix.translate(-world_camera_center[0], -world_camera_center[1], 0);
         }
 
         return matrix;

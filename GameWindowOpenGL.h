@@ -46,7 +46,6 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         std::array<float, 4> tensible_color = { 0, 1, 1, 1 };
         float mix_ratio = .2;
         bool draw_debug = false;
-        bool is_zoom_out = true;
         int shader_selection = 8;
         int poly_selection = 3;
         int level_selection = -1;
@@ -58,6 +57,11 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         bool use_painter = true;
         std::array<float, 2> water_drop_size = { 10, 10 };
         float world_time = 0;
+
+        bool use_world_camera = false;
+        float ship_camera_zoom = 1;
+        float world_camera_zoom = 1;
+        std::array<float, 2> world_camera_center { 0, -120 };
 
     protected:
         QOpenGLPaintDevice* device = nullptr;
