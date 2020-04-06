@@ -53,7 +53,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         float radius_factor = 1;
         float shading_max_speed = 60;
         float shading_alpha = -.65;
-        unsigned int water_flags = 0;
+        unsigned int water_flags = b2_viscousParticle | b2_tensileParticle;
         bool skip_state_step = false;
         bool use_painter = true;
         std::array<float, 2> water_drop_size = { 10, 10 };

@@ -592,47 +592,61 @@ void GameWindowOpenGL::paintUI()
     { // shading window
         begin_right("Shading");
 
-        //ImGui::Text("Hello, world!");
-        ImGui::ColorEdit3("water color", water_color.data());
-        ImGui::ColorEdit3("foam color", foam_color.data());
-        ImGui::ColorEdit4("halo out color", halo_out_color.data());
-        ImGui::ColorEdit4("halo in color", halo_in_color.data());
-        ImGui::ColorEdit3("viscous color", viscous_color.data());
-        ImGui::ColorEdit3("tensible color", tensible_color.data());
-        ImGui::SliderFloat("mix ratio", &mix_ratio, 0, 1);
-
+        if (ImGui::BeginTabBar("##shading_tabs", ImGuiTabBarFlags_None))
         {
-            shader_selection %= IM_ARRAYSIZE(shader_names);
-            const std::string key_name = QKeySequence(shader_switch_key).toString().toStdString();
-            std::stringstream ss;
-            ss << "shader (" << key_name << ")";
-            ImGui::Combo(ss.str().c_str(), &shader_selection, shader_names, IM_ARRAYSIZE(shader_names));
-            shader_selection %= IM_ARRAYSIZE(shader_names);
-        }
+            if (ImGui::BeginTabItem("Particle"))
+            {
+                //ImGui::Text("Hello, world!");
+                ImGui::ColorEdit3("water color", water_color.data());
+                ImGui::ColorEdit3("foam color", foam_color.data());
+                ImGui::ColorEdit3("viscous color", viscous_color.data());
+                ImGui::ColorEdit3("tensible color", tensible_color.data());
+                ImGui::SliderFloat("mix ratio", &mix_ratio, 0, 1);
 
-        {
-            const char* poly_names[] = { "octogon", "hexagon", "square", "triangle" };
-            poly_selection %= IM_ARRAYSIZE(poly_names);
-            ImGui::Combo("poly", &poly_selection, poly_names, IM_ARRAYSIZE(poly_names));
-        }
+                {
+                    shader_selection %= IM_ARRAYSIZE(shader_names);
+                    const std::string key_name = QKeySequence(shader_switch_key).toString().toStdString();
+                    std::stringstream ss;
+                    ss << "shader (" << key_name << ")";
+                    ImGui::Combo(ss.str().c_str(), &shader_selection, shader_names, IM_ARRAYSIZE(shader_names));
+                    shader_selection %= IM_ARRAYSIZE(shader_names);
+                }
 
-        ImGui::SliderFloat("radius factor", &radius_factor, 0.0f, 1.0f);
+                {
+                    const char* poly_names[] = { "octogon", "hexagon", "square", "triangle" };
+                    poly_selection %= IM_ARRAYSIZE(poly_names);
+                    ImGui::Combo("poly", &poly_selection, poly_names, IM_ARRAYSIZE(poly_names));
+                }
 
-        ImGui::SliderFloat("alpha", &shading_alpha, -1, 1);
-        ImGui::SliderFloat("max speed", &shading_max_speed, 0, 100);
+                ImGui::SliderFloat("radius factor", &radius_factor, 0.0f, 1.0f);
 
-        if (state && state->system)
-        {
-            ImGui::Separator();
+                ImGui::SliderFloat("alpha", &shading_alpha, -1, 1);
+                ImGui::SliderFloat("max speed", &shading_max_speed, 0, 100);
 
-            assert(state);
-            assert(state->system);
-            const b2Vec2* speeds = state->system->GetVelocityBuffer();
-            const auto kk_max = state->system->GetParticleCount();
-            const auto max_speed = std::accumulate(speeds, speeds + kk_max, 0.f, [](const float& max_speed, const b2Vec2& speed) -> float {
-                return std::max(max_speed, speed.Length());
-            });
-            ImGui::Text("max speed %f", max_speed);
+                if (state && state->system)
+                {
+                    ImGui::Separator();
+
+                    assert(state);
+                    assert(state->system);
+                    const b2Vec2* speeds = state->system->GetVelocityBuffer();
+                    const auto kk_max = state->system->GetParticleCount();
+                    const auto max_speed = std::accumulate(speeds, speeds + kk_max, 0.f, [](const float& max_speed, const b2Vec2& speed) -> float {
+                            return std::max(max_speed, speed.Length());
+                            });
+                    ImGui::Text("max speed %f", max_speed);
+                }
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Ship"))
+            {
+                ImGui::ColorEdit4("halo out color", halo_out_color.data());
+                ImGui::ColorEdit4("halo in color", halo_in_color.data());
+                ImGui::EndTabItem();
+            }
+
+            ImGui::EndTabBar();
         }
 
         end_right();
@@ -647,62 +661,24 @@ void GameWindowOpenGL::paintUI()
         auto& system = *state->system;
 
         {
-            water_flags = 0;
-
             const auto ww = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) / 2.f;
             const auto ww_ = ww + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().WindowPadding.x;
 
-            {
-                static bool state = false;
-                ImGui::Checkbox("spring", &state);
-                if (state) water_flags |= b2_springParticle;
-            }
+            ImGui::CheckboxFlags("spring", &water_flags, b2_springParticle);
+            ImGui::SameLine(ww_);
+            ImGui::CheckboxFlags("elastic", &water_flags, b2_elasticParticle);
 
-            {
-                static bool state = false;
-                ImGui::SameLine(ww_);
-                ImGui::Checkbox("elastic", &state);
-                if (state) water_flags |= b2_elasticParticle;
-            }
+            ImGui::CheckboxFlags("viscous", &water_flags, b2_viscousParticle);
+            ImGui::SameLine(ww_);
+            ImGui::CheckboxFlags("powder", &water_flags, b2_powderParticle);
 
-            {
-                static bool state = true;
-                ImGui::Checkbox("viscous", &state);
-                if (state) water_flags |= b2_viscousParticle;
-            }
+            ImGui::CheckboxFlags("tensible", &water_flags, b2_tensileParticle);
+            ImGui::SameLine(ww_);
+            ImGui::CheckboxFlags("color mixing", &water_flags, b2_colorMixingParticle);
 
-            {
-                static bool state = false;
-                ImGui::SameLine(ww_);
-                ImGui::Checkbox("powder", &state);
-                if (state) water_flags |= b2_powderParticle;
-            }
-
-            {
-                static bool state = true;
-                ImGui::Checkbox("tensible", &state);
-                if (state) water_flags |= b2_tensileParticle;
-            }
-
-            {
-                static bool state = false;
-                ImGui::SameLine(ww_);
-                ImGui::Checkbox("color mixing", &state);
-                if (state) water_flags |= b2_colorMixingParticle;
-            }
-
-            {
-                static bool state = false;
-                ImGui::Checkbox("static pressure", &state);
-                if (state) water_flags |= b2_staticPressureParticle;
-            }
-
-            {
-                static bool state = false;
-                ImGui::SameLine(ww_);
-                ImGui::Checkbox("repulsive", &state);
-                if (state) water_flags |= b2_repulsiveParticle;
-            }
+            ImGui::CheckboxFlags("static pressure", &water_flags, b2_staticPressureParticle);
+            ImGui::SameLine(ww_);
+            ImGui::CheckboxFlags("repulsive", &water_flags, b2_repulsiveParticle);
         }
 
 
