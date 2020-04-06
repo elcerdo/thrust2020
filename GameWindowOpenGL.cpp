@@ -572,19 +572,23 @@ void GameWindowOpenGL::paintUI()
         if (state)
         {
             assert(state);
-            ImGui::Text("ship %.2f %.2f", state->ship->GetPosition().x, state->ship->GetPosition().y);
+            assert(state->ship);
+            ImGui::Text("ship m=%.2f x=%.2f y=%.2f", state->ship->GetMass(), state->ship->GetPosition().x, state->ship->GetPosition().y);
+            ImGui::Text("ball m=%.2f x=%.2f y=%.2f", state->ball->GetMass(), state->ball->GetPosition().x, state->ball->GetPosition().y);
             if (state->system) ImGui::Text("particles %d %d(%d)", state->system->GetParticleGroupCount(), state->system->GetParticleCount(), state->system->GetStuckCandidateCount());
             ImGui::Text("crates %d", static_cast<int>(state->crates.size()));
-            {
-                std::stringstream ss;
-                for (unsigned int kk=0, kk_max=std::min(state->all_accum_contact, 10u); kk<kk_max; kk++)
-                    ss << "*";
-                ImGui::Text("contact %s", ss.str().c_str());
-            }
-            ImGui::Text("ship mass %f", state->ship->GetMass());
-            ImGui::Text("ball mass %f", state->ball->GetMass());
-            ImGui::Text(state->ship_state.touched_wall ? "!!!!BOOOM!!!!" : "<3<3<3<3");
+
+            std::stringstream ss;
+            for (unsigned int kk=0, kk_max=std::min(state->all_accum_contact, 10u); kk<kk_max; kk++)
+                ss << "*";
+            ImGui::Text("contact %s %s", state->ship_state.touched_wall ? "!!BOOM!!" : "<3<3<3<3", ss.str().c_str());
         }
+
+        end_left();
+    }
+
+    { // camera window
+        begin_left("Camera");
 
         end_left();
     }
