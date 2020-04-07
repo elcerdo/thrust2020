@@ -36,7 +36,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         void paintScene() override;
 
     public:
-        levels::LevelDatas level_datas;
+        levels::MainData data;
         std::unique_ptr<GameState> state = nullptr;
         std::default_random_engine flame_rng;
         std::array<float, 4> water_color = { 108 / 255., 195 / 255., 246 / 255., 1 };
@@ -49,7 +49,6 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         bool draw_debug = false;
         int shader_selection = 8;
         int poly_selection = 3;
-        int level_selection = -1;
         float radius_factor = 1;
         float shading_max_speed = 60;
         float shading_alpha = -.65;

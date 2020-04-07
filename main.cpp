@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
         view.state->clearWater(1);
     });
     view.addButton("clear level", Qt::Key_Y, [&view]() -> void {
-        view.level_selection = -1;
+        view.data.default_level = -1;
         view.resetLevel();
     });
     view.addButton("reset ship", Qt::Key_S, [&view]() -> void {

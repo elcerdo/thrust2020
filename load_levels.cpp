@@ -7,7 +7,7 @@
 #include <QCoreApplication>
 #include <QDebug>
 
-QJsonArray load_json_array(const std::string& json_filename)
+QJsonObject load_json_object(const std::string& json_filename)
 {
     QFile inFile(QString::fromStdString(json_filename));
     inFile.open(QIODevice::ReadOnly|QIODevice::Text);
@@ -20,7 +20,7 @@ QJsonArray load_json_array(const std::string& json_filename)
         qDebug() << error.errorString();
     assert(!doc.isNull());
 
-    return doc.array();
+    return doc.object();
 }
 
 b2Vec2 vec2_from_json(const QJsonValue& obj, const QString& xx_name, const QString& yy_name, const b2Vec2 def = { 0, 0 } )
@@ -28,11 +28,13 @@ b2Vec2 vec2_from_json(const QJsonValue& obj, const QString& xx_name, const QStri
     return  { static_cast<float>(obj.toObject()[xx_name].toDouble(def.x)), static_cast<float>(obj.toObject()[yy_name].toDouble(def.y)) };
 }
 
-levels::LevelDatas levels::load(const std::string& json_filename)
+levels::MainData levels::load(const std::string& json_filename)
 {
-    LevelDatas data;
 
-    for (const auto& level_json : load_json_array(json_filename))
+    const auto root_obj = load_json_object(json_filename);
+
+    MainData::LevelDatas levels;
+    for (const auto& level_json : root_obj["levels"].toArray())
     {
         assert(level_json.isObject());
         const auto& level_obj = level_json.toObject();
@@ -67,9 +69,9 @@ levels::LevelDatas levels::load(const std::string& json_filename)
             level.paths.emplace_back(LevelData::PathData { positions, size });
         }
 
-        data.emplace_back(level);
+        levels.emplace_back(level);
     }
 
-    return data;
+    return { levels, root_obj["default_level"].toInt(-1) };
 }
 

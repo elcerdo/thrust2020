@@ -39,12 +39,6 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
     registerFreeKey(Qt::Key_Right);
     registerFreeKey(Qt::Key_Up);
 
-    qDebug() << "========== levels";
-    level_datas = levels::load(":/levels/levels.json");
-    qDebug() << level_datas.size() << "levels";
-    for (const auto& level_data : level_datas)
-        qDebug() << "level" << QString::fromStdString(level_data.name) << QString::fromStdString(level_data.map_filename) << level_data.doors.size();
-
     {
         auto& sfx = engine_sfx;
         const auto sound = QUrl::fromLocalFile(":/sounds/engine.wav");
@@ -78,6 +72,15 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
         sfx.stop();
     }*/
 
+    {
+        qDebug() << "========== levels";
+        data = levels::load(":/levels/levels.json");
+        qDebug() << data.levels.size() << "levels";
+        for (const auto& level : data.levels)
+            qDebug() << "level" << QString::fromStdString(level.name) << QString::fromStdString(level.map_filename) << level.doors.size();
+        resetLevel();
+    }
+
     world_camera.screen_height = 500;
     world_camera.position[1] = -120;
 }
@@ -88,27 +91,27 @@ void GameWindowOpenGL::resetLevel()
     using std::endl;
     using std::get;
 
-    if (level_selection < 0)
+    if (data.default_level < 0)
     {
-        level_selection = -1;
+        data.default_level = -1;
         state = nullptr;
         return;
     }
 
-    assert(level_selection >= 0 );
-    assert(level_selection < static_cast<int>(level_datas.size()));
-    const auto& level_data = level_datas[level_selection];
+    assert(data.default_level >= 0 );
+    assert(data.default_level < static_cast<int>(data.levels.size()));
+    const auto& level = data.levels[data.default_level];
 
-    cout << "========== loading " << std::quoted(level_data.name) << endl;
+    cout << "========== loading " << std::quoted(level.name) << endl;
 
     state = std::make_unique<GameState>();
-    state->resetGround(level_data.map_filename);
-    loadBackground(level_data.map_filename);
+    state->resetGround(level.map_filename);
+    loadBackground(level.map_filename);
 
-    for (const auto& door : level_data.doors)
+    for (const auto& door : level.doors)
         state->addDoor(get<0>(door), get<1>(door), get<2>(door));
 
-    for (const auto& path : level_data.paths)
+    for (const auto& path : level.paths)
         state->addPath(get<0>(path), get<1>(path));
 
     state->dumpCollisionData();
@@ -504,16 +507,16 @@ void GameWindowOpenGL::paintUI()
 
         {
             std::vector<const char*> level_names;
-            for (const auto& level_data : level_datas)
-                level_names.emplace_back(level_data.name.c_str());
+            for (const auto& level : data.levels)
+                level_names.emplace_back(level.name.c_str());
 
-            const auto level_selection_prev = level_selection;
+            const auto level_selection_prev = data.default_level;
 
             const std::string key_name = QKeySequence(level_switch_key).toString().toStdString();
             std::stringstream ss;
             ss << "level (" << key_name << ")";
-            ImGui::Combo(ss.str().c_str(), &level_selection, level_names.data(), level_names.size());
-            if (level_selection_prev != level_selection)
+            ImGui::Combo(ss.str().c_str(), &data.default_level, level_names.data(), level_names.size());
+            if (level_selection_prev != data.default_level)
                 resetLevel();
         }
         ImGui::Separator();
@@ -1163,34 +1166,34 @@ void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
 
     if (event->key() == level_switch_key)
     {
-        assert(!level_datas.empty());
+        assert(!data.levels.empty());
         const auto modifiers = event->modifiers();
         if (modifiers == Qt::ShiftModifier)
-            if (level_selection >= 0)
+            if (data.default_level >= 0)
             {
-                level_selection += level_datas.size() - 1;
-                level_selection %= level_datas.size();
+                data.default_level += data.levels.size() - 1;
+                data.default_level %= data.levels.size();
                 resetLevel();
                 return;
             }
             else
             {
-                level_selection = level_datas.size() - 1;
+                data.default_level = data.levels.size() - 1;
                 resetLevel();
                 return;
             }
 
         if (modifiers == Qt::NoModifier)
-            if (level_selection >= 0)
+            if (data.default_level >= 0)
             {
-                level_selection++;
-                level_selection %= level_datas.size();
+                data.default_level++;
+                data.default_level %= data.levels.size();
                 resetLevel();
                 return;
             }
             else
             {
-                level_selection = 0;
+                data.default_level = 0;
                 resetLevel();
                 return;
             }

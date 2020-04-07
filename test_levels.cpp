@@ -24,13 +24,18 @@ int main(int argc, char* argv[])
 
     QCoreApplication app(argc, argv);
 
-    const auto levels = levels::load(":/levels/levels.json");
+    const auto data = levels::load(":/levels/levels.json");
 
-    cout << levels.size() << " levels" << endl;
-    for (const auto& level : levels)
+    require(data.default_level >= -1, "invalid default_level");
+    require(data.default_level < static_cast<int>(data.levels.size()), "invalid default_level");
+
+    cout << data.levels.size() << " levels" << endl;
+    int index = 0;
+    for (const auto& level : data.levels)
     {
         const auto map_exists = QFileInfo(QString::fromStdString(level.map_filename)).exists();
 
+        cout << (index == data.default_level ? "->" : "  ") << " ";
         cout << std::quoted(level.name) << " ";
         cout << std::quoted(level.map_filename) << " " << map_exists << " ";
         cout << level.doors.size() << "doors ";
@@ -47,6 +52,7 @@ int main(int argc, char* argv[])
             cout << "** path " << kk++ << " " << positions.size() << " " << size.x << " " << size.y << endl;
         }
         */
+        index++;
     }
 
     return 0;

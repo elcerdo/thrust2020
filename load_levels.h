@@ -18,8 +18,13 @@ struct LevelData
     std::vector<PathData> paths;
 };
 
-using LevelDatas = std::vector<LevelData>;
+struct MainData
+{
+    using LevelDatas = std::vector<LevelData>;
+    LevelDatas levels;
+    int default_level;
+};
 
-LevelDatas load(const std::string& json_filename);
+MainData load(const std::string& json_filename);
 
 }
