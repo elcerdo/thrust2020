@@ -85,12 +85,13 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         int main_camera_mat_unif = -1;
         int main_world_mat_unif = -1;
 
-        /*
         std::unique_ptr<QOpenGLShaderProgram> ball_program = nullptr;
         int ball_pos_attr = -1;
-        int ball_mat_unif = -1;
         int ball_angular_speed_unif = -1;
+        int ball_camera_mat_unif = -1;
+        int ball_world_mat_unif = -1;
 
+        /*
         std::unique_ptr<QOpenGLShaderProgram> grab_program = nullptr;
         int grab_pos_attr = -1;
         int grab_mat_unif = -1;

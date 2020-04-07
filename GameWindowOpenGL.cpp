@@ -171,6 +171,22 @@ void GameWindowOpenGL::initializePrograms()
         assertNoError();
     }
 
+    {
+        assert(!ball_program);
+        ball_program = loadAndCompileProgram(":/shaders/ball_vertex.glsl", ":/shaders/ball_fragment.glsl");
+
+        assert(ball_program);
+        const auto init_ok = initLocations(*ball_program, {
+                { "posAttr", ball_pos_attr },
+                }, {
+                { "circularSpeed", ball_angular_speed_unif },
+                { "cameraMatrix", ball_camera_mat_unif },
+                { "worldMatrix", ball_world_mat_unif },
+                });
+        assert(init_ok);
+        assertNoError();
+    }
+
     /*
     {
         assert(!grab_program);
@@ -188,21 +204,6 @@ void GameWindowOpenGL::initializePrograms()
         assert(grab_time_unif >= 0);
         assert(grab_halo_out_color_unif >= 0);
         assert(grab_halo_in_color_unif >= 0);
-        assertNoError();
-    }
-
-    {
-        assert(!ball_program);
-        ball_program = loadAndCompileProgram(":/shaders/ball_vertex.glsl", ":/shaders/ball_fragment.glsl");
-
-        assert(ball_program);
-        ball_pos_attr = ball_program->attributeLocation("posAttr");
-        ball_mat_unif = ball_program->uniformLocation("matrix");
-        ball_angular_speed_unif = ball_program->uniformLocation("circularSpeed");
-        qDebug() << "locations" << ball_pos_attr << ball_mat_unif << ball_angular_speed_unif;
-        assert(ball_pos_attr >= 0);
-        assert(ball_mat_unif >= 0);
-        assert(ball_angular_speed_unif >= 0);
         assertNoError();
     }
 
@@ -1038,7 +1039,6 @@ void GameWindowOpenGL::paintScene()
         }
     }
 
-    /*
     { // draw with ball program
         ProgramBinder binder(*this, ball_program);
 
@@ -1056,20 +1056,22 @@ void GameWindowOpenGL::paintScene()
             assertNoError();
         };
 
+        ball_program->setUniformValue(base_camera_mat_unif, camera_matrix);
+
         {
             assert(state->ball);
             assert(state->ball->GetFixtureList());
             assert(state->ball->GetFixtureList()->GetShape());
             const auto& shape = static_cast<const b2CircleShape&>(*state->ball->GetFixtureList()->GetShape());
 
-            auto world_matrix = world_matrix;
+            QMatrix4x4 world_matrix;
             const auto& pos = state->ball->GetWorldCenter();
             const auto& angle = state->ball->GetAngle();
             world_matrix.translate(pos.x, pos.y);
             world_matrix.rotate(qRadiansToDegrees(angle), 0, 0, 1);
             world_matrix.scale(shape.m_radius, shape.m_radius, shape.m_radius);
             //world_matrix.rotate(frame_counter, 1, 1, 1);
-            ball_program->setUniformValue(ball_mat_unif, world_matrix);
+            ball_program->setUniformValue(ball_world_mat_unif, world_matrix);
 
             const auto& angular_speed = state->ball->GetAngularVelocity();
             ball_program->setUniformValue(ball_angular_speed_unif, angular_speed);
@@ -1078,6 +1080,7 @@ void GameWindowOpenGL::paintScene()
         }
     }
 
+    /*
     if (state && state->canGrab())
     { // draw with grab program
         ProgramBinder binder(*this, grab_program);
