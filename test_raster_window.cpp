@@ -9,18 +9,67 @@
 #include <iostream>
 #include <cmath>
 
+struct Camera
+{
+    std::array<float, 2> position = { 0, 0 };
+    float screen_height = 4;
+    float fov_angle = 60.;
+    std::array<float, 2> clip = { .1, 100 };
+    float ortho_ratio = 0;
+
+    void paintUI();
+    void preparePainter(const RasterWindowOpenGL& view, QPainter& painter) const;
+    QMatrix4x4 cameraMatrix(const RasterWindowOpenGL& view) const;
+};
+
+void
+Camera::paintUI()
+{
+    ImGui::DragFloat2("camera pos", position.data(), .1, -10, 10, "%.1fm");
+    ImGui::SliderFloat("screen height", &screen_height, .1, 10, "%.1fm");
+    ImGui::SliderFloat("camera fov", &fov_angle, 5, 90, "%.1f°");
+    ImGui::SliderFloat2("camera clip", clip.data(), .1, 100, "%.1fm", 3);
+    ImGui::SliderFloat("ortho ratio", &ortho_ratio, 0, 1, "%.3f");
+}
+
+void
+Camera::preparePainter(const RasterWindowOpenGL& view, QPainter& painter) const
+{
+    using std::get;
+
+    const auto foo = view.height() / screen_height;
+    painter.translate(view.width() / 2., view.height() / 2.);
+    painter.scale(foo, -foo);
+    painter.translate(-get<0>(position), -get<1>(position));
+}
+
+QMatrix4x4
+Camera::cameraMatrix(const RasterWindowOpenGL& view) const
+{
+    using std::get;
+
+    const auto aspect_ratio = view.width() / static_cast<float>(view.height());
+    const auto hh = screen_height / 2;
+
+    QMatrix4x4 perspective_matrix;
+    perspective_matrix.perspective(fov_angle, aspect_ratio, get<0>(clip), get<1>(clip));
+
+    QMatrix4x4 ortho_matrix;
+    ortho_matrix.ortho(-hh * aspect_ratio, hh * aspect_ratio, -hh, hh, get<0>(clip), get<1>(clip));
+
+    auto mixed_matrix = ortho_ratio * ortho_matrix + (1 - ortho_ratio) * perspective_matrix;
+    const auto zz = screen_height / tan(M_PI * fov_angle / 180 / 2) / 2;
+    mixed_matrix.translate(-get<0>(position), -get<1>(position), -zz);
+
+    return mixed_matrix;
+}
+
 class TestWindowOpenGL : public RasterWindowOpenGL
 {
     public:
         float cube_angle = 30;
-
-        std::array<float, 2> camera_position = { 0, 0 };
-        float camera_screen_height = 4;
-        float camera_fov_angle = 60.;
-        std::array<float, 2> camera_clip = { .1, 100 };
-        float camera_ortho_ratio = 0;
-
         bool show_demo_window = false;
+        Camera camera;
 
         std::unique_ptr<QOpenGLPaintDevice> device = nullptr;
 
@@ -90,13 +139,9 @@ class TestWindowOpenGL : public RasterWindowOpenGL
             ImGui::Begin("test_raster_window", &display_ui);
 
             ImGui::SliderFloat("cube angle", &cube_angle, 0, 360, "%.1f°");
-            ImGui::DragFloat2("camera pos", camera_position.data(), .1, -10, 10, "%.1fm");
-            ImGui::SliderFloat("screen height", &camera_screen_height, .1, 10, "%.1fm");
             ImGui::Separator();
 
-            ImGui::SliderFloat("camera fov", &camera_fov_angle, 5, 90, "%.1f°");
-            ImGui::SliderFloat2("camera clip", camera_clip.data(), .1, 100, "%.1fm", 3);
-            ImGui::SliderFloat("ortho ratio", &camera_ortho_ratio, 0, 1, "%.3f");
+            camera.paintUI();
             ImGui::Separator();
 
             ImGuiCallbacks();
@@ -116,33 +161,7 @@ class TestWindowOpenGL : public RasterWindowOpenGL
 
         void paintScene() override
         {
-            using std::get;
-
-            const auto prepare_painter = [this](QPainter& painter) -> void
-            {
-                const auto foo = height() / camera_screen_height;
-                painter.translate(width() / 2., height() / 2.);
-                painter.scale(foo, -foo);
-                painter.translate(-get<0>(camera_position), -get<1>(camera_position));
-            };
-
-            const auto camera_matrix = [this]() -> QMatrix4x4
-            {
-                const auto aspect_ratio = width() / static_cast<float>(height());
-                const auto hh = camera_screen_height / 2;
-
-                QMatrix4x4 perspective_matrix;
-                perspective_matrix.perspective(camera_fov_angle, aspect_ratio, get<0>(camera_clip), get<1>(camera_clip));
-
-                QMatrix4x4 ortho_matrix;
-                ortho_matrix.ortho(-hh * aspect_ratio, hh * aspect_ratio, -hh, hh, get<0>(camera_clip), get<1>(camera_clip));
-
-                auto mixed_matrix = camera_ortho_ratio * ortho_matrix + (1 - camera_ortho_ratio) * perspective_matrix;
-                const auto camera_zz = camera_screen_height / tan(M_PI * camera_fov_angle / 180 / 2) / 2;
-                mixed_matrix.translate(-get<0>(camera_position), -get<1>(camera_position), -camera_zz);
-
-                return mixed_matrix;
-            }();
+            const auto camera_matrix = camera.cameraMatrix(*this);
 
             { // draw with base program
                 ProgramBinder binder(*this, base_program);
@@ -215,8 +234,7 @@ class TestWindowOpenGL : public RasterWindowOpenGL
                 assert(device);
                 device->setSize(size() * devicePixelRatio());
                 QPainter painter(device.get());
-
-                prepare_painter(painter);
+                camera.preparePainter(*this, painter);
 
                 { // background gradient
                     QLinearGradient linearGrad(QPointF(0, 0), QPointF(1, 1));
