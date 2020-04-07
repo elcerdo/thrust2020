@@ -10,7 +10,7 @@ struct Camera
 {
     std::array<float, 2> position = { 0, 0 };
     float screen_height = 100;
-    float fov_angle = 90.;
+    float fov_angle = 50.;
     std::array<float, 2> clip = { .1, 1000 };
     float ortho_ratio = 0;
 

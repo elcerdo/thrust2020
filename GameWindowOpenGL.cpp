@@ -78,7 +78,7 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
         sfx.stop();
     }*/
 
-    world_camera.screen_height = 300;
+    world_camera.screen_height = 500;
     world_camera.position[1] = -120;
 }
 
