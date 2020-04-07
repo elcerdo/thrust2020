@@ -3,7 +3,9 @@
 layout(points) in;
 layout(triangle_strip, max_vertices = 8) out;
 
-uniform mat4 matrix;
+uniform mat4 cameraMatrix;
+uniform mat4 worldMatrix;
+
 uniform float radius;
 uniform int poly;
 
@@ -20,6 +22,8 @@ void main() {
   col = colAttr_[0];
   speed = speedAmpl_[0];
   flag = flagAttr_[0];
+
+  mat4 matrix = cameraMatrix * worldMatrix;
 
   if (poly == 3)
   { // triangle

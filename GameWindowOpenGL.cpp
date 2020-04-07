@@ -205,49 +205,34 @@ void GameWindowOpenGL::initializePrograms()
         assertNoError();
     }
 
-    /*
     {
         assert(!particle_program);
         particle_program = loadAndCompileProgram(":/shaders/particle_vertex.glsl", ":/shaders/particle_fragment.glsl", ":/shaders/particle_geometry.glsl");
 
         assert(particle_program);
-        particle_pos_attr = particle_program->attributeLocation("posAttr");
-        particle_col_attr = particle_program->attributeLocation("colAttr");
-        particle_speed_attr = particle_program->attributeLocation("speedAttr");
-        particle_flag_attr = particle_program->attributeLocation("flagAttr");
-        particle_mat_unif = particle_program->uniformLocation("matrix");
-        particle_water_color_unif = particle_program->uniformLocation("waterColor");
-        particle_foam_color_unif = particle_program->uniformLocation("foamColor");
-        particle_radius_unif = particle_program->uniformLocation("radius");
-        particle_radius_factor_unif = particle_program->uniformLocation("radiusFactor");
-        particle_mode_unif = particle_program->uniformLocation("mode");
-        particle_poly_unif = particle_program->uniformLocation("poly");
-        particle_max_speed_unif = particle_program->uniformLocation("maxSpeed");
-        particle_alpha_unif = particle_program->uniformLocation("alpha");
-        particle_viscous_color_unif = particle_program->uniformLocation("viscousColor");
-        particle_tensible_color_unif = particle_program->uniformLocation("tensibleColor");
-        particle_mix_unif = particle_program->uniformLocation("mixColor");
-        qDebug() << "attr_locations" << particle_pos_attr << particle_col_attr << particle_speed_attr << particle_flag_attr;
-        assert(particle_pos_attr >= 0);
-        assert(particle_col_attr >= 0);
-        assert(particle_speed_attr >= 0);
-        assert(particle_flag_attr >= 0);
-        qDebug() << "unif_locations" << particle_mat_unif << particle_water_color_unif << particle_foam_color_unif << particle_radius_unif << particle_radius_factor_unif << particle_mode_unif << particle_poly_unif << particle_max_speed_unif << particle_alpha_unif << particle_viscous_color_unif << particle_tensible_color_unif << particle_mix_unif;
-        assert(particle_mat_unif >= 0);
-        assert(particle_water_color_unif >= 0);
-        assert(particle_foam_color_unif >= 0);
-        assert(particle_radius_unif >= 0);
-        assert(particle_radius_factor_unif >= 0);
-        assert(particle_mode_unif >= 0);
-        assert(particle_poly_unif >= 0);
-        assert(particle_max_speed_unif >= 0);
-        assert(particle_alpha_unif >= 0);
-        assert(particle_viscous_color_unif >= 0);
-        assert(particle_tensible_color_unif >= 0);
-        assert(particle_mix_unif >= 0);
+        const auto init_ok = initLocations(*particle_program, {
+                { "posAttr", particle_pos_attr },
+                { "colAttr", particle_col_attr },
+                { "speedAttr", particle_speed_attr },
+                { "flagAttr", particle_flag_attr },
+                }, {
+                { "waterColor", particle_water_color_unif },
+                { "foamColor", particle_foam_color_unif },
+                { "radius", particle_radius_unif },
+                { "radiusFactor", particle_radius_factor_unif },
+                { "mode", particle_mode_unif },
+                { "poly", particle_poly_unif },
+                { "maxSpeed", particle_max_speed_unif },
+                { "alpha", particle_alpha_unif },
+                { "viscousColor", particle_viscous_color_unif },
+                { "tensibleColor", particle_tensible_color_unif },
+                { "mixColor", particle_mix_unif },
+                { "cameraMatrix", particle_camera_mat_unif },
+                { "worldMatrix", particle_world_mat_unif },
+                });
+        assert(init_ok);
         assertNoError();
     }
-*/
 }
 
 void GameWindowOpenGL::initializeBuffers(BufferLoader& loader)
@@ -884,9 +869,10 @@ void GameWindowOpenGL::paintScene()
         }
     }
 
-    /*
     { // draw with particle program
         ProgramBinder binder(*this, particle_program);
+
+        particle_program->setUniformValue(base_camera_mat_unif, camera_matrix);
 
         { // particle system
             const auto& system = state->system;
@@ -909,7 +895,7 @@ void GameWindowOpenGL::paintScene()
 
             const auto radius = system->GetRadius();
 
-            QMatrix4x4 world_matrix = world_matrix;
+            QMatrix4x4 world_matrix;
             world_matrix.translate(0, 0, -1e-5);
 
             particle_program->setUniformValue(particle_radius_unif, radius);
@@ -925,7 +911,7 @@ void GameWindowOpenGL::paintScene()
             particle_program->setUniformValue(particle_viscous_color_unif, QColor::fromRgbF(viscous_color[0], viscous_color[1], viscous_color[2], viscous_color[3]));
             particle_program->setUniformValue(particle_tensible_color_unif, QColor::fromRgbF(tensible_color[0], tensible_color[1], tensible_color[2], tensible_color[3]));
             particle_program->setUniformValue(particle_mix_unif, mix_ratio);
-            particle_program->setUniformValue(particle_mat_unif, world_matrix);
+            particle_program->setUniformValue(particle_world_mat_unif, world_matrix);
             assertNoError();
 
             glBindBuffer(GL_ARRAY_BUFFER, vbos[6]);
@@ -964,7 +950,6 @@ void GameWindowOpenGL::paintScene()
             assertNoError();
         }
     }
-    */
 
 
     { // draw with main program
