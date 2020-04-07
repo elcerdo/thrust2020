@@ -3,6 +3,8 @@
 #include <imgui.h>
 
 #include <QApplication>
+#include <QOpenGLPaintDevice>
+#include <QPainter>
 
 #include <iostream>
 #include <cmath>
@@ -12,15 +14,15 @@ class TestWindowOpenGL : public RasterWindowOpenGL
     public:
         float cube_angle = 30;
 
-        float camera_screen_height = 4;
         std::array<float, 2> camera_position = { 0, 0 };
-
-        float camera_ortho_ratio = 0;
-
+        float camera_screen_height = 4;
         float camera_fov_angle = 60.;
         std::array<float, 2> camera_clip = { .1, 100 };
+        float camera_ortho_ratio = 0;
 
         bool show_demo_window = false;
+
+        std::unique_ptr<QOpenGLPaintDevice> device = nullptr;
 
     protected:
         std::unique_ptr<QOpenGLShaderProgram> base_program = nullptr;
@@ -32,6 +34,9 @@ class TestWindowOpenGL : public RasterWindowOpenGL
         {
             ImVec4* colors = ImGui::GetStyle().Colors;
             colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.67f);
+
+            device = std::make_unique<QOpenGLPaintDevice>();
+            device->setDevicePixelRatio(devicePixelRatio());
         }
 
         void initializePrograms() override
@@ -86,9 +91,9 @@ class TestWindowOpenGL : public RasterWindowOpenGL
 
             ImGui::SliderFloat("cube angle", &cube_angle, 0, 360, "%.1f°");
             ImGui::DragFloat2("camera pos", camera_position.data(), .1, -10, 10, "%.1fm");
+            ImGui::SliderFloat("screen height", &camera_screen_height, .1, 10, "%.1fm");
             ImGui::Separator();
 
-            ImGui::SliderFloat("screen height", &camera_screen_height, .1, 10, "%.1fm");
             ImGui::SliderFloat("camera fov", &camera_fov_angle, 5, 90, "%.1f°");
             ImGui::SliderFloat2("camera clip", camera_clip.data(), .1, 100, "%.1fm", 3);
             ImGui::SliderFloat("ortho ratio", &camera_ortho_ratio, 0, 1, "%.3f");
@@ -107,15 +112,22 @@ class TestWindowOpenGL : public RasterWindowOpenGL
 
             if (show_demo_window)
                 ImGui::ShowDemoWindow();
-
         }
 
         void paintScene() override
         {
+            using std::get;
+
+            const auto prepare_painter = [this](QPainter& painter) -> void
+            {
+                const auto foo = height() / camera_screen_height;
+                painter.translate(width() / 2., height() / 2.);
+                painter.scale(foo, -foo);
+                painter.translate(-get<0>(camera_position), -get<1>(camera_position));
+            };
+
             const auto camera_matrix = [this]() -> QMatrix4x4
             {
-                using std::get;
-
                 const auto aspect_ratio = width() / static_cast<float>(height());
                 const auto hh = camera_screen_height / 2;
 
@@ -174,6 +186,7 @@ class TestWindowOpenGL : public RasterWindowOpenGL
 
                 {
                     QMatrix4x4 world_matrix;
+                    world_matrix.rotate(cube_angle, 0, 0, 1);
                     world_matrix.scale(.5, .5, .5);
                     world_matrix.translate(1, 1, 0);
                     base_program->setUniformValue(base_world_mat_unif, world_matrix);
@@ -182,18 +195,34 @@ class TestWindowOpenGL : public RasterWindowOpenGL
 
                 {
                     QMatrix4x4 world_matrix;
-                    world_matrix.translate(0, 0, -1);
+                    world_matrix.translate(0, 1, 0);
                     world_matrix.scale(2, 2, 2);
+                    world_matrix.rotate(90, 1, 0, 0);
                     base_program->setUniformValue(base_world_mat_unif, world_matrix);
                     blit_square();
                 }
 
                 {
                     QMatrix4x4 world_matrix;
-                    world_matrix.translate(-1, 0, 0);
-                    world_matrix.rotate(cube_angle, 1, 1, 1);
+                    world_matrix.translate(-1.5, 0, 0);
+                    world_matrix.rotate(cube_angle, 1, 0, 0);
                     base_program->setUniformValue(base_world_mat_unif, world_matrix);
                     blit_cube();
+                }
+            }
+
+            {
+                assert(device);
+                device->setSize(size() * devicePixelRatio());
+                QPainter painter(device.get());
+
+                prepare_painter(painter);
+
+                { // background gradient
+                    QLinearGradient linearGrad(QPointF(0, 0), QPointF(1, 1));
+                    linearGrad.setColorAt(0, QColor(0x33, 0x08, 0x67)); // morpheus den gradient
+                    linearGrad.setColorAt(1, QColor(0x30, 0xcf, 0xd0));
+                    painter.fillRect(QRectF(-.5, -.5, 1, 1), linearGrad);
                 }
             }
         }
