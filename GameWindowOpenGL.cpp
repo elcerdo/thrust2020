@@ -187,26 +187,25 @@ void GameWindowOpenGL::initializePrograms()
         assertNoError();
     }
 
-    /*
     {
         assert(!grab_program);
         grab_program = loadAndCompileProgram(":/shaders/grab_vertex.glsl", ":/shaders/grab_fragment.glsl");
 
         assert(grab_program);
-        grab_pos_attr = grab_program->attributeLocation("posAttr");
-        grab_mat_unif = grab_program->uniformLocation("matrix");
-        grab_time_unif = grab_program->uniformLocation("time");
-        grab_halo_out_color_unif = grab_program->uniformLocation("haloOuterColor");
-        grab_halo_in_color_unif = grab_program->uniformLocation("haloInnerColor");
-        qDebug() << "locations" << grab_pos_attr << grab_mat_unif << grab_time_unif << grab_halo_out_color_unif << grab_halo_in_color_unif;
-        assert(grab_pos_attr >= 0);
-        assert(grab_mat_unif >= 0);
-        assert(grab_time_unif >= 0);
-        assert(grab_halo_out_color_unif >= 0);
-        assert(grab_halo_in_color_unif >= 0);
+        const auto init_ok = initLocations(*grab_program, {
+                { "posAttr", grab_pos_attr },
+                }, {
+                { "time", grab_time_unif },
+                { "haloOuterColor", grab_halo_out_color_unif },
+                { "haloInnerColor", grab_halo_in_color_unif },
+                { "cameraMatrix", grab_camera_mat_unif },
+                { "worldMatrix", grab_world_mat_unif },
+                });
+        assert(init_ok);
         assertNoError();
     }
 
+    /*
     {
         assert(!particle_program);
         particle_program = loadAndCompileProgram(":/shaders/particle_vertex.glsl", ":/shaders/particle_fragment.glsl", ":/shaders/particle_geometry.glsl");
@@ -1080,7 +1079,6 @@ void GameWindowOpenGL::paintScene()
         }
     }
 
-    /*
     if (state && state->canGrab())
     { // draw with grab program
         ProgramBinder binder(*this, grab_program);
@@ -1099,8 +1097,10 @@ void GameWindowOpenGL::paintScene()
             assertNoError();
         };
 
+        ball_program->setUniformValue(base_camera_mat_unif, camera_matrix);
+
         { // grab indicator
-            QMatrix4x4 world_matrix = world_matrix;
+            QMatrix4x4 world_matrix;
 
             assert(state);
             assert(state->ship);
@@ -1108,7 +1108,7 @@ void GameWindowOpenGL::paintScene()
             world_matrix.translate(pos.x, pos.y, 1e-5);
             world_matrix.scale(6, 6, 1);
 
-            grab_program->setUniformValue(grab_mat_unif, world_matrix);
+            grab_program->setUniformValue(grab_world_mat_unif, world_matrix);
             grab_program->setUniformValue(grab_time_unif, world_time);
             grab_program->setUniformValue(grab_halo_out_color_unif, QColor::fromRgbF(halo_out_color[0], halo_out_color[1], halo_out_color[2], halo_out_color[3]));
             grab_program->setUniformValue(grab_halo_in_color_unif, QColor::fromRgbF(halo_in_color[0], halo_in_color[1], halo_in_color[2], halo_in_color[3]));
@@ -1118,7 +1118,6 @@ void GameWindowOpenGL::paintScene()
             assertNoError();
         }
     }
-    */
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
