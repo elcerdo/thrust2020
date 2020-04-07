@@ -50,6 +50,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         int shader_selection = 8;
         int poly_selection = 3;
         float radius_factor = 1;
+        int current_level = -1;
         float shading_max_speed = 60;
         float shading_alpha = -.65;
         unsigned int water_flags = b2_viscousParticle | b2_tensileParticle;
