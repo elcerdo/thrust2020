@@ -117,13 +117,13 @@ class TestWindowOpenGL : public RasterWindowOpenGL
                 using std::get;
 
                 const auto aspect_ratio = width() / static_cast<float>(height());
-                const auto foo = camera_screen_height / 2;
+                const auto hh = camera_screen_height / 2;
 
                 QMatrix4x4 perspective_matrix;
                 perspective_matrix.perspective(camera_fov_angle, aspect_ratio, get<0>(camera_clip), get<1>(camera_clip));
 
                 QMatrix4x4 ortho_matrix;
-                ortho_matrix.ortho(-foo * aspect_ratio, foo * aspect_ratio, -foo, foo, get<0>(camera_clip), get<1>(camera_clip));
+                ortho_matrix.ortho(-hh * aspect_ratio, hh * aspect_ratio, -hh, hh, get<0>(camera_clip), get<1>(camera_clip));
 
                 auto mixed_matrix = camera_ortho_ratio * ortho_matrix + (1 - camera_ortho_ratio) * perspective_matrix;
                 const auto camera_zz = camera_screen_height / tan(M_PI * camera_fov_angle / 180 / 2) / 2;
