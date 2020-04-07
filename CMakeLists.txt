@@ -102,6 +102,7 @@ target_link_libraries(test_imgui_qt
     )
 
 add_executable(test_raster_window
+    Camera.cpp
     RasterWindowOpenGL.cpp
     test_raster_window.cpp
     data/shaders/shaders.qrc
