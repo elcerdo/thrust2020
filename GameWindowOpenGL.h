@@ -79,12 +79,13 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         int base_camera_mat_unif = -1;
         int base_world_mat_unif = -1;
 
-				/*
         std::unique_ptr<QOpenGLShaderProgram> main_program = nullptr;
         int main_pos_attr = -1;
         int main_col_attr = -1;
-        int main_mat_unif = -1;
+        int main_camera_mat_unif = -1;
+        int main_world_mat_unif = -1;
 
+        /*
         std::unique_ptr<QOpenGLShaderProgram> ball_program = nullptr;
         int ball_pos_attr = -1;
         int ball_mat_unif = -1;
@@ -114,7 +115,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         int particle_viscous_color_unif = -1;
         int particle_tensible_color_unif = -1;
         int particle_mix_unif = -1;
-				*/
+        */
 };
 
 

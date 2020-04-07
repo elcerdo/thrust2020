@@ -35,27 +35,20 @@ class TestWindowOpenGL : public RasterWindowOpenGL
             device = std::make_unique<QOpenGLPaintDevice>();
             device->setDevicePixelRatio(devicePixelRatio());
 
-            assert(!base_program);
-            base_program = loadAndCompileProgram(":/shaders/base_vertex.glsl", ":/shaders/base_fragment.glsl");
-            assert(base_program);
-            const auto init_ok = initProgramLocations(*base_program, {
-                { "posAttr", base_pos_attr },
-            }, {
-                { "cameraMatrix", base_camera_mat_unif },
-                { "worldMatrix", base_world_mat_unif },
-            });
-            assert(init_ok);
-            assertNoError();
+						{
+								assert(!base_program);
+								base_program = loadAndCompileProgram(":/shaders/base_vertex.glsl", ":/shaders/base_fragment.glsl");
 
-            /*
-            base_pos_attr = base_program->attributeLocation("posAttr");
-            base_camera_mat_unif = base_program->uniformLocation("cameraMatrix");
-            base_world_mat_unif = base_program->uniformLocation("worldMatrix");
-            qDebug() << "locations" << base_pos_attr << base_camera_mat_unif << base_world_mat_unif;
-            assert(base_pos_attr >= 0);
-            assert(base_camera_mat_unif >= 0);
-            assert(base_world_mat_unif >= 0);
-            */
+								assert(base_program);
+								const auto init_ok = initLocations(*base_program, {
+												{ "posAttr", base_pos_attr },
+												}, {
+												{ "cameraMatrix", base_camera_mat_unif },
+												{ "worldMatrix", base_world_mat_unif },
+												});
+								assert(init_ok);
+								assertNoError();
+						}
         }
 
         void initializeBuffers(BufferLoader& loader) override

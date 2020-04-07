@@ -313,7 +313,7 @@ std::unique_ptr<QOpenGLShaderProgram> RasterWindowOpenGL::loadAndCompileProgram(
     return program;
 }
 
-bool RasterWindowOpenGL::initProgramLocations(const QOpenGLShaderProgram& program, const Locations& attr_locations, const Locations& unif_locations)
+bool RasterWindowOpenGL::initLocations(const QOpenGLShaderProgram& program, const Locations& attr_locations, const Locations& unif_locations)
 {
     using std::cout;
     using std::endl;

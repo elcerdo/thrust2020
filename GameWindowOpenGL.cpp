@@ -145,32 +145,33 @@ void GameWindowOpenGL::initializePrograms()
         base_program = loadAndCompileProgram(":/shaders/base_vertex.glsl", ":/shaders/base_fragment.glsl");
 
         assert(base_program);
-        base_pos_attr = base_program->attributeLocation("posAttr");
-        base_camera_mat_unif = base_program->uniformLocation("cameraMatrix");
-        base_world_mat_unif = base_program->uniformLocation("worldMatrix");
-        qDebug() << "locations" << base_pos_attr << base_camera_mat_unif << base_world_mat_unif;
-        assert(base_pos_attr >= 0);
-        assert(base_camera_mat_unif >= 0);
-        assert(base_world_mat_unif >= 0);
+        const auto init_ok = initLocations(*base_program, {
+                { "posAttr", base_pos_attr },
+                }, {
+                { "cameraMatrix", base_camera_mat_unif },
+                { "worldMatrix", base_world_mat_unif },
+                });
+        assert(init_ok);
         assertNoError();
     }
 
-    /*
     {
         assert(!main_program);
         main_program = loadAndCompileProgram(":/shaders/main_vertex.glsl", ":/shaders/main_fragment.glsl");
 
         assert(main_program);
-        main_pos_attr = main_program->attributeLocation("posAttr");
-        main_col_attr = main_program->attributeLocation("colAttr");
-        main_mat_unif = main_program->uniformLocation("matrix");
-        qDebug() << "locations" << main_pos_attr << main_col_attr << main_mat_unif;
-        assert(main_pos_attr >= 0);
-        assert(main_col_attr >= 0);
-        assert(main_mat_unif >= 0);
+        const auto init_ok = initLocations(*main_program, {
+                { "posAttr", main_pos_attr },
+                { "colAttr", main_col_attr },
+                }, {
+                { "cameraMatrix", main_camera_mat_unif },
+                { "worldMatrix", main_world_mat_unif },
+                });
+        assert(init_ok);
         assertNoError();
     }
 
+    /*
     {
         assert(!grab_program);
         grab_program = loadAndCompileProgram(":/shaders/grab_vertex.glsl", ":/shaders/grab_fragment.glsl");
@@ -963,6 +964,8 @@ void GameWindowOpenGL::paintScene()
             assertNoError();
         }
     }
+    */
+
 
     { // draw with main program
         ProgramBinder binder(*this, main_program);
@@ -1007,8 +1010,10 @@ void GameWindowOpenGL::paintScene()
             assertNoError();
         };
 
+        main_program->setUniformValue(base_camera_mat_unif, camera_matrix);
+
         { // ship
-            QMatrix4x4 world_matrix = world_matrix;
+            QMatrix4x4 world_matrix;
 
             assert(state);
             assert(state->ship);
@@ -1018,7 +1023,7 @@ void GameWindowOpenGL::paintScene()
             world_matrix.rotate(180. * state->ship->GetAngle() / M_PI, 0, 0, 1);
             world_matrix.rotate(world_time * 60, 0, 1, 0);
 
-            main_program->setUniformValue(main_mat_unif, world_matrix);
+            main_program->setUniformValue(main_world_mat_unif, world_matrix);
             assertNoError();
 
             blit_triangle();
@@ -1026,13 +1031,14 @@ void GameWindowOpenGL::paintScene()
 
             world_matrix.rotate(90, 0, 1, 0);
 
-            main_program->setUniformValue(main_mat_unif, world_matrix);
+            main_program->setUniformValue(main_world_mat_unif, world_matrix);
             assertNoError();
 
             blit_triangle();
         }
     }
 
+    /*
     { // draw with ball program
         ProgramBinder binder(*this, ball_program);
 

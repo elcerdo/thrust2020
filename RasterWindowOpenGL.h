@@ -61,7 +61,7 @@ class RasterWindowOpenGL : public QOpenGLWindow, public QOpenGLExtraFunctions
         std::unique_ptr<QOpenGLShaderProgram> loadAndCompileProgram(const std::string& vertex_filename, const std::string& fragment_filename, const std::string& geometry_filename = "");
 
         using Locations = std::unordered_map<std::string, int&>;
-        bool initProgramLocations(const QOpenGLShaderProgram& program, const Locations& attr_locations, const Locations& unif_locations);
+        bool initLocations(const QOpenGLShaderProgram& program, const Locations& attr_locations, const Locations& unif_locations);
 
         virtual void initializePrograms() = 0;
 
