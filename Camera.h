@@ -9,9 +9,9 @@
 struct Camera
 {
     std::array<float, 2> position = { 0, 0 };
-    float screen_height = 4;
-    float fov_angle = 60.;
-    std::array<float, 2> clip = { .1, 100 };
+    float screen_height = 100;
+    float fov_angle = 90.;
+    std::array<float, 2> clip = { .1, 1000 };
     float ortho_ratio = 0;
 
     void paintUI();

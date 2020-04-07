@@ -2,6 +2,7 @@
 
 #include "load_levels.h"
 #include "GameState.h"
+#include "Camera.h"
 #include "RasterWindowOpenGL.h"
 
 #include <QOpenGLPaintDevice>
@@ -59,12 +60,11 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         float world_time = 0;
 
         bool use_world_camera = false;
-        float ship_camera_zoom = 1;
-        float world_camera_zoom = 1;
-        std::array<float, 2> world_camera_center { 0, -120 };
+        //Camera ship_camera;
+        Camera world_camera;
 
     protected:
-        QOpenGLPaintDevice* device = nullptr;
+        std::unique_ptr<QOpenGLPaintDevice> device = nullptr;
 
         QSoundEffect engine_sfx;
         QSoundEffect ship_click_sfx;
@@ -76,8 +76,10 @@ class GameWindowOpenGL : public RasterWindowOpenGL
 
         std::unique_ptr<QOpenGLShaderProgram> base_program = nullptr;
         int base_pos_attr = -1;
-        int base_mat_unif = -1;
+        int base_camera_mat_unif = -1;
+        int base_world_mat_unif = -1;
 
+				/*
         std::unique_ptr<QOpenGLShaderProgram> main_program = nullptr;
         int main_pos_attr = -1;
         int main_col_attr = -1;
@@ -112,6 +114,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         int particle_viscous_color_unif = -1;
         int particle_tensible_color_unif = -1;
         int particle_mix_unif = -1;
+				*/
 };
 
 

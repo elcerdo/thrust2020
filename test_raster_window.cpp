@@ -28,13 +28,13 @@ class TestWindowOpenGL : public RasterWindowOpenGL
         {
             ImVec4* colors = ImGui::GetStyle().Colors;
             colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.67f);
-
-            device = std::make_unique<QOpenGLPaintDevice>();
-            device->setDevicePixelRatio(devicePixelRatio());
         }
 
         void initializePrograms() override
         {
+            device = std::make_unique<QOpenGLPaintDevice>();
+            device->setDevicePixelRatio(devicePixelRatio());
+
             assert(!base_program);
             base_program = loadAndCompileProgram(":/shaders/base_vertex.glsl", ":/shaders/base_fragment.glsl");
             assert(base_program);

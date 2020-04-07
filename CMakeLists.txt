@@ -116,6 +116,7 @@ add_executable(rocket
     data_polygons.cpp
     extract_polygons.cpp
     decompose_polygons.cpp
+    Camera.cpp
     RasterWindowOpenGL.cpp
     GameWindowOpenGL.cpp
     GameState.cpp

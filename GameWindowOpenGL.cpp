@@ -136,18 +136,26 @@ void GameWindowOpenGL::setMuted(const bool muted)
 void GameWindowOpenGL::initializePrograms()
 {
     {
+        device = std::make_unique<QOpenGLPaintDevice>();
+        device->setDevicePixelRatio(devicePixelRatio());
+    }
+
+    {
         assert(!base_program);
         base_program = loadAndCompileProgram(":/shaders/base_vertex.glsl", ":/shaders/base_fragment.glsl");
 
         assert(base_program);
         base_pos_attr = base_program->attributeLocation("posAttr");
-        base_mat_unif = base_program->uniformLocation("matrix");
-        qDebug() << "locations" << base_pos_attr << base_mat_unif;
+        base_camera_mat_unif = base_program->uniformLocation("cameraMatrix");
+        base_world_mat_unif = base_program->uniformLocation("worldMatrix");
+        qDebug() << "locations" << base_pos_attr << base_camera_mat_unif << base_world_mat_unif;
         assert(base_pos_attr >= 0);
-        assert(base_mat_unif >= 0);
+        assert(base_camera_mat_unif >= 0);
+        assert(base_world_mat_unif >= 0);
         assertNoError();
     }
 
+    /*
     {
         assert(!main_program);
         main_program = loadAndCompileProgram(":/shaders/main_vertex.glsl", ":/shaders/main_fragment.glsl");
@@ -238,6 +246,7 @@ void GameWindowOpenGL::initializePrograms()
         assert(particle_mix_unif >= 0);
         assertNoError();
     }
+*/
 }
 
 void GameWindowOpenGL::initializeBuffers(BufferLoader& loader)
@@ -586,11 +595,11 @@ void GameWindowOpenGL::paintUI()
     }
 
     { // camera window
-        begin_left("Camera");
+        begin_left("Cameras");
 
-        ImGui::SliderFloat("world zoom", &world_camera_zoom, .1, 3);
-        ImGui::DragFloat2("world center", world_camera_center.data());
-        ImGui::SliderFloat("ship zoom", &ship_camera_zoom, .1, 3);
+        //ship_camera.paintUI();
+        //ImGui::Separator();
+        world_camera.paintUI();
 
         end_left();
     }
@@ -762,18 +771,14 @@ void GameWindowOpenGL::paintScene()
     if (!skip_state_step)
         state->step(dt);
 
+    const auto& camera = world_camera;
+
     if (use_painter)
     { // draw with qt painter
-        glBindVertexArray(0);
-
-        if (!device)
-            device = new QOpenGLPaintDevice;
-
+        assert(device);
         device->setSize(size() * devicePixelRatio());
-        device->setDevicePixelRatio(devicePixelRatio());
-
-        QPainter painter(device);
-        painter.setRenderHint(QPainter::Antialiasing);
+        QPainter painter(device.get());
+        //painter.setRenderHint(QPainter::Antialiasing);
 
         { // background gradient
             QLinearGradient linearGrad(QPointF(0, 0), QPointF(0, height()));
@@ -782,35 +787,10 @@ void GameWindowOpenGL::paintScene()
             painter.fillRect(0, 0, width(), height(), linearGrad);
         }
 
+
         { // world
             painter.save();
-            painter.translate(width() / 2, height() / 2);
-            painter.scale(1., -1);
-
-            if (!use_world_camera)
-            {
-                const auto& pos = state->ship->GetPosition();
-                const double side = ship_camera_zoom * qMin(width(), height()) / 100.;
-                const double foo = std::max(1., pos.y / 40.);
-                painter.scale(side / foo, side / foo);
-                painter.translate(-pos.x, -std::min(20.f, pos.y));
-            }
-            else
-            {
-                painter.scale(1.5 * world_camera_zoom, 1.5 *world_camera_zoom);
-                painter.translate(-world_camera_center[0], -world_camera_center[1]);
-            }
-
-            //{
-            //    const QTransform tt = painter.worldTransform();
-            //    const std::array<float, 9> tt_values {
-            //        static_cast<float>(tt.m11()), static_cast<float>(tt.m21()), static_cast<float>(tt.m31()),
-            //        static_cast<float>(tt.m12()), static_cast<float>(tt.m22()), static_cast<float>(tt.m32()),
-            //        static_cast<float>(tt.m13()), static_cast<float>(tt.m23()), static_cast<float>(tt.m33())
-            //    };
-            //    const QMatrix3x3 foo(tt_values.data());
-            //    qDebug() << foo << world_matrix;
-            //}
+            camera.preparePainter(*this, painter);
 
             { // svg
                 constexpr double scale = 600;
@@ -868,35 +848,7 @@ void GameWindowOpenGL::paintScene()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
 
-    const auto world_matrix = [this]() -> QMatrix4x4
-    {
-        QMatrix4x4 matrix;
-        const auto ratio = static_cast<double>(width()) / height();
-        const auto norm_width = ratio;
-        const double norm_height = 1;
-        matrix.ortho(-norm_width, norm_width, -norm_height, norm_height, 0, 100);
-        //matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
-
-        matrix.translate(0, 0, -50);
-        matrix.scale(2, 2, 1);
-
-        if (!use_world_camera)
-        {
-            const auto& pos = state->ship->GetPosition();
-            const double side = ship_camera_zoom * std::min(ratio, 1.) / 100.;
-            const double foo = std::max(1., pos.y / 40.);
-            matrix.scale(side / foo, side / foo, 1);
-            matrix.translate(-pos.x, -std::min(20.f, pos.y), 0);
-        }
-        else
-        {
-            const int side = qMin(width(), height());
-            matrix.scale(1.5 * world_camera_zoom / side, 1.5 * world_camera_zoom / side, 1.);
-            matrix.translate(-world_camera_center[0], -world_camera_center[1], 0);
-        }
-
-        return matrix;
-    }();
+    const auto camera_matrix = camera.cameraMatrix(*this);
 
     { // draw with base program
         ProgramBinder binder(*this, base_program);
@@ -919,17 +871,19 @@ void GameWindowOpenGL::paintScene()
             assertNoError();
         };
 
-        {
-            auto matrix = world_matrix;
-            matrix.translate(0, 10);
-            matrix.scale(3, 3, 3);
-            matrix.rotate(world_time * 60, 1, 1, 1);
-            base_program->setUniformValue(base_mat_unif, matrix);
+        base_program->setUniformValue(base_camera_mat_unif, camera_matrix);
 
+        {
+            QMatrix4x4 world_matrix;
+            world_matrix.translate(0, 10);
+            world_matrix.scale(3, 3, 3);
+            world_matrix.rotate(world_time * 60, 1, 1, 1);
+            base_program->setUniformValue(base_world_mat_unif, world_matrix);
             blit_cube();
         }
     }
 
+    /*
     { // draw with particle program
         ProgramBinder binder(*this, particle_program);
 
@@ -954,8 +908,8 @@ void GameWindowOpenGL::paintScene()
 
             const auto radius = system->GetRadius();
 
-            QMatrix4x4 matrix = world_matrix;
-            matrix.translate(0, 0, -1e-5);
+            QMatrix4x4 world_matrix = world_matrix;
+            world_matrix.translate(0, 0, -1e-5);
 
             particle_program->setUniformValue(particle_radius_unif, radius);
             particle_program->setUniformValue(particle_radius_factor_unif, radius_factor);
@@ -970,7 +924,7 @@ void GameWindowOpenGL::paintScene()
             particle_program->setUniformValue(particle_viscous_color_unif, QColor::fromRgbF(viscous_color[0], viscous_color[1], viscous_color[2], viscous_color[3]));
             particle_program->setUniformValue(particle_tensible_color_unif, QColor::fromRgbF(tensible_color[0], tensible_color[1], tensible_color[2], tensible_color[3]));
             particle_program->setUniformValue(particle_mix_unif, mix_ratio);
-            particle_program->setUniformValue(particle_mat_unif, matrix);
+            particle_program->setUniformValue(particle_mat_unif, world_matrix);
             assertNoError();
 
             glBindBuffer(GL_ARRAY_BUFFER, vbos[6]);
@@ -1054,25 +1008,25 @@ void GameWindowOpenGL::paintScene()
         };
 
         { // ship
-            QMatrix4x4 matrix = world_matrix;
+            QMatrix4x4 world_matrix = world_matrix;
 
             assert(state);
             assert(state->ship);
             const auto& pos = state->ship->GetPosition();
-            matrix.translate(pos.x, pos.y);
+            world_matrix.translate(pos.x, pos.y);
 
-            matrix.rotate(180. * state->ship->GetAngle() / M_PI, 0, 0, 1);
-            matrix.rotate(world_time * 60, 0, 1, 0);
+            world_matrix.rotate(180. * state->ship->GetAngle() / M_PI, 0, 0, 1);
+            world_matrix.rotate(world_time * 60, 0, 1, 0);
 
-            main_program->setUniformValue(main_mat_unif, matrix);
+            main_program->setUniformValue(main_mat_unif, world_matrix);
             assertNoError();
 
             blit_triangle();
             blit_square();
 
-            matrix.rotate(90, 0, 1, 0);
+            world_matrix.rotate(90, 0, 1, 0);
 
-            main_program->setUniformValue(main_mat_unif, matrix);
+            main_program->setUniformValue(main_mat_unif, world_matrix);
             assertNoError();
 
             blit_triangle();
@@ -1102,14 +1056,14 @@ void GameWindowOpenGL::paintScene()
             assert(state->ball->GetFixtureList()->GetShape());
             const auto& shape = static_cast<const b2CircleShape&>(*state->ball->GetFixtureList()->GetShape());
 
-            auto matrix = world_matrix;
+            auto world_matrix = world_matrix;
             const auto& pos = state->ball->GetWorldCenter();
             const auto& angle = state->ball->GetAngle();
-            matrix.translate(pos.x, pos.y);
-            matrix.rotate(qRadiansToDegrees(angle), 0, 0, 1);
-            matrix.scale(shape.m_radius, shape.m_radius, shape.m_radius);
-            //matrix.rotate(frame_counter, 1, 1, 1);
-            ball_program->setUniformValue(ball_mat_unif, matrix);
+            world_matrix.translate(pos.x, pos.y);
+            world_matrix.rotate(qRadiansToDegrees(angle), 0, 0, 1);
+            world_matrix.scale(shape.m_radius, shape.m_radius, shape.m_radius);
+            //world_matrix.rotate(frame_counter, 1, 1, 1);
+            ball_program->setUniformValue(ball_mat_unif, world_matrix);
 
             const auto& angular_speed = state->ball->GetAngularVelocity();
             ball_program->setUniformValue(ball_angular_speed_unif, angular_speed);
@@ -1137,15 +1091,15 @@ void GameWindowOpenGL::paintScene()
         };
 
         { // grab indicator
-            QMatrix4x4 matrix = world_matrix;
+            QMatrix4x4 world_matrix = world_matrix;
 
             assert(state);
             assert(state->ship);
             const auto& pos = state->ship->GetWorldCenter();
-            matrix.translate(pos.x, pos.y, 1e-5);
-            matrix.scale(6, 6, 1);
+            world_matrix.translate(pos.x, pos.y, 1e-5);
+            world_matrix.scale(6, 6, 1);
 
-            grab_program->setUniformValue(grab_mat_unif, matrix);
+            grab_program->setUniformValue(grab_mat_unif, world_matrix);
             grab_program->setUniformValue(grab_time_unif, world_time);
             grab_program->setUniformValue(grab_halo_out_color_unif, QColor::fromRgbF(halo_out_color[0], halo_out_color[1], halo_out_color[2], halo_out_color[3]));
             grab_program->setUniformValue(grab_halo_in_color_unif, QColor::fromRgbF(halo_in_color[0], halo_in_color[1], halo_in_color[2], halo_in_color[3]));
@@ -1155,6 +1109,7 @@ void GameWindowOpenGL::paintScene()
             assertNoError();
         }
     }
+    */
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);

@@ -7,9 +7,9 @@ void
 Camera::paintUI()
 {
     ImGui::DragFloat2("camera pos", position.data(), .1, -10, 10, "%.1fm");
-    ImGui::SliderFloat("screen height", &screen_height, .1, 10, "%.1fm");
-    ImGui::SliderFloat("camera fov", &fov_angle, 5, 90, "%.1f°");
-    ImGui::SliderFloat2("camera clip", clip.data(), .1, 100, "%.1fm", 3);
+    ImGui::SliderFloat("screen height", &screen_height, .1, 1000, "%.1fm", 3);
+    ImGui::SliderFloat("camera fov", &fov_angle, 10, 120, "%.1f°");
+    ImGui::SliderFloat2("camera clip", clip.data(), .1, 1000, "%.1fm", 3);
     ImGui::SliderFloat("ortho ratio", &ortho_ratio, 0, 1, "%.3f");
 }
 
