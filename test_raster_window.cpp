@@ -38,7 +38,16 @@ class TestWindowOpenGL : public RasterWindowOpenGL
             assert(!base_program);
             base_program = loadAndCompileProgram(":/shaders/base_vertex.glsl", ":/shaders/base_fragment.glsl");
             assert(base_program);
+            const auto init_ok = initProgramLocations(*base_program, {
+                { "posAttr", base_pos_attr },
+            }, {
+                { "cameraMatrix", base_camera_mat_unif },
+                { "worldMatrix", base_world_mat_unif },
+            });
+            assert(init_ok);
+            assertNoError();
 
+            /*
             base_pos_attr = base_program->attributeLocation("posAttr");
             base_camera_mat_unif = base_program->uniformLocation("cameraMatrix");
             base_world_mat_unif = base_program->uniformLocation("worldMatrix");
@@ -46,7 +55,7 @@ class TestWindowOpenGL : public RasterWindowOpenGL
             assert(base_pos_attr >= 0);
             assert(base_camera_mat_unif >= 0);
             assert(base_world_mat_unif >= 0);
-            assertNoError();
+            */
         }
 
         void initializeBuffers(BufferLoader& loader) override
@@ -216,6 +225,8 @@ int main(int argc, char* argv[])
     view.setAnimated(true);
     view.resize(1280, 720);
     view.show();
+
+    view.camera.screen_height = 10;
 
     view.addCheckbox("imgui demo", Qt::Key_Q, false, [&view](const bool checked) -> void {
         view.show_demo_window = checked;
