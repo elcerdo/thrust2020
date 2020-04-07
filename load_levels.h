@@ -16,6 +16,8 @@ struct LevelData
     std::string map_filename;
     std::vector<DoorData> doors;
     std::vector<PathData> paths;
+    b2Vec2 world_camera_position;
+    float world_screen_height;
 };
 
 struct MainData

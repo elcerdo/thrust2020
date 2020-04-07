@@ -82,8 +82,6 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
         resetLevel();
     }
 
-    world_camera.screen_height = 500;
-    world_camera.position[1] = -120;
 }
 
 void GameWindowOpenGL::resetLevel()
@@ -91,6 +89,10 @@ void GameWindowOpenGL::resetLevel()
     using std::cout;
     using std::endl;
     using std::get;
+
+    world_time = 0;
+    world_camera = Camera();
+    ship_camera = Camera();
 
     if (current_level < 0)
     {
@@ -105,21 +107,27 @@ void GameWindowOpenGL::resetLevel()
 
     cout << "========== loading " << std::quoted(level.name) << endl;
 
-    state = std::make_unique<GameState>();
-    state->resetGround(level.map_filename);
-    loadBackground(level.map_filename);
+    {
+        state = std::make_unique<GameState>();
+        state->resetGround(level.map_filename);
+        loadBackground(level.map_filename);
 
-    for (const auto& door : level.doors)
-        state->addDoor(get<0>(door), get<1>(door), get<2>(door));
+        for (const auto& door : level.doors)
+            state->addDoor(get<0>(door), get<1>(door), get<2>(door));
 
-    for (const auto& path : level.paths)
-        state->addPath(get<0>(path), get<1>(path));
+        for (const auto& path : level.paths)
+            state->addPath(get<0>(path), get<1>(path));
 
-    state->dumpCollisionData();
+        state->dumpCollisionData();
+    }
+
+    {
+        world_camera.screen_height = level.world_screen_height;
+        world_camera.position = { level.world_camera_position.x, level.world_camera_position.y };
+    }
 
     enforceCallbackValues();
 
-    world_time = 0;
 }
 
 void GameWindowOpenGL::loadBackground(const std::string& map_filename)

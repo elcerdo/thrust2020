@@ -23,9 +23,14 @@ QJsonObject load_json_object(const std::string& json_filename)
     return doc.object();
 }
 
+float float_from_json(const QJsonValue& obj, const QString& name, const float def = 0)
+{
+    return static_cast<float>(obj.toObject()[name].toDouble(def));
+}
+
 b2Vec2 vec2_from_json(const QJsonValue& obj, const QString& xx_name, const QString& yy_name, const b2Vec2 def = { 0, 0 } )
 {
-    return  { static_cast<float>(obj.toObject()[xx_name].toDouble(def.x)), static_cast<float>(obj.toObject()[yy_name].toDouble(def.y)) };
+    return { float_from_json(obj, xx_name, def.x), float_from_json(obj, yy_name, def.y) };
 }
 
 levels::MainData levels::load(const std::string& json_filename)
@@ -44,6 +49,8 @@ levels::MainData levels::load(const std::string& json_filename)
             level_obj["map"].toString().toStdString(),
             {},
             {},
+            vec2_from_json(level_obj, "wcx", "wcy", b2Vec2 { 0, -120 }),
+            float_from_json(level_obj, "wsh", 500),
         };
 
         for (const auto& door_json : level_obj["doors"].toArray())

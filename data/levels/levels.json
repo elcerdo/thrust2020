@@ -13,6 +13,8 @@
     {
       "name": "sandhour",
       "map": ":/levels/map2.svg",
+      "wcy": -95,
+      "wsh": 415,
       "doors": [
         { "cx": -65, "cy": -160, "dx": 15, "dy": 0},
         { "cx": -90, "cy": 100, "dx": -15, "dy": 0},
@@ -28,6 +30,8 @@
     {
       "name": "pump",
       "map": ":/levels/map4.svg",
+      "wcy": 10,
+      "wsh": 330,
       "paths": [
         {
           "positions": [
