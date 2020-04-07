@@ -77,6 +77,9 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
         sfx.setMuted(false);
         sfx.stop();
     }*/
+
+    world_camera.screen_height = 300;
+    world_camera.position[1] = -120;
 }
 
 void GameWindowOpenGL::resetLevel()
@@ -583,9 +586,17 @@ void GameWindowOpenGL::paintUI()
     { // camera window
         begin_left("Cameras");
 
-        //ship_camera.paintUI();
-        //ImGui::Separator();
-        world_camera.paintUI();
+        if (ImGui::TreeNode("World"))
+        {
+            world_camera.paintUI();
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Ship"))
+        {
+            ship_camera.paintUI();
+            ImGui::TreePop();
+        }
 
         end_left();
     }
@@ -757,7 +768,14 @@ void GameWindowOpenGL::paintScene()
     if (!skip_state_step)
         state->step(dt);
 
-    const auto& camera = world_camera;
+    {
+        assert(state);
+        assert(state->ship);
+        const auto& position = state->ship->GetWorldCenter();
+        ship_camera.position = { position.x, position.y };
+    }
+
+    const auto& camera = use_world_camera ?  world_camera : ship_camera;
 
     if (use_painter)
     { // draw with qt painter

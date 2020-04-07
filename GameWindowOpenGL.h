@@ -60,7 +60,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         float world_time = 0;
 
         bool use_world_camera = false;
-        //Camera ship_camera;
+        Camera ship_camera;
         Camera world_camera;
 
     protected:
@@ -118,5 +118,4 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         int particle_camera_mat_unif = -1;
         int particle_world_mat_unif = -1;
 };
-
 

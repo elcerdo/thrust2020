@@ -6,7 +6,7 @@
 void
 Camera::paintUI()
 {
-    ImGui::DragFloat2("camera pos", position.data(), .1, -10, 10, "%.1fm");
+    ImGui::DragFloat2("camera pos", position.data(), .5, -1000, 1000, "%.1fm");
     ImGui::SliderFloat("screen height", &screen_height, .1, 1000, "%.1fm", 3);
     ImGui::SliderFloat("camera fov", &fov_angle, 10, 120, "%.1f°");
     ImGui::SliderFloat2("camera clip", clip.data(), .1, 1000, "%.1fm", 3);
