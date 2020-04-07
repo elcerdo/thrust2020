@@ -5,17 +5,24 @@
 #include <QApplication>
 
 #include <iostream>
+#include <cmath>
 
 class TestWindowOpenGL : public RasterWindowOpenGL
 {
     public:
-        float angle = 30;
+        float cube_angle = 30;
+        float camera_fov_angle = 60.;
+        float camera_screen_height = 4;
+        std::array<float, 2> camera_clip = { .1, 100 };
+        std::array<float, 2> camera_position = { 0, 0 };
+
         bool show_demo_window = false;
 
     protected:
         std::unique_ptr<QOpenGLShaderProgram> base_program = nullptr;
         int base_pos_attr = -1;
-        int base_mat_unif = -1;
+        int base_camera_mat_unif = -1;
+        int base_world_mat_unif = -1;
 
         void initializeUI() override
         {
@@ -30,16 +37,18 @@ class TestWindowOpenGL : public RasterWindowOpenGL
             assert(base_program);
 
             base_pos_attr = base_program->attributeLocation("posAttr");
-            base_mat_unif = base_program->uniformLocation("matrix");
-            qDebug() << "locations" << base_pos_attr << base_mat_unif;
+            base_camera_mat_unif = base_program->uniformLocation("cameraMatrix");
+            base_world_mat_unif = base_program->uniformLocation("worldMatrix");
+            qDebug() << "locations" << base_pos_attr << base_camera_mat_unif << base_world_mat_unif;
             assert(base_pos_attr >= 0);
-            assert(base_mat_unif >= 0);
+            assert(base_camera_mat_unif >= 0);
+            assert(base_world_mat_unif >= 0);
             assertNoError();
         }
 
         void initializeBuffers(BufferLoader& loader) override
         {
-            loader.init(2);
+            loader.init(3);
 
             // cube
             loader.loadBuffer3(0, {
@@ -56,13 +65,26 @@ class TestWindowOpenGL : public RasterWindowOpenGL
                 0, 1, 3, 2, 7, 6, 4, 5,
                 3, 7, 0, 4, 1, 5, 2, 6,
             });
+
+            // square
+            loader.loadBuffer2(2, {
+                { -1, -1 },
+                { 1, -1 },
+                { -1, 1 },
+                { 1, 1 },
+            });
         }
 
         void paintUI() override
         {
             ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiCond_Once);
             ImGui::Begin("test_raster_window", &display_ui);
-            ImGui::SliderFloat("angle", &angle, 0, 360);
+
+            ImGui::SliderFloat("cube angle", &cube_angle, 0, 360, "%.1f°");
+            ImGui::SliderFloat("screen height", &camera_screen_height, .1, 10, "%.1fm");
+            ImGui::DragFloat2("camera pos", camera_position.data(), .1, -10, 10, "%.1fm");
+            ImGui::SliderFloat("camera fov", &camera_fov_angle, 30, 90, "%.1f°");
+            ImGui::SliderFloat2("camera clip", camera_clip.data(), .1, 100, "%.1fm", 2);
 
             ImGuiCallbacks();
             ImGui::Separator();
@@ -82,11 +104,13 @@ class TestWindowOpenGL : public RasterWindowOpenGL
 
         void paintScene() override
         {
-            const auto world_matrix = [this]() -> QMatrix4x4
+            const auto camera_matrix = [this]() -> QMatrix4x4
             {
+                using std::get;
                 QMatrix4x4 matrix;
-                matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
-                matrix.translate(0, 0, -5);
+                matrix.perspective(camera_fov_angle, width() / static_cast<float>(height()), get<0>(camera_clip), get<1>(camera_clip));
+                const auto camera_zz = camera_screen_height / tan(M_PI * camera_fov_angle / 180 / 2) / 2;
+                matrix.translate(-get<0>(camera_position), -get<1>(camera_position), -camera_zz);
                 return matrix;
             }();
 
@@ -98,12 +122,12 @@ class TestWindowOpenGL : public RasterWindowOpenGL
 
                 const auto blit_cube = [this]() -> void
                 {
-                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[1]);
-                    assertNoError();
-
                     glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
                     glVertexAttribPointer(base_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
                     glEnableVertexAttribArray(base_pos_attr);
+                    assertNoError();
+
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[1]);
                     assertNoError();
 
                     glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
@@ -114,13 +138,43 @@ class TestWindowOpenGL : public RasterWindowOpenGL
                     assertNoError();
                 };
 
+                const auto blit_square = [this]() -> void
                 {
-                    auto matrix = world_matrix;
-                    //matrix.translate(0, 10);
-                    //matrix.scale(3, 3, 3);
-                    matrix.rotate(angle, 1, 1, 1);
-                    base_program->setUniformValue(base_mat_unif, matrix);
+                    glBindBuffer(GL_ARRAY_BUFFER, vbos[2]);
+                    glVertexAttribPointer(base_pos_attr, 2, GL_FLOAT, GL_FALSE, 0, 0);
+                    glEnableVertexAttribArray(base_pos_attr);
+                    assertNoError();
 
+                    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+                    assertNoError();
+
+                    glDisableVertexAttribArray(base_pos_attr);
+                    assertNoError();
+                };
+
+                base_program->setUniformValue(base_camera_mat_unif, camera_matrix);
+
+                {
+                    QMatrix4x4 world_matrix;
+                    world_matrix.scale(.5, .5, .5);
+                    world_matrix.translate(1, 1, 0);
+                    base_program->setUniformValue(base_world_mat_unif, world_matrix);
+                    blit_square();
+                }
+
+                {
+                    QMatrix4x4 world_matrix;
+                    world_matrix.translate(0, 0, -1);
+                    world_matrix.scale(2, 2, 2);
+                    base_program->setUniformValue(base_world_mat_unif, world_matrix);
+                    blit_square();
+                }
+
+                {
+                    QMatrix4x4 world_matrix;
+                    world_matrix.translate(-1, 0, 0);
+                    world_matrix.rotate(cube_angle, 1, 1, 1);
+                    base_program->setUniformValue(base_world_mat_unif, world_matrix);
                     blit_cube();
                 }
             }
