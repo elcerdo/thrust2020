@@ -256,17 +256,30 @@ void GameWindowOpenGL::initializeBuffers(BufferLoader& loader)
 
     // ship
     loader.loadBuffer3(0, {
-            { -2, 0, 0 },
-            { 2, 0, 0 },
-            { 0, 4, 0 },
+            { -2, 0, .2 },
+            { 2, 0, .2 },
+            { 0, 4, .2 },
+            { -2, 0, -.2 },
+            { 2, 0, -.2 },
+            { 0, 4, -.2 },
             });
     loader.loadBuffer4(1, { // ship colors
             { 1, 1, 1, 1 },
+            { 1, 1, 1, 1 },
+            { 1, 1, 1, 1 },
             { 0, 0, 0, 1 },
-            { 0, 0, 1, 1 },
+            { 0, 0, 0, 1 },
+            { 0, 0, 0, 1 },
             });
     loader.loadIndices(11, { // ship indices
-            0, 1, 3,
+            0, 1, 2,
+            4, 3, 5,
+            0, 3, 1,
+            1, 3, 4,
+            2, 5, 0,
+            0, 5, 3,
+            1, 4, 2,
+            2, 4, 5,
             });
 
     // square
@@ -892,7 +905,7 @@ void GameWindowOpenGL::paintScene()
     {
         //glClear(GL_DEPTH_BUFFER_BIT);
 
-        //glEnable(GL_CULL_FACE);
+        glEnable(GL_CULL_FACE);
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
@@ -1023,7 +1036,7 @@ void GameWindowOpenGL::paintScene()
 
             const auto blit_ship = [this]() -> void
             {
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[5]);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[11]);
                 assertNoError();
 
                 glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
@@ -1036,7 +1049,7 @@ void GameWindowOpenGL::paintScene()
                 glEnableVertexAttribArray(main_col_attr);
                 assertNoError();
 
-                glDrawArrays(GL_TRIANGLES, 0, 3);
+                glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, nullptr);
                 assertNoError();
 
                 glDisableVertexAttribArray(main_col_attr);
@@ -1174,7 +1187,7 @@ void GameWindowOpenGL::paintScene()
 
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_BLEND);
-        //glDisable(GL_CULL_FACE);
+        glDisable(GL_CULL_FACE);
     }
 
     { // sfx
