@@ -266,7 +266,7 @@ void GameWindowOpenGL::initializeBuffers(BufferLoader& loader)
     loader.loadBuffer4(1, { // ship colors
             { 1, 1, 1, 1 },
             { 1, 1, 1, 1 },
-            { 1, 1, 1, 1 },
+            { .2, .2, 1, 1 },
             { 0, 0, 0, 1 },
             { 0, 0, 0, 1 },
             { 0, 0, 0, 1 },
@@ -289,12 +289,6 @@ void GameWindowOpenGL::initializeBuffers(BufferLoader& loader)
             { -1, 1, 0 },
             { 1, 1, 0 },
             });
-    loader.loadBuffer4(3, { // ship tail colors
-            { 0, 0, 1, 1 },
-            { 0, 0, 1, 1 },
-            { 0, 0, 1, 1 },
-            { 0, 0, 1, 1 },
-            });
     loader.loadBuffer4(10, { // morpheus den gradient colors
             { 0x30 / 255., 0xcf / 255., 0xd0 / 255., 1 },
             { 0x30 / 255., 0xcf / 255., 0xd0 / 255., 1 },
@@ -312,6 +306,16 @@ void GameWindowOpenGL::initializeBuffers(BufferLoader& loader)
             { 1, -1, -1 },
             { 1, 1, -1 },
             { -1, 1, -1 },
+            });
+    loader.loadBuffer4(3, { // ship tail colors
+            { 1, 1, 0, 1 },
+            { 0, 1, 0, 1 },
+            { 0, 0, 0, 1 },
+            { 1, 1, 0, 1 },
+            { 1, 1, 0, 1 },
+            { 0, 1, 0, 1 },
+            { 0, 1, 0, 1 },
+            { 1, 1, 0, 1 },
             });
     loader.loadIndices(5, {
             0, 1, 3, 2, 7, 6, 4, 5,
@@ -900,12 +904,13 @@ void GameWindowOpenGL::paintScene()
             painter.restore();
         }
     }
+
     assertNoError();
 
     {
         //glClear(GL_DEPTH_BUFFER_BIT);
 
-        glEnable(GL_CULL_FACE);
+        //glEnable(GL_CULL_FACE);
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
@@ -914,39 +919,6 @@ void GameWindowOpenGL::paintScene()
         glEnable(GL_DEPTH_TEST);
 
         const auto camera_matrix = camera.cameraMatrix(*this);
-
-        { // draw with base program
-            ProgramBinder binder(*this, base_program);
-
-            const auto blit_cube = [this]() -> void
-            {
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[5]);
-                assertNoError();
-
-                glBindBuffer(GL_ARRAY_BUFFER, vbos[4]);
-                glVertexAttribPointer(base_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
-                glEnableVertexAttribArray(base_pos_attr);
-                assertNoError();
-
-                glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
-                glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(8 * sizeof(unsigned int)));
-                assertNoError();
-
-                glDisableVertexAttribArray(base_pos_attr);
-                assertNoError();
-            };
-
-            base_program->setUniformValue(base_camera_mat_unif, camera_matrix);
-
-            {
-                QMatrix4x4 world_matrix;
-                world_matrix.translate(0, 10);
-                world_matrix.scale(3, 3, 3);
-                world_matrix.rotate(world_time * 60, 1, 1, 1);
-                base_program->setUniformValue(base_world_mat_unif, world_matrix);
-                blit_cube();
-            }
-        }
 
         { // draw with particle program
             ProgramBinder binder(*this, particle_program);
@@ -975,7 +947,7 @@ void GameWindowOpenGL::paintScene()
                 const auto radius = system->GetRadius();
 
                 QMatrix4x4 world_matrix;
-                world_matrix.translate(0, 0, -1e-5);
+                world_matrix.translate(0, 0, 0);
 
                 particle_program->setUniformValue(particle_radius_unif, radius);
                 particle_program->setUniformValue(particle_radius_factor_unif, radius_factor);
@@ -1030,6 +1002,40 @@ void GameWindowOpenGL::paintScene()
             }
         }
 
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        { // draw with base program
+            ProgramBinder binder(*this, base_program);
+
+            const auto blit_cube = [this]() -> void
+            {
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[5]);
+                assertNoError();
+
+                glBindBuffer(GL_ARRAY_BUFFER, vbos[4]);
+                glVertexAttribPointer(base_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
+                glEnableVertexAttribArray(base_pos_attr);
+                assertNoError();
+
+                glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
+                glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(8 * sizeof(unsigned int)));
+                assertNoError();
+
+                glDisableVertexAttribArray(base_pos_attr);
+                assertNoError();
+            };
+
+            base_program->setUniformValue(base_camera_mat_unif, camera_matrix);
+
+            {
+                QMatrix4x4 world_matrix;
+                world_matrix.translate(0, 10);
+                world_matrix.scale(3, 3, 3);
+                world_matrix.rotate(world_time * 60, 1, 1, 1);
+                base_program->setUniformValue(base_world_mat_unif, world_matrix);
+                blit_cube();
+            }
+        }
 
         { // draw with main program
             ProgramBinder binder(*this, main_program);
@@ -1057,9 +1063,12 @@ void GameWindowOpenGL::paintScene()
                 assertNoError();
             };
 
-            const auto blit_square = [this]() -> void
+            const auto blit_wing = [this]() -> void
             {
-                glBindBuffer(GL_ARRAY_BUFFER, vbos[2]);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[5]);
+                assertNoError();
+
+                glBindBuffer(GL_ARRAY_BUFFER, vbos[4]);
                 glVertexAttribPointer(main_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
                 glEnableVertexAttribArray(main_pos_attr);
                 assertNoError();
@@ -1069,7 +1078,8 @@ void GameWindowOpenGL::paintScene()
                 glEnableVertexAttribArray(main_col_attr);
                 assertNoError();
 
-                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+                glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
+                glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(8 * sizeof(unsigned int)));
                 assertNoError();
 
                 glDisableVertexAttribArray(main_col_attr);
@@ -1087,20 +1097,42 @@ void GameWindowOpenGL::paintScene()
                 const auto& pos = state->ship->GetPosition();
                 world_matrix.translate(pos.x, pos.y);
 
+                auto delta = state->ship_state.target_angle - state->ship->GetAngle();
+                delta /= .1;
+                delta *= 20;
+
+
                 world_matrix.rotate(180. * state->ship->GetAngle() / M_PI, 0, 0, 1);
-                world_matrix.rotate(world_time * 60, 0, 1, 0);
+                world_matrix.rotate(delta, 0, 1, 0);
 
                 main_program->setUniformValue(main_world_mat_unif, world_matrix);
                 assertNoError();
 
                 blit_ship();
 
-                world_matrix.rotate(90, 0, 1, 0);
+                {
+                    auto foo = world_matrix;
+                    foo.rotate(90, 0, 1, 0);
+                    foo.scale(.5, .8, 1);
+                    foo.translate(0, -.5, 1.2);
+                    foo.scale(1, 1, .2);
+                    foo.rotate(delta / 2, 1, 0, 0);
+                    main_program->setUniformValue(main_world_mat_unif, foo);
+                    assertNoError();
+                    blit_wing();
+                }
 
-                main_program->setUniformValue(main_world_mat_unif, world_matrix);
-                assertNoError();
-
-                blit_square();
+                {
+                    auto foo = world_matrix;
+                    foo.rotate(90, 0, 1, 0);
+                    foo.scale(.5, .8, 1);
+                    foo.translate(0, -.5, -1.2);
+                    foo.scale(1, 1, .2);
+                    foo.rotate(delta / 2, 1, 0, 0);
+                    main_program->setUniformValue(main_world_mat_unif, foo);
+                    assertNoError();
+                    blit_wing();
+                }
             }
         }
 
@@ -1171,7 +1203,7 @@ void GameWindowOpenGL::paintScene()
                 assert(state);
                 assert(state->ship);
                 const auto& pos = state->ship->GetWorldCenter();
-                world_matrix.translate(pos.x, pos.y, 1e-5);
+                world_matrix.translate(pos.x, pos.y, 2);
                 world_matrix.scale(6, 6, 1);
 
                 grab_program->setUniformValue(grab_world_mat_unif, world_matrix);
