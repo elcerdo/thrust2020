@@ -252,34 +252,37 @@ void GameWindowOpenGL::initializePrograms()
 
 void GameWindowOpenGL::initializeBuffers(BufferLoader& loader)
 {
-    loader.init(11);
+    loader.init(12);
 
     // ship
     loader.loadBuffer3(0, {
-            { -1.8, 0, 0 },
-            { 1.8, 0, 0 },
-            { 0, 2*1.8, 0 },
+            { -2, 0, 0 },
+            { 2, 0, 0 },
+            { 0, 4, 0 },
             });
-    loader.loadBuffer4(1, {
-            { 1, 0, 0, 1 },
-            { 0, 1, 0, 1 },
+    loader.loadBuffer4(1, { // ship colors
+            { 1, 1, 1, 1 },
+            { 0, 0, 0, 1 },
             { 0, 0, 1, 1 },
             });
+    loader.loadIndices(11, { // ship indices
+            0, 1, 3,
+            });
 
-    // square (ship tail, ball and background gradient)
+    // square
     loader.loadBuffer3(2, {
             { -1, -1, 0 },
             { 1, -1, 0 },
             { -1, 1, 0 },
             { 1, 1, 0 },
             });
-    loader.loadBuffer4(3, {
+    loader.loadBuffer4(3, { // ship tail colors
             { 0, 0, 1, 1 },
             { 0, 0, 1, 1 },
             { 0, 0, 1, 1 },
             { 0, 0, 1, 1 },
             });
-    loader.loadBuffer4(10, { // morpheus den gradient
+    loader.loadBuffer4(10, { // morpheus den gradient colors
             { 0x30 / 255., 0xcf / 255., 0xd0 / 255., 1 },
             { 0x30 / 255., 0xcf / 255., 0xd0 / 255., 1 },
             { 0x33 / 255., 0x08 / 255., 0x67 / 255., 1 },
@@ -604,17 +607,9 @@ void GameWindowOpenGL::paintUI()
     { // camera window
         begin_left("Cameras");
 
-        if (ImGui::TreeNode("World"))
-        {
-            world_camera.paintUI();
-            ImGui::TreePop();
-        }
-
-        if (ImGui::TreeNode("Ship"))
-        {
-            ship_camera.paintUI();
-            ImGui::TreePop();
-        }
+        auto& camera = use_world_camera ? world_camera : ship_camera;
+        ImGui::Text("%s camera", use_world_camera ? "world" : "ship");
+        camera.paintUI();
 
         end_left();
     }
@@ -1026,8 +1021,11 @@ void GameWindowOpenGL::paintScene()
         { // draw with main program
             ProgramBinder binder(*this, main_program);
 
-            const auto blit_triangle = [this]() -> void
+            const auto blit_ship = [this]() -> void
             {
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[5]);
+                assertNoError();
+
                 glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
                 glVertexAttribPointer(main_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
                 glEnableVertexAttribArray(main_pos_attr);
@@ -1082,15 +1080,14 @@ void GameWindowOpenGL::paintScene()
                 main_program->setUniformValue(main_world_mat_unif, world_matrix);
                 assertNoError();
 
-                blit_triangle();
-                blit_square();
+                blit_ship();
 
                 world_matrix.rotate(90, 0, 1, 0);
 
                 main_program->setUniformValue(main_world_mat_unif, world_matrix);
                 assertNoError();
 
-                blit_triangle();
+                blit_square();
             }
         }
 

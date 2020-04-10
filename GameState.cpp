@@ -243,12 +243,11 @@ void GameState::resetShip()
     def.angularVelocity = 0;
     def.angle = 0;
 
-    constexpr float ww = 1.8;
     b2PolygonShape shape;
     static const b2Vec2 points[3] {
-        { -ww, 0 },
-        { ww, 0 },
-        { 0, 2*ww }
+        { -2, 0 },
+        { 2, 0 },
+        { 0, 4 }
     };
     shape.Set(points, 3);
 
