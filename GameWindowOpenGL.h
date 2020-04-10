@@ -68,6 +68,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
 
         QSoundEffect engine_sfx;
         QSoundEffect ship_click_sfx;
+				QImage logo;
         //QSoundEffect back_click_sfx;
 
         QSvgRenderer map_renderer;

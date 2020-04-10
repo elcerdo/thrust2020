@@ -61,6 +61,11 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
         sfx.stop();
     }
 
+    {
+        logo = QImage(":/images/logo.png");
+        assert(!logo.size().isEmpty());
+    }
+
     /*{
         auto& sfx = back_click_sfx;
         const auto click_sound = QUrl::fromLocalFile(":/sounds/click00.wav");
@@ -817,12 +822,24 @@ void GameWindowOpenGL::paintScene()
         glDisable(GL_BLEND);
     }
 
-    if (!state)
-        return;
+    if (use_painter && !state)
+    { // draw with qt painter
+        assert(device);
+        device->setSize(size() * devicePixelRatio());
+        QPainter painter(device.get());
+
+        const auto scale = pow(std::min(1., world_time / .2), 1.35);
+        painter.translate(width() / 2, height() / 2);
+        painter.scale(scale, scale);
+        painter.drawImage(QRect(QPoint(-logo.size().width() / 2, -logo.size().height() / 2), logo.size()), logo);
+    }
 
     const auto& io = ImGui::GetIO();
     const double dt = std::min(50e-3, 1. / io.Framerate);
     world_time += dt;
+
+    if (!state)
+        return;
 
     { // ship state
         assert(state);

@@ -124,6 +124,7 @@ add_executable(rocket
     data/sounds/sounds.qrc
     data/shaders/shaders.qrc
     data/levels/levels.qrc
+    data/images/images.qrc
     )
 target_link_libraries(rocket
     Box2D
