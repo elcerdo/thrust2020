@@ -8,6 +8,7 @@
 #include <QOpenGLPaintDevice>
 #include <QSoundEffect>
 #include <QSvgRenderer>
+#include <QOpenGLTexture>
 
 #include <random>
 
@@ -67,7 +68,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
 
         QSoundEffect engine_sfx;
         QSoundEffect ship_click_sfx;
-				QImage logo;
+        QImage logo;
         //QSoundEffect back_click_sfx;
 
         QSvgRenderer map_renderer;
@@ -117,5 +118,11 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         int particle_mix_unif = -1;
         int particle_camera_mat_unif = -1;
         int particle_world_mat_unif = -1;
+
+        std::unique_ptr<QOpenGLShaderProgram> crate_program = nullptr;
+        int crate_pos_attr = -1;
+        int crate_camera_mat_unif = -1;
+        int crate_world_mat_unif = -1;
+        std::unique_ptr<QOpenGLTexture> crate_texture = nullptr;
 };
 

@@ -11,5 +11,7 @@
         <file>ball_fragment.glsl</file>
         <file alias="grab_vertex.glsl">base_vertex.glsl</file>
         <file>grab_fragment.glsl</file>
+        <file alias="crate_vertex.glsl">base_vertex.glsl</file>
+        <file alias="crate_fragment.glsl">base_fragment.glsl</file>
     </qresource>
 </RCC>

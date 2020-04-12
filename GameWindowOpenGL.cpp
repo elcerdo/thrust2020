@@ -253,6 +253,26 @@ void GameWindowOpenGL::initializePrograms()
         assert(init_ok);
         assertNoError();
     }
+
+    {
+        assert(!crate_texture);
+        crate_texture = std::make_unique<QOpenGLTexture>(QImage(":/images/crate_texture.png"));
+        assert(crate_texture->width() == 2048);
+        assert(crate_texture->height() == 2048);
+
+        assert(!crate_program);
+        crate_program = loadAndCompileProgram(":/shaders/crate_vertex.glsl", ":/shaders/crate_fragment.glsl");
+
+        assert(crate_program);
+        const auto init_ok = initLocations(*crate_program, {
+                { "posAttr", crate_pos_attr },
+                }, {
+                { "cameraMatrix", crate_camera_mat_unif },
+                { "worldMatrix", crate_world_mat_unif },
+                });
+        assert(init_ok);
+        assertNoError();
+    }
 }
 
 void GameWindowOpenGL::initializeBuffers(BufferLoader& loader)
@@ -886,8 +906,9 @@ void GameWindowOpenGL::paintScene()
             if (draw_debug)
                 drawBody(painter, *state->ground);
 
-            for (auto& crate : state->crates)
-                drawBody(painter, *crate);
+            if (draw_debug)
+                for (auto& crate : state->crates)
+                    drawBody(painter, *crate);
 
             for (auto& door : state->doors)
                 drawBody(painter, *std::get<0>(door), Qt::yellow);
@@ -1016,7 +1037,7 @@ void GameWindowOpenGL::paintScene()
             }
         }
 
-        glClear(GL_DEPTH_BUFFER_BIT);
+        //glClear(GL_DEPTH_BUFFER_BIT);
 
         { // draw with base program
             ProgramBinder binder(*this, base_program);
@@ -1148,6 +1169,44 @@ void GameWindowOpenGL::paintScene()
                 }
             }
         }
+
+        { // draw with crate program
+            ProgramBinder binder(*this, crate_program);
+
+            const auto blit_cube = [this]() -> void
+            {
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[5]);
+                assertNoError();
+
+                glBindBuffer(GL_ARRAY_BUFFER, vbos[4]);
+                glVertexAttribPointer(crate_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
+                glEnableVertexAttribArray(crate_pos_attr);
+                assertNoError();
+
+                glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
+                glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(8 * sizeof(unsigned int)));
+                assertNoError();
+
+                glDisableVertexAttribArray(crate_pos_attr);
+                assertNoError();
+            };
+
+            crate_program->setUniformValue(crate_camera_mat_unif, camera_matrix);
+
+            for (auto& crate : state->crates)
+            {
+                const auto& pos = crate->GetWorldCenter();
+                const auto& angle = crate->GetAngle();
+
+                QMatrix4x4 world_matrix;
+                world_matrix.translate(pos.x, pos.y, 0);
+                world_matrix.rotate(180. * angle / M_PI, 0, 0, 1);
+                world_matrix.scale(GameState::crate_scale, GameState::crate_scale, GameState::crate_scale);
+                crate_program->setUniformValue(crate_world_mat_unif, world_matrix);
+                blit_cube();
+            }
+        }
+
 
         { // draw with ball program
             ProgramBinder binder(*this, ball_program);
