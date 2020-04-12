@@ -123,6 +123,7 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         int crate_pos_attr = -1;
         int crate_camera_mat_unif = -1;
         int crate_world_mat_unif = -1;
+        int crate_texture_unif = -1;
         std::unique_ptr<QOpenGLTexture> crate_texture = nullptr;
 };
 

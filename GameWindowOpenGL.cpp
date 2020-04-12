@@ -256,9 +256,9 @@ void GameWindowOpenGL::initializePrograms()
 
     {
         assert(!crate_texture);
-        crate_texture = std::make_unique<QOpenGLTexture>(QImage(":/images/crate_texture.png"));
-        assert(crate_texture->width() == 2048);
-        assert(crate_texture->height() == 2048);
+        crate_texture = std::make_unique<QOpenGLTexture>(QImage(":/images/crate_texture.png").mirrored());
+        assert(crate_texture->width());
+        assert(crate_texture->height());
 
         assert(!crate_program);
         crate_program = loadAndCompileProgram(":/shaders/crate_vertex.glsl", ":/shaders/crate_fragment.glsl");
@@ -269,6 +269,7 @@ void GameWindowOpenGL::initializePrograms()
                 }, {
                 { "cameraMatrix", crate_camera_mat_unif },
                 { "worldMatrix", crate_world_mat_unif },
+                { "texture", crate_texture_unif },
                 });
         assert(init_ok);
         assertNoError();
@@ -1173,6 +1174,9 @@ void GameWindowOpenGL::paintScene()
         { // draw with crate program
             ProgramBinder binder(*this, crate_program);
 
+            assert(crate_texture);
+            crate_texture->bind(0);
+
             const auto blit_cube = [this]() -> void
             {
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[5]);
@@ -1192,6 +1196,7 @@ void GameWindowOpenGL::paintScene()
             };
 
             crate_program->setUniformValue(crate_camera_mat_unif, camera_matrix);
+            crate_program->setUniformValue(crate_texture_unif, 0);
 
             for (auto& crate : state->crates)
             {
@@ -1205,6 +1210,8 @@ void GameWindowOpenGL::paintScene()
                 crate_program->setUniformValue(crate_world_mat_unif, world_matrix);
                 blit_cube();
             }
+
+            crate_texture->release();
         }
 
 
