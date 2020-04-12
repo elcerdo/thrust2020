@@ -209,7 +209,7 @@ void GameState::resetBall()
     def.angularVelocity = 0;
 
     b2CircleShape shape;
-    shape.m_radius = 5.;
+    shape.m_radius = ball_scale;
 
     b2FixtureDef fixture;
     fixture.shape = &shape;
@@ -245,9 +245,9 @@ void GameState::resetShip()
 
     b2PolygonShape shape;
     static const b2Vec2 points[3] {
-        { -2, 0 },
-        { 2, 0 },
-        { 0, 4 }
+        { -ship_scale, 0 },
+        { ship_scale, 0 },
+        { 0, ship_scale * 2 }
     };
     shape.Set(points, 3);
 
@@ -538,13 +538,12 @@ void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double a
     def.position = pos;
     def.angle = angle;
 
-    constexpr float zz = 3; // 1.2
     b2PolygonShape shape;
     static const b2Vec2 points[4] {
-        { -zz, -zz },
-        { zz, -zz },
-        { zz, zz },
-        { -zz, zz },
+        { -crate_scale, -crate_scale },
+        { crate_scale, -crate_scale },
+        { crate_scale, crate_scale },
+        { -crate_scale, crate_scale },
     };
     shape.Set(points, 4);
 

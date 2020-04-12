@@ -27,7 +27,6 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         void drawBody(QPainter& painter, const b2Body& body, const QColor& color = Qt::black) const;
         void drawParticleSystem(QPainter& painter, const b2ParticleSystem& system, const QColor& color = Qt::black) const;
         void drawShip(QPainter& painter);
-        void drawFlame(QPainter& painter);
 
         void initializeUI() override;
         void initializeBuffers(BufferLoader& loader) override;

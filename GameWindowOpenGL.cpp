@@ -261,12 +261,12 @@ void GameWindowOpenGL::initializeBuffers(BufferLoader& loader)
 
     // ship
     loader.loadBuffer3(0, {
-            { -2, 0, .2 },
-            { 2, 0, .2 },
-            { 0, 4, .2 },
-            { -2, 0, -.2 },
-            { 2, 0, -.2 },
-            { 0, 4, -.2 },
+            { -1, 0, .1 },
+            { 1, 0, .1 },
+            { 0, 2, .1 },
+            { -1, 0, -.1 },
+            { 1, 0, -.1 },
+            { 0, 2, -.1 },
             });
     loader.loadBuffer4(1, { // ship colors
             { 1, 1, 1, 1 },
@@ -429,44 +429,6 @@ void GameWindowOpenGL::drawBody(QPainter& painter, const b2Body& body, const QCo
     }
 }
 
-void GameWindowOpenGL::drawFlame(QPainter& painter)
-{
-    assert(state);
-
-    std::bernoulli_distribution dist_flicker;
-    std::normal_distribution<float> dist_noise(0, .2);
-    const auto randomPoint = [this, &dist_noise]() -> QPointF {
-        return { dist_noise(flame_rng), dist_noise(flame_rng) };
-    };
-
-    const auto& body = state->ship;
-    assert(body);
-
-    painter.save();
-    const auto& position = body->GetPosition();
-    const auto& angle = body->GetAngle();
-    painter.translate(position.x, position.y);
-    painter.rotate(qRadiansToDegrees(angle));
-    painter.scale(2.5, 2.5);
-
-    QLinearGradient grad(QPointF(0, 0), QPointF(0, -3));
-    grad.setColorAt(0, QColor(0xfa, 0x70, 0x9a)); // true sunset
-    grad.setColorAt(1, QColor(0xfe, 0xe1, 0x40));
-
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(grad);
-    QPolygonF poly;
-    poly << QPointF(0, 0) << QPointF(1, -3) + randomPoint();
-    if (dist_flicker(flame_rng)) poly << QPointF(.5, -2.5) + randomPoint();
-    poly << QPointF(0, -4) + randomPoint();
-    if (dist_flicker(flame_rng)) poly << QPointF(-.5, -2.5) + randomPoint();
-    poly << QPointF(-1, -3) + randomPoint();
-    painter.scale(.8, .8);
-    painter.translate(0, 1.5);
-    painter.drawPolygon(poly);
-    painter.restore();
-}
-
 void GameWindowOpenGL::drawShip(QPainter& painter)
 {
     assert(state);
@@ -475,7 +437,42 @@ void GameWindowOpenGL::drawShip(QPainter& painter)
     assert(body);
 
     if (state->ship_state.firing_thruster)
-        drawFlame(painter);
+    {
+        assert(state);
+
+        std::bernoulli_distribution dist_flicker;
+        std::normal_distribution<float> dist_noise(0, .2);
+        const auto randomPoint = [this, &dist_noise]() -> QPointF {
+            return { dist_noise(flame_rng), dist_noise(flame_rng) };
+        };
+
+        const auto& body = state->ship;
+        assert(body);
+
+        painter.save();
+        const auto& position = body->GetPosition();
+        const auto& angle = body->GetAngle();
+        painter.translate(position.x, position.y);
+        painter.rotate(qRadiansToDegrees(angle));
+        painter.scale(2.5, 2.5);
+
+        QLinearGradient grad(QPointF(0, 0), QPointF(0, -3));
+        grad.setColorAt(0, QColor(0xfa, 0x70, 0x9a)); // true sunset
+        grad.setColorAt(1, QColor(0xfe, 0xe1, 0x40));
+
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(grad);
+        QPolygonF poly;
+        poly << QPointF(0, 0) << QPointF(1, -3) + randomPoint();
+        if (dist_flicker(flame_rng)) poly << QPointF(.5, -2.5) + randomPoint();
+        poly << QPointF(0, -4) + randomPoint();
+        if (dist_flicker(flame_rng)) poly << QPointF(-.5, -2.5) + randomPoint();
+        poly << QPointF(-1, -3) + randomPoint();
+        painter.scale(.8, .8);
+        painter.translate(0, 1.5);
+        painter.drawPolygon(poly);
+        painter.restore();
+    }
 
     if (draw_debug)
         drawBody(painter, *body, Qt::black);
@@ -1118,19 +1115,20 @@ void GameWindowOpenGL::paintScene()
                 delta /= .1;
                 delta *= 20;
 
-
                 world_matrix.rotate(180. * state->ship->GetAngle() / M_PI, 0, 0, 1);
                 world_matrix.rotate(delta, 0, 1, 0);
+                world_matrix.scale(GameState::ship_scale, GameState::ship_scale, GameState::ship_scale);
 
                 main_program->setUniformValue(main_world_mat_unif, world_matrix);
                 assertNoError();
 
                 blit_ship();
 
+                world_matrix.rotate(90, 0, 1, 0);
+                world_matrix.scale(.25, .4, .5);
+
                 {
                     auto foo = world_matrix;
-                    foo.rotate(90, 0, 1, 0);
-                    foo.scale(.5, .8, 1);
                     foo.translate(0, -.5, 1.2);
                     foo.scale(1, 1, .2);
                     foo.rotate(delta / 2, 1, 0, 0);
@@ -1141,8 +1139,6 @@ void GameWindowOpenGL::paintScene()
 
                 {
                     auto foo = world_matrix;
-                    foo.rotate(90, 0, 1, 0);
-                    foo.scale(.5, .8, 1);
                     foo.translate(0, -.5, -1.2);
                     foo.scale(1, 1, .2);
                     foo.rotate(delta / 2, 1, 0, 0);
@@ -1176,15 +1172,13 @@ void GameWindowOpenGL::paintScene()
                 assert(state->ball);
                 assert(state->ball->GetFixtureList());
                 assert(state->ball->GetFixtureList()->GetShape());
-                const auto& shape = static_cast<const b2CircleShape&>(*state->ball->GetFixtureList()->GetShape());
 
                 QMatrix4x4 world_matrix;
                 const auto& pos = state->ball->GetWorldCenter();
                 const auto& angle = state->ball->GetAngle();
                 world_matrix.translate(pos.x, pos.y);
                 world_matrix.rotate(qRadiansToDegrees(angle), 0, 0, 1);
-                world_matrix.scale(shape.m_radius, shape.m_radius, shape.m_radius);
-                //world_matrix.rotate(frame_counter, 1, 1, 1);
+                world_matrix.scale(GameState::ball_scale, GameState::ball_scale, GameState::ball_scale);
                 ball_program->setUniformValue(ball_world_mat_unif, world_matrix);
 
                 const auto& angular_speed = state->ball->GetAngularVelocity();
