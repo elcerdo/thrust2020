@@ -270,6 +270,9 @@ void GameWindowOpenGL::initializePrograms()
                 { "cameraMatrix", crate_camera_mat_unif },
                 { "worldMatrix", crate_world_mat_unif },
                 { "texture", crate_texture_unif },
+                { "baseColor", crate_color_unif },
+                { "maxTag", crate_max_tag_unif },
+                { "tag", crate_tag_unif },
                 });
         assert(init_ok);
         assertNoError();
@@ -684,7 +687,6 @@ void GameWindowOpenGL::paintUI()
                 }
 
                 ImGui::SliderFloat("radius factor", &radius_factor, 0.0f, 1.0f);
-
                 ImGui::SliderFloat("alpha", &shading_alpha, -1, 1);
                 ImGui::SliderFloat("max speed", &shading_max_speed, 0, 100);
 
@@ -704,10 +706,12 @@ void GameWindowOpenGL::paintUI()
                 ImGui::EndTabItem();
             }
 
-            if (ImGui::BeginTabItem("Ship"))
+            if (ImGui::BeginTabItem("Ship & crate"))
             {
                 ImGui::ColorEdit4("halo out color", halo_out_color.data());
                 ImGui::ColorEdit4("halo in color", halo_in_color.data());
+                ImGui::ColorEdit3("crate color", crate_color.data());
+                ImGui::SliderInt("crate max tag", &crate_max_tag, 1, 64);
                 ImGui::EndTabItem();
             }
 
@@ -798,6 +802,8 @@ void GameWindowOpenGL::paintUI()
 
 void GameWindowOpenGL::paintScene()
 {
+    using std::get;
+
     {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
@@ -909,7 +915,7 @@ void GameWindowOpenGL::paintScene()
 
             if (draw_debug)
                 for (auto& crate : state->crates)
-                    drawBody(painter, *crate);
+                    drawBody(painter, *get<0>(crate));
 
             for (auto& door : state->doors)
                 drawBody(painter, *std::get<0>(door), Qt::yellow);
@@ -1195,19 +1201,22 @@ void GameWindowOpenGL::paintScene()
                 assertNoError();
             };
 
+            crate_program->setUniformValue(crate_color_unif, QColor::fromRgbF(crate_color[0], crate_color[1], crate_color[2], crate_color[3]));
             crate_program->setUniformValue(crate_camera_mat_unif, camera_matrix);
             crate_program->setUniformValue(crate_texture_unif, 0);
+            crate_program->setUniformValue(crate_max_tag_unif, crate_max_tag);
 
             for (auto& crate : state->crates)
             {
-                const auto& pos = crate->GetWorldCenter();
-                const auto& angle = crate->GetAngle();
+                const auto& pos = get<0>(crate)->GetWorldCenter();
+                const auto& angle = get<0>(crate)->GetAngle();
 
                 QMatrix4x4 world_matrix;
                 world_matrix.translate(pos.x, pos.y, 0);
                 world_matrix.rotate(180. * angle / M_PI, 0, 0, 1);
                 world_matrix.scale(GameState::crate_scale, GameState::crate_scale, GameState::crate_scale);
                 crate_program->setUniformValue(crate_world_mat_unif, world_matrix);
+                crate_program->setUniformValue(crate_tag_unif, get<1>(crate));
                 blit_cube();
             }
 

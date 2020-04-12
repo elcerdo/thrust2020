@@ -186,7 +186,7 @@ void GameState::dumpCollisionData() const
     if (!crates.empty())
     {
         cout << "crate" << endl;
-        dump_filter_data(*crates.front());
+        dump_filter_data(*std::get<0>(crates.front()));
     }
 }
 
@@ -531,7 +531,7 @@ void GameState::addPath(const std::vector<b2Vec2>& positions, const b2Vec2 size)
     doors.emplace_back(std::move(door), positions, 0);
 }
 
-void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle)
+void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle, const int tag)
 {
     b2BodyDef def;
     def.type = b2_dynamicBody;
@@ -560,7 +560,7 @@ void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double a
     crate->SetLinearVelocity(velocity);
 
     auto foo = UniqueBody(crate, [this](b2Body* body) -> void { world.DestroyBody(body); });
-    crates.emplace_back(std::move(foo));
+    crates.emplace_back(std::move(foo) , tag);
 }
 
 void GameState::clearCrates()

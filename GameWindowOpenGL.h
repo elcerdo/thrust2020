@@ -45,6 +45,8 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         std::array<float, 4> halo_in_color = { 0, 0, 1, .2 };
         std::array<float, 4> viscous_color = { 1, 0, 1, 1 };
         std::array<float, 4> tensible_color = { 0, 1, 1, 1 };
+        std::array<float, 4> crate_color = { 1, 1, 1, 1 };
+        int crate_max_tag = 10;
         float mix_ratio = .2;
         bool draw_debug = false;
         int shader_selection = 8;
@@ -124,6 +126,9 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         int crate_camera_mat_unif = -1;
         int crate_world_mat_unif = -1;
         int crate_texture_unif = -1;
+        int crate_color_unif = -1;
+        int crate_max_tag_unif = -1;
+        int crate_tag_unif = -1;
         std::unique_ptr<QOpenGLTexture> crate_texture = nullptr;
 };
 
