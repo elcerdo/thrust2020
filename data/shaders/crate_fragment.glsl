@@ -21,7 +21,8 @@ void main()
   pos_ = pos_ / 2 + vec2(.5, .5);
   int tag_ = tag % maxTag;
   vec2 delta = vec2(tag_ % 8, 7 - tag_ / 8);
-  vec4 sampledColor = texture2D(crateTexture, (pos_ + delta) / 8.f);
+  vec2 prout = (pos_ + delta) / 8.f;
+  vec4 sampledColor = texture(crateTexture, prout, 0);
   finalColor = sampledColor.a * sampledColor + (1 - sampledColor.a) * baseColor;
 }
 
