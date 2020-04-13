@@ -1129,7 +1129,7 @@ void GameWindowOpenGL::paintScene()
                 assertNoError();
             };
 
-            main_program->setUniformValue(base_camera_mat_unif, camera_matrix);
+            main_program->setUniformValue(main_camera_mat_unif, camera_matrix);
 
             { // ship
                 QMatrix4x4 world_matrix;
@@ -1241,7 +1241,7 @@ void GameWindowOpenGL::paintScene()
                 assertNoError();
             };
 
-            ball_program->setUniformValue(base_camera_mat_unif, camera_matrix);
+            ball_program->setUniformValue(ball_camera_mat_unif, camera_matrix);
 
             {
                 assert(state->ball);
@@ -1283,7 +1283,7 @@ void GameWindowOpenGL::paintScene()
                 assertNoError();
             };
 
-            grab_program->setUniformValue(base_camera_mat_unif, camera_matrix);
+            grab_program->setUniformValue(grab_camera_mat_unif, camera_matrix);
 
             { // grab indicator
                 QMatrix4x4 world_matrix;
