@@ -1,10 +1,10 @@
-#version 330
+#version 330 core
 
 in lowp vec4 pos;
 
 out lowp vec4 finalColor;
 
-uniform sampler2D texture;
+uniform sampler2D crateTexture;
 uniform vec4 baseColor;
 uniform int tag;
 uniform int maxTag;
@@ -21,7 +21,7 @@ void main()
   pos_ = pos_ / 2 + vec2(.5, .5);
   int tag_ = tag % maxTag;
   vec2 delta = vec2(tag_ % 8, 7 - tag_ / 8);
-  vec4 sampledColor = texture2D(texture, (pos_ + delta) / 8);
+  vec4 sampledColor = texture2D(crateTexture, (pos_ + delta) / 8.f);
   finalColor = sampledColor.a * sampledColor + (1 - sampledColor.a) * baseColor;
 }
 

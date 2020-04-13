@@ -269,7 +269,7 @@ void GameWindowOpenGL::initializePrograms()
                 }, {
                 { "cameraMatrix", crate_camera_mat_unif },
                 { "worldMatrix", crate_world_mat_unif },
-                { "texture", crate_texture_unif },
+                { "crateTexture", crate_texture_unif },
                 { "baseColor", crate_color_unif },
                 { "maxTag", crate_max_tag_unif },
                 { "tag", crate_tag_unif },
