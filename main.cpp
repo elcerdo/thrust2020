@@ -47,13 +47,14 @@ int main(int argc, char* argv[])
     });
 
     std::default_random_engine rng;
+    int tag = 0;
     view.addButton("drop water", Qt::Key_E, [&view, &rng]() -> void {
         if (!view.state)
             return;
         assert(view.state);
         view.state->addWater({ 0, 70 }, { view.water_drop_size[0], view.water_drop_size[1] }, rng(), view.water_flags);
     });
-    view.addButton("drop crate", Qt::Key_R, [&view, &rng]() -> void {
+    view.addButton("drop crate", Qt::Key_R, [&view, &rng, &tag]() -> void {
         if (!view.state)
             return;
         assert(view.state);
@@ -61,7 +62,7 @@ int main(int argc, char* argv[])
         const auto angle = dist_angle(rng);
         std::normal_distribution<double> dist_normal(0, 10);
         const b2Vec2 velocity(dist_normal(rng), dist_normal(rng));
-        view.state->addCrate({ 0, 10 }, velocity, angle);
+        view.state->addCrate({ 0, 10 }, velocity, angle, tag++);
         return;
     });
     view.addButton("clear all water", Qt::Key_D, [&view]() -> void {
@@ -83,7 +84,7 @@ int main(int argc, char* argv[])
         view.state->clearWater(1);
     });
     view.addButton("clear level", Qt::Key_Y, [&view]() -> void {
-        view.level_selection = -1;
+        view.current_level = -1;
         view.resetLevel();
     });
     view.addButton("reset ship", Qt::Key_S, [&view]() -> void {

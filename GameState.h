@@ -24,7 +24,7 @@ struct GameState : public b2ContactListener
     void grab();
     void release();
 
-    void addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle);
+    void addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle, const int tag);
     void clearCrates();
 
     void addWater(const b2Vec2 pos, const b2Vec2 size, const size_t seed, const unsigned int flags);
@@ -44,6 +44,10 @@ struct GameState : public b2ContactListener
     using UniqueDistanceJoint = std::unique_ptr<b2DistanceJoint, std::function<void(b2Joint*)>>;
     using UniqueSystem = std::unique_ptr<b2ParticleSystem, std::function<void(b2ParticleSystem*)>>;
 
+    static constexpr float ship_scale = 1.8;
+    static constexpr float ball_scale = 5;
+    static constexpr float crate_scale = 3.5;
+
     b2World world = b2World({ 0, -8 });
     UniqueBody ground = nullptr;
     UniqueBody ship = nullptr;
@@ -51,7 +55,7 @@ struct GameState : public b2ContactListener
     UniqueDistanceJoint link = nullptr;
     UniqueSystem system = nullptr;
 
-    std::vector<UniqueBody> crates;
+    std::vector<std::tuple<UniqueBody, int>> crates;
     std::vector<std::tuple<UniqueBody, std::vector<b2Vec2>, size_t>> doors;
 
     struct ShipState

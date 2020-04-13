@@ -39,12 +39,6 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
     registerFreeKey(Qt::Key_Right);
     registerFreeKey(Qt::Key_Up);
 
-    qDebug() << "========== levels";
-    level_datas = levels::load(":/levels/levels.json");
-    qDebug() << level_datas.size() << "levels";
-    for (const auto& level_data : level_datas)
-        qDebug() << "level" << QString::fromStdString(level_data.name) << QString::fromStdString(level_data.map_filename) << level_data.doors.size();
-
     {
         auto& sfx = engine_sfx;
         const auto sound = QUrl::fromLocalFile(":/sounds/engine.wav");
@@ -67,6 +61,11 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
         sfx.stop();
     }
 
+    {
+        logo = QImage(":/images/logo.png");
+        assert(!logo.size().isEmpty());
+    }
+
     /*{
         auto& sfx = back_click_sfx;
         const auto click_sound = QUrl::fromLocalFile(":/sounds/click00.wav");
@@ -77,6 +76,17 @@ GameWindowOpenGL::GameWindowOpenGL(QWindow* parent)
         sfx.setMuted(false);
         sfx.stop();
     }*/
+
+    {
+        qDebug() << "========== levels";
+        data = levels::load(":/levels/levels.json");
+        qDebug() << data.levels.size() << "levels";
+        for (const auto& level : data.levels)
+            qDebug() << "level" << QString::fromStdString(level.name) << QString::fromStdString(level.map_filename) << level.doors.size();
+        current_level = data.default_level;
+        resetLevel();
+    }
+
 }
 
 void GameWindowOpenGL::resetLevel()
@@ -85,34 +95,44 @@ void GameWindowOpenGL::resetLevel()
     using std::endl;
     using std::get;
 
-    if (level_selection < 0)
+    world_time = 0;
+    world_camera = Camera();
+    ship_camera = Camera();
+
+    if (current_level < 0)
     {
-        level_selection = -1;
+        current_level = -1;
         state = nullptr;
         return;
     }
 
-    assert(level_selection >= 0 );
-    assert(level_selection < static_cast<int>(level_datas.size()));
-    const auto& level_data = level_datas[level_selection];
+    assert(current_level >= 0 );
+    assert(current_level < static_cast<int>(data.levels.size()));
+    const auto& level = data.levels[current_level];
 
-    cout << "========== loading " << std::quoted(level_data.name) << endl;
+    cout << "========== loading " << std::quoted(level.name) << endl;
 
-    state = std::make_unique<GameState>();
-    state->resetGround(level_data.map_filename);
-    loadBackground(level_data.map_filename);
+    {
+        state = std::make_unique<GameState>();
+        state->resetGround(level.map_filename);
+        loadBackground(level.map_filename);
 
-    for (const auto& door : level_data.doors)
-        state->addDoor(get<0>(door), get<1>(door), get<2>(door));
+        for (const auto& door : level.doors)
+            state->addDoor(get<0>(door), get<1>(door), get<2>(door));
 
-    for (const auto& path : level_data.paths)
-        state->addPath(get<0>(path), get<1>(path));
+        for (const auto& path : level.paths)
+            state->addPath(get<0>(path), get<1>(path));
 
-    state->dumpCollisionData();
+        state->dumpCollisionData();
+    }
+
+    {
+        world_camera.screen_height = level.world_screen_height;
+        world_camera.position = { level.world_camera_position.x, level.world_camera_position.y };
+    }
 
     enforceCallbackValues();
 
-    world_time = 0;
 }
 
 void GameWindowOpenGL::loadBackground(const std::string& map_filename)
@@ -136,15 +156,22 @@ void GameWindowOpenGL::setMuted(const bool muted)
 void GameWindowOpenGL::initializePrograms()
 {
     {
+        device = std::make_unique<QOpenGLPaintDevice>();
+        device->setDevicePixelRatio(devicePixelRatio());
+    }
+
+    {
         assert(!base_program);
         base_program = loadAndCompileProgram(":/shaders/base_vertex.glsl", ":/shaders/base_fragment.glsl");
 
         assert(base_program);
-        base_pos_attr = base_program->attributeLocation("posAttr");
-        base_mat_unif = base_program->uniformLocation("matrix");
-        qDebug() << "locations" << base_pos_attr << base_mat_unif;
-        assert(base_pos_attr >= 0);
-        assert(base_mat_unif >= 0);
+        const auto init_ok = initLocations(*base_program, {
+                { "posAttr", base_pos_attr },
+                }, {
+                { "cameraMatrix", base_camera_mat_unif },
+                { "worldMatrix", base_world_mat_unif },
+                });
+        assert(init_ok);
         assertNoError();
     }
 
@@ -153,32 +180,14 @@ void GameWindowOpenGL::initializePrograms()
         main_program = loadAndCompileProgram(":/shaders/main_vertex.glsl", ":/shaders/main_fragment.glsl");
 
         assert(main_program);
-        main_pos_attr = main_program->attributeLocation("posAttr");
-        main_col_attr = main_program->attributeLocation("colAttr");
-        main_mat_unif = main_program->uniformLocation("matrix");
-        qDebug() << "locations" << main_pos_attr << main_col_attr << main_mat_unif;
-        assert(main_pos_attr >= 0);
-        assert(main_col_attr >= 0);
-        assert(main_mat_unif >= 0);
-        assertNoError();
-    }
-
-    {
-        assert(!grab_program);
-        grab_program = loadAndCompileProgram(":/shaders/grab_vertex.glsl", ":/shaders/grab_fragment.glsl");
-
-        assert(grab_program);
-        grab_pos_attr = grab_program->attributeLocation("posAttr");
-        grab_mat_unif = grab_program->uniformLocation("matrix");
-        grab_time_unif = grab_program->uniformLocation("time");
-        grab_halo_out_color_unif = grab_program->uniformLocation("haloOuterColor");
-        grab_halo_in_color_unif = grab_program->uniformLocation("haloInnerColor");
-        qDebug() << "locations" << grab_pos_attr << grab_mat_unif << grab_time_unif << grab_halo_out_color_unif << grab_halo_in_color_unif;
-        assert(grab_pos_attr >= 0);
-        assert(grab_mat_unif >= 0);
-        assert(grab_time_unif >= 0);
-        assert(grab_halo_out_color_unif >= 0);
-        assert(grab_halo_in_color_unif >= 0);
+        const auto init_ok = initLocations(*main_program, {
+                { "posAttr", main_pos_attr },
+                { "colAttr", main_col_attr },
+                }, {
+                { "cameraMatrix", main_camera_mat_unif },
+                { "worldMatrix", main_world_mat_unif },
+                });
+        assert(init_ok);
         assertNoError();
     }
 
@@ -187,13 +196,32 @@ void GameWindowOpenGL::initializePrograms()
         ball_program = loadAndCompileProgram(":/shaders/ball_vertex.glsl", ":/shaders/ball_fragment.glsl");
 
         assert(ball_program);
-        ball_pos_attr = ball_program->attributeLocation("posAttr");
-        ball_mat_unif = ball_program->uniformLocation("matrix");
-        ball_angular_speed_unif = ball_program->uniformLocation("circularSpeed");
-        qDebug() << "locations" << ball_pos_attr << ball_mat_unif << ball_angular_speed_unif;
-        assert(ball_pos_attr >= 0);
-        assert(ball_mat_unif >= 0);
-        assert(ball_angular_speed_unif >= 0);
+        const auto init_ok = initLocations(*ball_program, {
+                { "posAttr", ball_pos_attr },
+                }, {
+                { "circularSpeed", ball_angular_speed_unif },
+                { "cameraMatrix", ball_camera_mat_unif },
+                { "worldMatrix", ball_world_mat_unif },
+                });
+        assert(init_ok);
+        assertNoError();
+    }
+
+    {
+        assert(!grab_program);
+        grab_program = loadAndCompileProgram(":/shaders/grab_vertex.glsl", ":/shaders/grab_fragment.glsl");
+
+        assert(grab_program);
+        const auto init_ok = initLocations(*grab_program, {
+                { "posAttr", grab_pos_attr },
+                }, {
+                { "time", grab_time_unif },
+                { "haloOuterColor", grab_halo_out_color_unif },
+                { "haloInnerColor", grab_halo_in_color_unif },
+                { "cameraMatrix", grab_camera_mat_unif },
+                { "worldMatrix", grab_world_mat_unif },
+                });
+        assert(init_ok);
         assertNoError();
     }
 
@@ -202,72 +230,99 @@ void GameWindowOpenGL::initializePrograms()
         particle_program = loadAndCompileProgram(":/shaders/particle_vertex.glsl", ":/shaders/particle_fragment.glsl", ":/shaders/particle_geometry.glsl");
 
         assert(particle_program);
-        particle_pos_attr = particle_program->attributeLocation("posAttr");
-        particle_col_attr = particle_program->attributeLocation("colAttr");
-        particle_speed_attr = particle_program->attributeLocation("speedAttr");
-        particle_flag_attr = particle_program->attributeLocation("flagAttr");
-        particle_mat_unif = particle_program->uniformLocation("matrix");
-        particle_water_color_unif = particle_program->uniformLocation("waterColor");
-        particle_foam_color_unif = particle_program->uniformLocation("foamColor");
-        particle_radius_unif = particle_program->uniformLocation("radius");
-        particle_radius_factor_unif = particle_program->uniformLocation("radiusFactor");
-        particle_mode_unif = particle_program->uniformLocation("mode");
-        particle_poly_unif = particle_program->uniformLocation("poly");
-        particle_max_speed_unif = particle_program->uniformLocation("maxSpeed");
-        particle_alpha_unif = particle_program->uniformLocation("alpha");
-        particle_viscous_color_unif = particle_program->uniformLocation("viscousColor");
-        particle_tensible_color_unif = particle_program->uniformLocation("tensibleColor");
-        particle_mix_unif = particle_program->uniformLocation("mixColor");
-        qDebug() << "attr_locations" << particle_pos_attr << particle_col_attr << particle_speed_attr << particle_flag_attr;
-        assert(particle_pos_attr >= 0);
-        assert(particle_col_attr >= 0);
-        assert(particle_speed_attr >= 0);
-        assert(particle_flag_attr >= 0);
-        qDebug() << "unif_locations" << particle_mat_unif << particle_water_color_unif << particle_foam_color_unif << particle_radius_unif << particle_radius_factor_unif << particle_mode_unif << particle_poly_unif << particle_max_speed_unif << particle_alpha_unif << particle_viscous_color_unif << particle_tensible_color_unif << particle_mix_unif;
-        assert(particle_mat_unif >= 0);
-        assert(particle_water_color_unif >= 0);
-        assert(particle_foam_color_unif >= 0);
-        assert(particle_radius_unif >= 0);
-        assert(particle_radius_factor_unif >= 0);
-        assert(particle_mode_unif >= 0);
-        assert(particle_poly_unif >= 0);
-        assert(particle_max_speed_unif >= 0);
-        assert(particle_alpha_unif >= 0);
-        assert(particle_viscous_color_unif >= 0);
-        assert(particle_tensible_color_unif >= 0);
-        assert(particle_mix_unif >= 0);
+        const auto init_ok = initLocations(*particle_program, {
+                { "posAttr", particle_pos_attr },
+                { "colAttr", particle_col_attr },
+                { "speedAttr", particle_speed_attr },
+                { "flagAttr", particle_flag_attr },
+                }, {
+                { "waterColor", particle_water_color_unif },
+                { "foamColor", particle_foam_color_unif },
+                { "radius", particle_radius_unif },
+                { "radiusFactor", particle_radius_factor_unif },
+                { "mode", particle_mode_unif },
+                { "poly", particle_poly_unif },
+                { "maxSpeed", particle_max_speed_unif },
+                { "alpha", particle_alpha_unif },
+                { "viscousColor", particle_viscous_color_unif },
+                { "tensibleColor", particle_tensible_color_unif },
+                { "mixColor", particle_mix_unif },
+                { "cameraMatrix", particle_camera_mat_unif },
+                { "worldMatrix", particle_world_mat_unif },
+                });
+        assert(init_ok);
+        assertNoError();
+    }
+
+    {
+        assert(!crate_texture);
+        crate_texture = std::make_unique<QOpenGLTexture>(QImage(":/images/crate_texture.png").mirrored());
+        assert(crate_texture->width());
+        assert(crate_texture->height());
+
+        assert(!crate_program);
+        crate_program = loadAndCompileProgram(":/shaders/crate_vertex.glsl", ":/shaders/crate_fragment.glsl");
+
+        assert(crate_program);
+        const auto init_ok = initLocations(*crate_program, {
+                { "posAttr", crate_pos_attr },
+                }, {
+                { "cameraMatrix", crate_camera_mat_unif },
+                { "worldMatrix", crate_world_mat_unif },
+                { "crateTexture", crate_texture_unif },
+                { "baseColor", crate_color_unif },
+                { "maxTag", crate_max_tag_unif },
+                { "tag", crate_tag_unif },
+                });
+        assert(init_ok);
         assertNoError();
     }
 }
 
 void GameWindowOpenGL::initializeBuffers(BufferLoader& loader)
 {
-    loader.init(10);
+    loader.init(12);
 
     // ship
     loader.loadBuffer3(0, {
-            { -1.8, 0, 0 },
-            { 1.8, 0, 0 },
-            { 0, 2*1.8, 0 },
+            { -1, 0, .1 },
+            { 1, 0, .1 },
+            { 0, 2, .1 },
+            { -1, 0, -.1 },
+            { 1, 0, -.1 },
+            { 0, 2, -.1 },
             });
-    loader.loadBuffer4(1, {
-            { 1, 0, 0, 1 },
-            { 0, 1, 0, 1 },
-            { 0, 0, 1, 1 },
+    loader.loadBuffer4(1, { // ship colors
+            { 1, 1, 1, 1 },
+            { 1, 1, 1, 1 },
+            { .2, .2, 1, 1 },
+            { 0, 0, 0, 1 },
+            { 0, 0, 0, 1 },
+            { 0, 0, 0, 1 },
+            });
+    loader.loadIndices(11, { // ship indices
+            0, 1, 2,
+            4, 3, 5,
+            0, 3, 1,
+            1, 3, 4,
+            2, 5, 0,
+            0, 5, 3,
+            1, 4, 2,
+            2, 4, 5,
             });
 
-    // square (ship tail)
+    // square
     loader.loadBuffer3(2, {
             { -1, -1, 0 },
             { 1, -1, 0 },
             { -1, 1, 0 },
             { 1, 1, 0 },
             });
-    loader.loadBuffer4(3, {
-            { 0, 0, 1, 1 },
-            { 0, 0, 1, 1 },
-            { 0, 0, 1, 1 },
-            { 0, 0, 1, 1 },
+    loader.loadBuffer4(10, { // morpheus den gradient colors
+            { 0x30 / 255., 0xcf / 255., 0xd0 / 255., 1 },
+            { 0x30 / 255., 0xcf / 255., 0xd0 / 255., 1 },
+            { 0x33 / 255., 0x08 / 255., 0x67 / 255., 1 },
+            { 0x33 / 255., 0x08 / 255., 0x67 / 255., 1 },
             });
 
     // cube
@@ -280,6 +335,16 @@ void GameWindowOpenGL::initializeBuffers(BufferLoader& loader)
             { 1, -1, -1 },
             { 1, 1, -1 },
             { -1, 1, -1 },
+            });
+    loader.loadBuffer4(3, { // ship tail colors
+            { 1, 1, 0, 1 },
+            { 0, 1, 0, 1 },
+            { 0, 0, 0, 1 },
+            { 1, 1, 0, 1 },
+            { 1, 1, 0, 1 },
+            { 0, 1, 0, 1 },
+            { 0, 1, 0, 1 },
+            { 1, 1, 0, 1 },
             });
     loader.loadIndices(5, {
             0, 1, 3, 2, 7, 6, 4, 5,
@@ -388,44 +453,6 @@ void GameWindowOpenGL::drawBody(QPainter& painter, const b2Body& body, const QCo
     }
 }
 
-void GameWindowOpenGL::drawFlame(QPainter& painter)
-{
-    assert(state);
-
-    std::bernoulli_distribution dist_flicker;
-    std::normal_distribution<float> dist_noise(0, .2);
-    const auto randomPoint = [this, &dist_noise]() -> QPointF {
-        return { dist_noise(flame_rng), dist_noise(flame_rng) };
-    };
-
-    const auto& body = state->ship;
-    assert(body);
-
-    painter.save();
-    const auto& position = body->GetPosition();
-    const auto& angle = body->GetAngle();
-    painter.translate(position.x, position.y);
-    painter.rotate(qRadiansToDegrees(angle));
-    painter.scale(2.5, 2.5);
-
-    QLinearGradient grad(QPointF(0, 0), QPointF(0, -3));
-    grad.setColorAt(0, QColor(0xfa, 0x70, 0x9a)); // true sunset
-    grad.setColorAt(1, QColor(0xfe, 0xe1, 0x40));
-
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(grad);
-    QPolygonF poly;
-    poly << QPointF(0, 0) << QPointF(1, -3) + randomPoint();
-    if (dist_flicker(flame_rng)) poly << QPointF(.5, -2.5) + randomPoint();
-    poly << QPointF(0, -4) + randomPoint();
-    if (dist_flicker(flame_rng)) poly << QPointF(-.5, -2.5) + randomPoint();
-    poly << QPointF(-1, -3) + randomPoint();
-    painter.scale(.8, .8);
-    painter.translate(0, 1.5);
-    painter.drawPolygon(poly);
-    painter.restore();
-}
-
 void GameWindowOpenGL::drawShip(QPainter& painter)
 {
     assert(state);
@@ -434,7 +461,42 @@ void GameWindowOpenGL::drawShip(QPainter& painter)
     assert(body);
 
     if (state->ship_state.firing_thruster)
-        drawFlame(painter);
+    {
+        assert(state);
+
+        std::bernoulli_distribution dist_flicker;
+        std::normal_distribution<float> dist_noise(0, .2);
+        const auto randomPoint = [this, &dist_noise]() -> QPointF {
+            return { dist_noise(flame_rng), dist_noise(flame_rng) };
+        };
+
+        const auto& body = state->ship;
+        assert(body);
+
+        painter.save();
+        const auto& position = body->GetPosition();
+        const auto& angle = body->GetAngle();
+        painter.translate(position.x, position.y);
+        painter.rotate(qRadiansToDegrees(angle));
+        painter.scale(2.5, 2.5);
+
+        QLinearGradient grad(QPointF(0, 0), QPointF(0, -3));
+        grad.setColorAt(0, QColor(0xfa, 0x70, 0x9a)); // true sunset
+        grad.setColorAt(1, QColor(0xfe, 0xe1, 0x40));
+
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(grad);
+        QPolygonF poly;
+        poly << QPointF(0, 0) << QPointF(1, -3) + randomPoint();
+        if (dist_flicker(flame_rng)) poly << QPointF(.5, -2.5) + randomPoint();
+        poly << QPointF(0, -4) + randomPoint();
+        if (dist_flicker(flame_rng)) poly << QPointF(-.5, -2.5) + randomPoint();
+        poly << QPointF(-1, -3) + randomPoint();
+        painter.scale(.8, .8);
+        painter.translate(0, 1.5);
+        painter.drawPolygon(poly);
+        painter.restore();
+    }
 
     if (draw_debug)
         drawBody(painter, *body, Qt::black);
@@ -506,16 +568,16 @@ void GameWindowOpenGL::paintUI()
 
         {
             std::vector<const char*> level_names;
-            for (const auto& level_data : level_datas)
-                level_names.emplace_back(level_data.name.c_str());
+            for (const auto& level : data.levels)
+                level_names.emplace_back(level.name.c_str());
 
-            const auto level_selection_prev = level_selection;
+            const auto level_selection_prev = current_level;
 
             const std::string key_name = QKeySequence(level_switch_key).toString().toStdString();
             std::stringstream ss;
             ss << "level (" << key_name << ")";
-            ImGui::Combo(ss.str().c_str(), &level_selection, level_names.data(), level_names.size());
-            if (level_selection_prev != level_selection)
+            ImGui::Combo(ss.str().c_str(), &current_level, level_names.data(), level_names.size());
+            if (level_selection_prev != current_level)
                 resetLevel();
         }
         ImGui::Separator();
@@ -586,11 +648,11 @@ void GameWindowOpenGL::paintUI()
     }
 
     { // camera window
-        begin_left("Camera");
+        begin_left("Cameras");
 
-        ImGui::SliderFloat("world zoom", &world_camera_zoom, .1, 3);
-        ImGui::DragFloat2("world center", world_camera_center.data());
-        ImGui::SliderFloat("ship zoom", &ship_camera_zoom, .1, 3);
+        auto& camera = use_world_camera ? world_camera : ship_camera;
+        ImGui::Text("%s camera", use_world_camera ? "world" : "ship");
+        camera.paintUI();
 
         end_left();
     }
@@ -625,7 +687,6 @@ void GameWindowOpenGL::paintUI()
                 }
 
                 ImGui::SliderFloat("radius factor", &radius_factor, 0.0f, 1.0f);
-
                 ImGui::SliderFloat("alpha", &shading_alpha, -1, 1);
                 ImGui::SliderFloat("max speed", &shading_max_speed, 0, 100);
 
@@ -645,10 +706,12 @@ void GameWindowOpenGL::paintUI()
                 ImGui::EndTabItem();
             }
 
-            if (ImGui::BeginTabItem("Ship"))
+            if (ImGui::BeginTabItem("Ship & crate"))
             {
                 ImGui::ColorEdit4("halo out color", halo_out_color.data());
                 ImGui::ColorEdit4("halo in color", halo_in_color.data());
+                ImGui::ColorEdit3("crate color", crate_color.data());
+                ImGui::SliderInt("crate max tag", &crate_max_tag, 1, 64);
                 ImGui::EndTabItem();
             }
 
@@ -739,12 +802,68 @@ void GameWindowOpenGL::paintUI()
 
 void GameWindowOpenGL::paintScene()
 {
-    if (!state)
-        return;
+    using std::get;
+
+    {
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_BLEND);
+
+        { // draw with main program
+            ProgramBinder binder(*this, main_program);
+
+            const auto blit_square = [this]() -> void
+            {
+                glBindBuffer(GL_ARRAY_BUFFER, vbos[2]);
+                glVertexAttribPointer(main_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
+                glEnableVertexAttribArray(main_pos_attr);
+                assertNoError();
+
+                glBindBuffer(GL_ARRAY_BUFFER, vbos[10]);
+                glVertexAttribPointer(main_col_attr, 4, GL_FLOAT, GL_FALSE, 0, 0);
+                glEnableVertexAttribArray(main_col_attr);
+                assertNoError();
+
+                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+                assertNoError();
+
+                glDisableVertexAttribArray(main_col_attr);
+                glDisableVertexAttribArray(main_pos_attr);
+                assertNoError();
+            };
+
+            // background gradient
+
+            QMatrix4x4 screen_matrix;
+            main_program->setUniformValue(main_camera_mat_unif, screen_matrix);
+
+            QMatrix4x4 world_matrix;
+            main_program->setUniformValue(main_world_mat_unif, world_matrix);
+            assertNoError();
+
+            blit_square();
+        }
+
+        glDisable(GL_BLEND);
+    }
+
+    if (use_painter && !state)
+    { // draw with qt painter
+        assert(device);
+        device->setSize(size() * devicePixelRatio());
+        QPainter painter(device.get());
+
+        const auto scale = pow(std::min(1., world_time / .2), 1.35);
+        painter.translate(width() / 2, height() / 2);
+        painter.scale(scale, scale);
+        painter.drawImage(QRect(QPoint(-logo.size().width() / 2, -logo.size().height() / 2), logo.size()), logo);
+    }
 
     const auto& io = ImGui::GetIO();
     const double dt = std::min(50e-3, 1. / io.Framerate);
     world_time += dt;
+
+    if (!state)
+        return;
 
     { // ship state
         assert(state);
@@ -762,55 +881,25 @@ void GameWindowOpenGL::paintScene()
     if (!skip_state_step)
         state->step(dt);
 
+    {
+        assert(state);
+        assert(state->ship);
+        const auto& position = state->ship->GetWorldCenter();
+        ship_camera.position = { position.x, position.y };
+    }
+
+    const auto& camera = use_world_camera ?  world_camera : ship_camera;
+
     if (use_painter)
     { // draw with qt painter
-        glBindVertexArray(0);
-
-        if (!device)
-            device = new QOpenGLPaintDevice;
-
+        assert(device);
         device->setSize(size() * devicePixelRatio());
-        device->setDevicePixelRatio(devicePixelRatio());
-
-        QPainter painter(device);
-        painter.setRenderHint(QPainter::Antialiasing);
-
-        { // background gradient
-            QLinearGradient linearGrad(QPointF(0, 0), QPointF(0, height()));
-            linearGrad.setColorAt(0, QColor(0x33, 0x08, 0x67)); // morpheus den gradient
-            linearGrad.setColorAt(1, QColor(0x30, 0xcf, 0xd0));
-            painter.fillRect(0, 0, width(), height(), linearGrad);
-        }
+        QPainter painter(device.get());
+        //painter.setRenderHint(QPainter::Antialiasing);
 
         { // world
             painter.save();
-            painter.translate(width() / 2, height() / 2);
-            painter.scale(1., -1);
-
-            if (!use_world_camera)
-            {
-                const auto& pos = state->ship->GetPosition();
-                const double side = ship_camera_zoom * qMin(width(), height()) / 100.;
-                const double foo = std::max(1., pos.y / 40.);
-                painter.scale(side / foo, side / foo);
-                painter.translate(-pos.x, -std::min(20.f, pos.y));
-            }
-            else
-            {
-                painter.scale(1.5 * world_camera_zoom, 1.5 *world_camera_zoom);
-                painter.translate(-world_camera_center[0], -world_camera_center[1]);
-            }
-
-            //{
-            //    const QTransform tt = painter.worldTransform();
-            //    const std::array<float, 9> tt_values {
-            //        static_cast<float>(tt.m11()), static_cast<float>(tt.m21()), static_cast<float>(tt.m31()),
-            //        static_cast<float>(tt.m12()), static_cast<float>(tt.m22()), static_cast<float>(tt.m32()),
-            //        static_cast<float>(tt.m13()), static_cast<float>(tt.m23()), static_cast<float>(tt.m33())
-            //    };
-            //    const QMatrix3x3 foo(tt_values.data());
-            //    qDebug() << foo << world_matrix;
-            //}
+            camera.preparePainter(*this, painter);
 
             { // svg
                 constexpr double scale = 600;
@@ -824,8 +913,9 @@ void GameWindowOpenGL::paintScene()
             if (draw_debug)
                 drawBody(painter, *state->ground);
 
-            for (auto& crate : state->crates)
-                drawBody(painter, *crate);
+            if (draw_debug)
+                for (auto& crate : state->crates)
+                    drawBody(painter, *get<0>(crate));
 
             for (auto& door : state->doors)
                 drawBody(painter, *std::get<0>(door), Qt::yellow);
@@ -856,309 +946,370 @@ void GameWindowOpenGL::paintScene()
             painter.restore();
         }
     }
+
     assertNoError();
 
-    glClear(GL_DEPTH_BUFFER_BIT);
-
-    //glEnable(GL_CULL_FACE);
-
-    glDepthFunc(GL_LESS);
-    glEnable(GL_DEPTH_TEST);
-
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-
-    const auto world_matrix = [this]() -> QMatrix4x4
     {
-        QMatrix4x4 matrix;
-        const auto ratio = static_cast<double>(width()) / height();
-        const auto norm_width = ratio;
-        const double norm_height = 1;
-        matrix.ortho(-norm_width, norm_width, -norm_height, norm_height, 0, 100);
-        //matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
+        //glClear(GL_DEPTH_BUFFER_BIT);
 
-        matrix.translate(0, 0, -50);
-        matrix.scale(2, 2, 1);
+        //glEnable(GL_CULL_FACE);
 
-        if (!use_world_camera)
-        {
-            const auto& pos = state->ship->GetPosition();
-            const double side = ship_camera_zoom * std::min(ratio, 1.) / 100.;
-            const double foo = std::max(1., pos.y / 40.);
-            matrix.scale(side / foo, side / foo, 1);
-            matrix.translate(-pos.x, -std::min(20.f, pos.y), 0);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_BLEND);
+
+        glDepthFunc(GL_LESS);
+        glEnable(GL_DEPTH_TEST);
+
+        const auto camera_matrix = camera.cameraMatrix(*this);
+
+        { // draw with particle program
+            ProgramBinder binder(*this, particle_program);
+
+            particle_program->setUniformValue(particle_camera_mat_unif, camera_matrix);
+
+            { // particle system
+                const auto& system = state->system;
+                assert(system);
+
+                const b2Vec2* positions = system->GetPositionBuffer();
+                const b2ParticleColor* colors = system->GetColorBuffer();
+                const b2Vec2* speeds = system->GetVelocityBuffer();
+
+                const auto kk_max = system->GetParticleCount();
+                std::vector<GLuint> flags(kk_max);
+                {
+                    static_assert(sizeof(GLuint) == sizeof(uint32), "mismatching size");
+                    const GLuint* flags_ = system->GetFlagsBuffer();
+                    std::copy(flags_, flags_ + kk_max, std::begin(flags));
+                    const auto candidates = system->GetStuckCandidates();
+                    for (auto ll=0, ll_max=system->GetStuckCandidateCount(); ll < ll_max; ll++)
+                        flags[candidates[ll]] |= 1 << 31;
+                }
+
+                const auto radius = system->GetRadius();
+
+                QMatrix4x4 world_matrix;
+                world_matrix.translate(0, 0, 0);
+
+                particle_program->setUniformValue(particle_radius_unif, radius);
+                particle_program->setUniformValue(particle_radius_factor_unif, radius_factor);
+                particle_program->setUniformValue(particle_mode_unif, shader_selection);
+                particle_program->setUniformValue(particle_poly_unif, poly_selection);
+                particle_program->setUniformValue(particle_max_speed_unif, shading_max_speed);
+                particle_program->setUniformValue(particle_alpha_unif, shading_alpha);
+
+                //            const auto& color = QColor::fromRgb(0x6cu, 0xc3u, 0xf6u, 0xffu);
+                particle_program->setUniformValue(particle_water_color_unif, QColor::fromRgbF(water_color[0], water_color[1], water_color[2], water_color[3]));
+                particle_program->setUniformValue(particle_foam_color_unif, QColor::fromRgbF(foam_color[0], foam_color[1], foam_color[2], foam_color[3]));
+                particle_program->setUniformValue(particle_viscous_color_unif, QColor::fromRgbF(viscous_color[0], viscous_color[1], viscous_color[2], viscous_color[3]));
+                particle_program->setUniformValue(particle_tensible_color_unif, QColor::fromRgbF(tensible_color[0], tensible_color[1], tensible_color[2], tensible_color[3]));
+                particle_program->setUniformValue(particle_mix_unif, mix_ratio);
+                particle_program->setUniformValue(particle_world_mat_unif, world_matrix);
+                assertNoError();
+
+                glBindBuffer(GL_ARRAY_BUFFER, vbos[6]);
+                glBufferData(GL_ARRAY_BUFFER, kk_max * 2 * sizeof(GLfloat), positions, GL_DYNAMIC_DRAW);
+                glVertexAttribPointer(particle_pos_attr, 2, GL_FLOAT, GL_FALSE, 0, 0);
+                glEnableVertexAttribArray(particle_pos_attr);
+                assertNoError();
+
+                static_assert(std::is_same<GLubyte, decltype(b2ParticleColor::r)>::value, "mismatching color types");
+
+                glBindBuffer(GL_ARRAY_BUFFER, vbos[7]);
+                glBufferData(GL_ARRAY_BUFFER, kk_max * 4 * sizeof(GLubyte), colors, GL_DYNAMIC_DRAW);
+                glVertexAttribPointer(particle_col_attr, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
+                glEnableVertexAttribArray(particle_col_attr);
+                assertNoError();
+
+                glBindBuffer(GL_ARRAY_BUFFER, vbos[8]);
+                glBufferData(GL_ARRAY_BUFFER, kk_max * 2 * sizeof(GLfloat), speeds, GL_DYNAMIC_DRAW);
+                glVertexAttribPointer(particle_speed_attr, 2, GL_FLOAT, GL_FALSE, 0, 0);
+                glEnableVertexAttribArray(particle_speed_attr);
+                assertNoError();
+
+                glBindBuffer(GL_ARRAY_BUFFER, vbos[9]);
+                glBufferData(GL_ARRAY_BUFFER, kk_max * sizeof(GLuint), flags.data(), GL_DYNAMIC_DRAW);
+                glVertexAttribIPointer(particle_flag_attr, 1, GL_UNSIGNED_INT, 0, 0);
+                glEnableVertexAttribArray(particle_flag_attr);
+                assertNoError();
+
+                glDrawArrays(GL_POINTS, 0, kk_max);
+                assertNoError();
+
+                glDisableVertexAttribArray(particle_flag_attr);
+                glDisableVertexAttribArray(particle_speed_attr);
+                glDisableVertexAttribArray(particle_col_attr);
+                glDisableVertexAttribArray(particle_pos_attr);
+                assertNoError();
+            }
         }
-        else
-        {
-            const int side = qMin(width(), height());
-            matrix.scale(1.5 * world_camera_zoom / side, 1.5 * world_camera_zoom / side, 1.);
-            matrix.translate(-world_camera_center[0], -world_camera_center[1], 0);
-        }
 
-        return matrix;
-    }();
+        //glClear(GL_DEPTH_BUFFER_BIT);
 
-    { // draw with base program
-        ProgramBinder binder(*this, base_program);
+        { // draw with base program
+            ProgramBinder binder(*this, base_program);
 
-        const auto blit_cube = [this]() -> void
-        {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[5]);
-            assertNoError();
-
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[4]);
-            glVertexAttribPointer(base_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(base_pos_attr);
-            assertNoError();
-
-            glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
-            glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(8 * sizeof(unsigned int)));
-            assertNoError();
-
-            glDisableVertexAttribArray(base_pos_attr);
-            assertNoError();
-        };
-
-        {
-            auto matrix = world_matrix;
-            matrix.translate(0, 10);
-            matrix.scale(3, 3, 3);
-            matrix.rotate(world_time * 60, 1, 1, 1);
-            base_program->setUniformValue(base_mat_unif, matrix);
-
-            blit_cube();
-        }
-    }
-
-    { // draw with particle program
-        ProgramBinder binder(*this, particle_program);
-
-        { // particle system
-            const auto& system = state->system;
-            assert(system);
-
-            const b2Vec2* positions = system->GetPositionBuffer();
-            const b2ParticleColor* colors = system->GetColorBuffer();
-            const b2Vec2* speeds = system->GetVelocityBuffer();
-
-            const auto kk_max = system->GetParticleCount();
-            std::vector<GLuint> flags(kk_max);
+            const auto blit_cube = [this]() -> void
             {
-                static_assert(sizeof(GLuint) == sizeof(uint32), "mismatching size");
-                const GLuint* flags_ = system->GetFlagsBuffer();
-                std::copy(flags_, flags_ + kk_max, std::begin(flags));
-                const auto candidates = system->GetStuckCandidates();
-                for (auto ll=0, ll_max=system->GetStuckCandidateCount(); ll < ll_max; ll++)
-                    flags[candidates[ll]] |= 1 << 31;
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[5]);
+                assertNoError();
+
+                glBindBuffer(GL_ARRAY_BUFFER, vbos[4]);
+                glVertexAttribPointer(base_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
+                glEnableVertexAttribArray(base_pos_attr);
+                assertNoError();
+
+                glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
+                glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(8 * sizeof(unsigned int)));
+                assertNoError();
+
+                glDisableVertexAttribArray(base_pos_attr);
+                assertNoError();
+            };
+
+            base_program->setUniformValue(base_camera_mat_unif, camera_matrix);
+
+            {
+                QMatrix4x4 world_matrix;
+                world_matrix.translate(0, 10);
+                world_matrix.scale(3, 3, 3);
+                world_matrix.rotate(world_time * 60, 1, 1, 1);
+                base_program->setUniformValue(base_world_mat_unif, world_matrix);
+                blit_cube();
+            }
+        }
+
+        { // draw with main program
+            ProgramBinder binder(*this, main_program);
+
+            const auto blit_ship = [this]() -> void
+            {
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[11]);
+                assertNoError();
+
+                glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
+                glVertexAttribPointer(main_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
+                glEnableVertexAttribArray(main_pos_attr);
+                assertNoError();
+
+                glBindBuffer(GL_ARRAY_BUFFER, vbos[1]);
+                glVertexAttribPointer(main_col_attr, 4, GL_FLOAT, GL_FALSE, 0, 0);
+                glEnableVertexAttribArray(main_col_attr);
+                assertNoError();
+
+                glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, nullptr);
+                assertNoError();
+
+                glDisableVertexAttribArray(main_col_attr);
+                glDisableVertexAttribArray(main_pos_attr);
+                assertNoError();
+            };
+
+            const auto blit_wing = [this]() -> void
+            {
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[5]);
+                assertNoError();
+
+                glBindBuffer(GL_ARRAY_BUFFER, vbos[4]);
+                glVertexAttribPointer(main_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
+                glEnableVertexAttribArray(main_pos_attr);
+                assertNoError();
+
+                glBindBuffer(GL_ARRAY_BUFFER, vbos[3]);
+                glVertexAttribPointer(main_col_attr, 4, GL_FLOAT, GL_FALSE, 0, 0);
+                glEnableVertexAttribArray(main_col_attr);
+                assertNoError();
+
+                glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
+                glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(8 * sizeof(unsigned int)));
+                assertNoError();
+
+                glDisableVertexAttribArray(main_col_attr);
+                glDisableVertexAttribArray(main_pos_attr);
+                assertNoError();
+            };
+
+            main_program->setUniformValue(main_camera_mat_unif, camera_matrix);
+
+            { // ship
+                QMatrix4x4 world_matrix;
+
+                assert(state);
+                assert(state->ship);
+                const auto& pos = state->ship->GetPosition();
+                world_matrix.translate(pos.x, pos.y);
+
+                auto delta = state->ship_state.target_angle - state->ship->GetAngle();
+                delta /= .1;
+                delta *= 20;
+
+                world_matrix.rotate(180. * state->ship->GetAngle() / M_PI, 0, 0, 1);
+                world_matrix.rotate(delta, 0, 1, 0);
+                world_matrix.scale(GameState::ship_scale, GameState::ship_scale, GameState::ship_scale);
+
+                main_program->setUniformValue(main_world_mat_unif, world_matrix);
+                assertNoError();
+
+                blit_ship();
+
+                world_matrix.rotate(90, 0, 1, 0);
+                world_matrix.scale(.25, .4, .5);
+
+                {
+                    auto foo = world_matrix;
+                    foo.translate(0, -.5, 1.2);
+                    foo.scale(1, 1, .2);
+                    foo.rotate(delta / 2, 1, 0, 0);
+                    main_program->setUniformValue(main_world_mat_unif, foo);
+                    assertNoError();
+                    blit_wing();
+                }
+
+                {
+                    auto foo = world_matrix;
+                    foo.translate(0, -.5, -1.2);
+                    foo.scale(1, 1, .2);
+                    foo.rotate(delta / 2, 1, 0, 0);
+                    main_program->setUniformValue(main_world_mat_unif, foo);
+                    assertNoError();
+                    blit_wing();
+                }
+            }
+        }
+
+        { // draw with crate program
+            ProgramBinder binder(*this, crate_program);
+
+            assert(crate_texture);
+            crate_texture->bind(0);
+
+            const auto blit_cube = [this]() -> void
+            {
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[5]);
+                assertNoError();
+
+                glBindBuffer(GL_ARRAY_BUFFER, vbos[4]);
+                glVertexAttribPointer(crate_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
+                glEnableVertexAttribArray(crate_pos_attr);
+                assertNoError();
+
+                glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
+                glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(8 * sizeof(unsigned int)));
+                assertNoError();
+
+                glDisableVertexAttribArray(crate_pos_attr);
+                assertNoError();
+            };
+
+            crate_program->setUniformValue(crate_color_unif, QColor::fromRgbF(crate_color[0], crate_color[1], crate_color[2], crate_color[3]));
+            crate_program->setUniformValue(crate_camera_mat_unif, camera_matrix);
+            crate_program->setUniformValue(crate_texture_unif, 0);
+            crate_program->setUniformValue(crate_max_tag_unif, crate_max_tag);
+
+            for (auto& crate : state->crates)
+            {
+                const auto& pos = get<0>(crate)->GetWorldCenter();
+                const auto& angle = get<0>(crate)->GetAngle();
+
+                QMatrix4x4 world_matrix;
+                world_matrix.translate(pos.x, pos.y, 0);
+                world_matrix.rotate(180. * angle / M_PI, 0, 0, 1);
+                world_matrix.scale(GameState::crate_scale, GameState::crate_scale, GameState::crate_scale);
+                crate_program->setUniformValue(crate_world_mat_unif, world_matrix);
+                crate_program->setUniformValue(crate_tag_unif, get<1>(crate));
+                blit_cube();
             }
 
-            const auto radius = system->GetRadius();
-
-            QMatrix4x4 matrix = world_matrix;
-            matrix.translate(0, 0, -1e-5);
-
-            particle_program->setUniformValue(particle_radius_unif, radius);
-            particle_program->setUniformValue(particle_radius_factor_unif, radius_factor);
-            particle_program->setUniformValue(particle_mode_unif, shader_selection);
-            particle_program->setUniformValue(particle_poly_unif, poly_selection);
-            particle_program->setUniformValue(particle_max_speed_unif, shading_max_speed);
-            particle_program->setUniformValue(particle_alpha_unif, shading_alpha);
-
-            //            const auto& color = QColor::fromRgb(0x6cu, 0xc3u, 0xf6u, 0xffu);
-            particle_program->setUniformValue(particle_water_color_unif, QColor::fromRgbF(water_color[0], water_color[1], water_color[2], water_color[3]));
-            particle_program->setUniformValue(particle_foam_color_unif, QColor::fromRgbF(foam_color[0], foam_color[1], foam_color[2], foam_color[3]));
-            particle_program->setUniformValue(particle_viscous_color_unif, QColor::fromRgbF(viscous_color[0], viscous_color[1], viscous_color[2], viscous_color[3]));
-            particle_program->setUniformValue(particle_tensible_color_unif, QColor::fromRgbF(tensible_color[0], tensible_color[1], tensible_color[2], tensible_color[3]));
-            particle_program->setUniformValue(particle_mix_unif, mix_ratio);
-            particle_program->setUniformValue(particle_mat_unif, matrix);
-            assertNoError();
-
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[6]);
-            glBufferData(GL_ARRAY_BUFFER, kk_max * 2 * sizeof(GLfloat), positions, GL_DYNAMIC_DRAW);
-            glVertexAttribPointer(particle_pos_attr, 2, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(particle_pos_attr);
-            assertNoError();
-
-            static_assert(std::is_same<GLubyte, decltype(b2ParticleColor::r)>::value, "mismatching color types");
-
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[7]);
-            glBufferData(GL_ARRAY_BUFFER, kk_max * 4 * sizeof(GLubyte), colors, GL_DYNAMIC_DRAW);
-            glVertexAttribPointer(particle_col_attr, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, 0);
-            glEnableVertexAttribArray(particle_col_attr);
-            assertNoError();
-
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[8]);
-            glBufferData(GL_ARRAY_BUFFER, kk_max * 2 * sizeof(GLfloat), speeds, GL_DYNAMIC_DRAW);
-            glVertexAttribPointer(particle_speed_attr, 2, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(particle_speed_attr);
-            assertNoError();
-
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[9]);
-            glBufferData(GL_ARRAY_BUFFER, kk_max * sizeof(GLuint), flags.data(), GL_DYNAMIC_DRAW);
-            glVertexAttribIPointer(particle_flag_attr, 1, GL_UNSIGNED_INT, 0, 0);
-            glEnableVertexAttribArray(particle_flag_attr);
-            assertNoError();
-
-            glDrawArrays(GL_POINTS, 0, kk_max);
-            assertNoError();
-
-            glDisableVertexAttribArray(particle_flag_attr);
-            glDisableVertexAttribArray(particle_speed_attr);
-            glDisableVertexAttribArray(particle_col_attr);
-            glDisableVertexAttribArray(particle_pos_attr);
-            assertNoError();
+            crate_texture->release();
         }
-    }
 
-    { // draw with main program
-        ProgramBinder binder(*this, main_program);
 
-        const auto blit_triangle = [this]() -> void
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
-            glVertexAttribPointer(main_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(main_pos_attr);
-            assertNoError();
+        { // draw with ball program
+            ProgramBinder binder(*this, ball_program);
 
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[1]);
-            glVertexAttribPointer(main_col_attr, 4, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(main_col_attr);
-            assertNoError();
+            const auto blit_square = [this]() -> void
+            {
+                glBindBuffer(GL_ARRAY_BUFFER, vbos[2]);
+                glVertexAttribPointer(ball_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
+                glEnableVertexAttribArray(ball_pos_attr);
+                assertNoError();
 
-            glDrawArrays(GL_TRIANGLES, 0, 3);
-            assertNoError();
+                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+                assertNoError();
 
-            glDisableVertexAttribArray(main_col_attr);
-            glDisableVertexAttribArray(main_pos_attr);
-            assertNoError();
-        };
+                glDisableVertexAttribArray(ball_pos_attr);
+                assertNoError();
+            };
 
-        const auto blit_square = [this]() -> void
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[2]);
-            glVertexAttribPointer(main_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(main_pos_attr);
-            assertNoError();
+            ball_program->setUniformValue(ball_camera_mat_unif, camera_matrix);
 
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[3]);
-            glVertexAttribPointer(main_col_attr, 4, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(main_col_attr);
-            assertNoError();
+            {
+                assert(state->ball);
+                assert(state->ball->GetFixtureList());
+                assert(state->ball->GetFixtureList()->GetShape());
 
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            assertNoError();
+                QMatrix4x4 world_matrix;
+                const auto& pos = state->ball->GetWorldCenter();
+                const auto& angle = state->ball->GetAngle();
+                world_matrix.translate(pos.x, pos.y);
+                world_matrix.rotate(qRadiansToDegrees(angle), 0, 0, 1);
+                world_matrix.scale(GameState::ball_scale, GameState::ball_scale, GameState::ball_scale);
+                ball_program->setUniformValue(ball_world_mat_unif, world_matrix);
 
-            glDisableVertexAttribArray(main_col_attr);
-            glDisableVertexAttribArray(main_pos_attr);
-            assertNoError();
-        };
+                const auto& angular_speed = state->ball->GetAngularVelocity();
+                ball_program->setUniformValue(ball_angular_speed_unif, angular_speed);
 
-        { // ship
-            QMatrix4x4 matrix = world_matrix;
-
-            assert(state);
-            assert(state->ship);
-            const auto& pos = state->ship->GetPosition();
-            matrix.translate(pos.x, pos.y);
-
-            matrix.rotate(180. * state->ship->GetAngle() / M_PI, 0, 0, 1);
-            matrix.rotate(world_time * 60, 0, 1, 0);
-
-            main_program->setUniformValue(main_mat_unif, matrix);
-            assertNoError();
-
-            blit_triangle();
-            blit_square();
-
-            matrix.rotate(90, 0, 1, 0);
-
-            main_program->setUniformValue(main_mat_unif, matrix);
-            assertNoError();
-
-            blit_triangle();
+                blit_square();
+            }
         }
-    }
 
-    { // draw with ball program
-        ProgramBinder binder(*this, ball_program);
+        if (state && state->canGrab())
+        { // draw with grab program
+            ProgramBinder binder(*this, grab_program);
 
-        const auto blit_square = [this]() -> void
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[2]);
-            glVertexAttribPointer(ball_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(ball_pos_attr);
             assertNoError();
 
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            assertNoError();
+            const auto blit_square = [this]() -> void
+            {
+                glBindBuffer(GL_ARRAY_BUFFER, vbos[2]);
+                glVertexAttribPointer(grab_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
+                glEnableVertexAttribArray(grab_pos_attr);
+                assertNoError();
 
-            glDisableVertexAttribArray(ball_pos_attr);
-            assertNoError();
-        };
+                glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+                assertNoError();
 
-        {
-            assert(state->ball);
-            assert(state->ball->GetFixtureList());
-            assert(state->ball->GetFixtureList()->GetShape());
-            const auto& shape = static_cast<const b2CircleShape&>(*state->ball->GetFixtureList()->GetShape());
+                glDisableVertexAttribArray(grab_pos_attr);
+                assertNoError();
+            };
 
-            auto matrix = world_matrix;
-            const auto& pos = state->ball->GetWorldCenter();
-            const auto& angle = state->ball->GetAngle();
-            matrix.translate(pos.x, pos.y);
-            matrix.rotate(qRadiansToDegrees(angle), 0, 0, 1);
-            matrix.scale(shape.m_radius, shape.m_radius, shape.m_radius);
-            //matrix.rotate(frame_counter, 1, 1, 1);
-            ball_program->setUniformValue(ball_mat_unif, matrix);
+            grab_program->setUniformValue(grab_camera_mat_unif, camera_matrix);
 
-            const auto& angular_speed = state->ball->GetAngularVelocity();
-            ball_program->setUniformValue(ball_angular_speed_unif, angular_speed);
+            { // grab indicator
+                QMatrix4x4 world_matrix;
 
-            blit_square();
+                assert(state);
+                assert(state->ship);
+                const auto& pos = state->ship->GetWorldCenter();
+                world_matrix.translate(pos.x, pos.y, 2);
+                world_matrix.scale(6, 6, 1);
+
+                grab_program->setUniformValue(grab_world_mat_unif, world_matrix);
+                grab_program->setUniformValue(grab_time_unif, world_time);
+                grab_program->setUniformValue(grab_halo_out_color_unif, QColor::fromRgbF(halo_out_color[0], halo_out_color[1], halo_out_color[2], halo_out_color[3]));
+                grab_program->setUniformValue(grab_halo_in_color_unif, QColor::fromRgbF(halo_in_color[0], halo_in_color[1], halo_in_color[2], halo_in_color[3]));
+                assertNoError();
+
+                blit_square();
+
+                assertNoError();
+            }
         }
+
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
+        glDisable(GL_CULL_FACE);
     }
-
-    if (state && state->canGrab())
-    { // draw with grab program
-        ProgramBinder binder(*this, grab_program);
-
-        const auto blit_square = [this]() -> void
-        {
-            glBindBuffer(GL_ARRAY_BUFFER, vbos[2]);
-            glVertexAttribPointer(grab_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
-            glEnableVertexAttribArray(grab_pos_attr);
-            assertNoError();
-
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            assertNoError();
-
-            glDisableVertexAttribArray(grab_pos_attr);
-            assertNoError();
-        };
-
-        { // grab indicator
-            QMatrix4x4 matrix = world_matrix;
-
-            assert(state);
-            assert(state->ship);
-            const auto& pos = state->ship->GetWorldCenter();
-            matrix.translate(pos.x, pos.y, 1e-5);
-            matrix.scale(6, 6, 1);
-
-            grab_program->setUniformValue(grab_mat_unif, matrix);
-            grab_program->setUniformValue(grab_time_unif, world_time);
-            grab_program->setUniformValue(grab_halo_out_color_unif, QColor::fromRgbF(halo_out_color[0], halo_out_color[1], halo_out_color[2], halo_out_color[3]));
-            grab_program->setUniformValue(grab_halo_in_color_unif, QColor::fromRgbF(halo_in_color[0], halo_in_color[1], halo_in_color[2], halo_in_color[3]));
-
-            blit_square();
-
-            assertNoError();
-        }
-    }
-
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_BLEND);
-    //glDisable(GL_CULL_FACE);
 
     { // sfx
         assert(state);
@@ -1197,34 +1348,34 @@ void GameWindowOpenGL::keyPressEvent(QKeyEvent* event)
 
     if (event->key() == level_switch_key)
     {
-        assert(!level_datas.empty());
+        assert(!data.levels.empty());
         const auto modifiers = event->modifiers();
         if (modifiers == Qt::ShiftModifier)
-            if (level_selection >= 0)
+            if (current_level >= 0)
             {
-                level_selection += level_datas.size() - 1;
-                level_selection %= level_datas.size();
+                current_level += data.levels.size() - 1;
+                current_level %= data.levels.size();
                 resetLevel();
                 return;
             }
             else
             {
-                level_selection = level_datas.size() - 1;
+                current_level = data.levels.size() - 1;
                 resetLevel();
                 return;
             }
 
         if (modifiers == Qt::NoModifier)
-            if (level_selection >= 0)
+            if (current_level >= 0)
             {
-                level_selection++;
-                level_selection %= level_datas.size();
+                current_level++;
+                current_level %= data.levels.size();
                 resetLevel();
                 return;
             }
             else
             {
-                level_selection = 0;
+                current_level = 0;
                 resetLevel();
                 return;
             }

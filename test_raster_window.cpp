@@ -1,21 +1,28 @@
+#include "Camera.h"
 #include "RasterWindowOpenGL.h"
 
 #include <imgui.h>
 
 #include <QApplication>
+#include <QOpenGLPaintDevice>
+#include <QPainter>
 
 #include <iostream>
 
 class TestWindowOpenGL : public RasterWindowOpenGL
 {
     public:
-        float angle = 30;
+        float cube_angle = 30;
         bool show_demo_window = false;
+        Camera camera;
+
+        std::unique_ptr<QOpenGLPaintDevice> device = nullptr;
 
     protected:
         std::unique_ptr<QOpenGLShaderProgram> base_program = nullptr;
         int base_pos_attr = -1;
-        int base_mat_unif = -1;
+        int base_camera_mat_unif = -1;
+        int base_world_mat_unif = -1;
 
         void initializeUI() override
         {
@@ -25,21 +32,28 @@ class TestWindowOpenGL : public RasterWindowOpenGL
 
         void initializePrograms() override
         {
-            assert(!base_program);
-            base_program = loadAndCompileProgram(":/shaders/base_vertex.glsl", ":/shaders/base_fragment.glsl");
-            assert(base_program);
+            device = std::make_unique<QOpenGLPaintDevice>();
+            device->setDevicePixelRatio(devicePixelRatio());
 
-            base_pos_attr = base_program->attributeLocation("posAttr");
-            base_mat_unif = base_program->uniformLocation("matrix");
-            qDebug() << "locations" << base_pos_attr << base_mat_unif;
-            assert(base_pos_attr >= 0);
-            assert(base_mat_unif >= 0);
-            assertNoError();
+						{
+								assert(!base_program);
+								base_program = loadAndCompileProgram(":/shaders/base_vertex.glsl", ":/shaders/base_fragment.glsl");
+
+								assert(base_program);
+								const auto init_ok = initLocations(*base_program, {
+												{ "posAttr", base_pos_attr },
+												}, {
+												{ "cameraMatrix", base_camera_mat_unif },
+												{ "worldMatrix", base_world_mat_unif },
+												});
+								assert(init_ok);
+								assertNoError();
+						}
         }
 
         void initializeBuffers(BufferLoader& loader) override
         {
-            loader.init(2);
+            loader.init(3);
 
             // cube
             loader.loadBuffer3(0, {
@@ -56,13 +70,26 @@ class TestWindowOpenGL : public RasterWindowOpenGL
                 0, 1, 3, 2, 7, 6, 4, 5,
                 3, 7, 0, 4, 1, 5, 2, 6,
             });
+
+            // square
+            loader.loadBuffer2(2, {
+                { -1, -1 },
+                { 1, -1 },
+                { -1, 1 },
+                { 1, 1 },
+            });
         }
 
         void paintUI() override
         {
             ImGui::SetNextWindowPos(ImVec2(5, 5), ImGuiCond_Once);
             ImGui::Begin("test_raster_window", &display_ui);
-            ImGui::SliderFloat("angle", &angle, 0, 360);
+
+            ImGui::SliderFloat("cube angle", &cube_angle, 0, 360, "%.1f°");
+            ImGui::Separator();
+
+            camera.paintUI();
+            ImGui::Separator();
 
             ImGuiCallbacks();
             ImGui::Separator();
@@ -77,18 +104,11 @@ class TestWindowOpenGL : public RasterWindowOpenGL
 
             if (show_demo_window)
                 ImGui::ShowDemoWindow();
-
         }
 
         void paintScene() override
         {
-            const auto world_matrix = [this]() -> QMatrix4x4
-            {
-                QMatrix4x4 matrix;
-                matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
-                matrix.translate(0, 0, -5);
-                return matrix;
-            }();
+            const auto camera_matrix = camera.cameraMatrix(*this);
 
             { // draw with base program
                 ProgramBinder binder(*this, base_program);
@@ -98,12 +118,12 @@ class TestWindowOpenGL : public RasterWindowOpenGL
 
                 const auto blit_cube = [this]() -> void
                 {
-                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[1]);
-                    assertNoError();
-
                     glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
                     glVertexAttribPointer(base_pos_attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
                     glEnableVertexAttribArray(base_pos_attr);
+                    assertNoError();
+
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[1]);
                     assertNoError();
 
                     glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
@@ -114,14 +134,60 @@ class TestWindowOpenGL : public RasterWindowOpenGL
                     assertNoError();
                 };
 
+                const auto blit_square = [this]() -> void
                 {
-                    auto matrix = world_matrix;
-                    //matrix.translate(0, 10);
-                    //matrix.scale(3, 3, 3);
-                    matrix.rotate(angle, 1, 1, 1);
-                    base_program->setUniformValue(base_mat_unif, matrix);
+                    glBindBuffer(GL_ARRAY_BUFFER, vbos[2]);
+                    glVertexAttribPointer(base_pos_attr, 2, GL_FLOAT, GL_FALSE, 0, 0);
+                    glEnableVertexAttribArray(base_pos_attr);
+                    assertNoError();
 
+                    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+                    assertNoError();
+
+                    glDisableVertexAttribArray(base_pos_attr);
+                    assertNoError();
+                };
+
+                base_program->setUniformValue(base_camera_mat_unif, camera_matrix);
+
+                {
+                    QMatrix4x4 world_matrix;
+                    world_matrix.rotate(cube_angle, 0, 0, 1);
+                    world_matrix.scale(.5, .5, .5);
+                    world_matrix.translate(1, 1, 0);
+                    base_program->setUniformValue(base_world_mat_unif, world_matrix);
+                    blit_square();
+                }
+
+                {
+                    QMatrix4x4 world_matrix;
+                    world_matrix.translate(0, 1, 0);
+                    world_matrix.scale(2, 2, 2);
+                    world_matrix.rotate(90, 1, 0, 0);
+                    base_program->setUniformValue(base_world_mat_unif, world_matrix);
+                    blit_square();
+                }
+
+                {
+                    QMatrix4x4 world_matrix;
+                    world_matrix.translate(-1.5, 0, 0);
+                    world_matrix.rotate(cube_angle, 1, 0, 0);
+                    base_program->setUniformValue(base_world_mat_unif, world_matrix);
                     blit_cube();
+                }
+            }
+
+            {
+                assert(device);
+                device->setSize(size() * devicePixelRatio());
+                QPainter painter(device.get());
+                camera.preparePainter(*this, painter);
+
+                { // background gradient
+                    QLinearGradient linearGrad(QPointF(0, 0), QPointF(1, 1));
+                    linearGrad.setColorAt(0, QColor(0x33, 0x08, 0x67)); // morpheus den gradient
+                    linearGrad.setColorAt(1, QColor(0x30, 0xcf, 0xd0));
+                    painter.fillRect(QRectF(-.5, -.5, 1, 1), linearGrad);
                 }
             }
         }
@@ -152,6 +218,8 @@ int main(int argc, char* argv[])
     view.setAnimated(true);
     view.resize(1280, 720);
     view.show();
+
+    view.camera.screen_height = 10;
 
     view.addCheckbox("imgui demo", Qt::Key_Q, false, [&view](const bool checked) -> void {
         view.show_demo_window = checked;

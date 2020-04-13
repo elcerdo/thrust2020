@@ -186,7 +186,7 @@ void GameState::dumpCollisionData() const
     if (!crates.empty())
     {
         cout << "crate" << endl;
-        dump_filter_data(*crates.front());
+        dump_filter_data(*std::get<0>(crates.front()));
     }
 }
 
@@ -209,7 +209,7 @@ void GameState::resetBall()
     def.angularVelocity = 0;
 
     b2CircleShape shape;
-    shape.m_radius = 5.;
+    shape.m_radius = ball_scale;
 
     b2FixtureDef fixture;
     fixture.shape = &shape;
@@ -243,12 +243,11 @@ void GameState::resetShip()
     def.angularVelocity = 0;
     def.angle = 0;
 
-    constexpr float ww = 1.8;
     b2PolygonShape shape;
     static const b2Vec2 points[3] {
-        { -ww, 0 },
-        { ww, 0 },
-        { 0, 2*ww }
+        { -ship_scale, 0 },
+        { ship_scale, 0 },
+        { 0, ship_scale * 2 }
     };
     shape.Set(points, 3);
 
@@ -532,20 +531,19 @@ void GameState::addPath(const std::vector<b2Vec2>& positions, const b2Vec2 size)
     doors.emplace_back(std::move(door), positions, 0);
 }
 
-void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle)
+void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle, const int tag)
 {
     b2BodyDef def;
     def.type = b2_dynamicBody;
     def.position = pos;
     def.angle = angle;
 
-    constexpr float zz = 3; // 1.2
     b2PolygonShape shape;
     static const b2Vec2 points[4] {
-        { -zz, -zz },
-        { zz, -zz },
-        { zz, zz },
-        { -zz, zz },
+        { -crate_scale, -crate_scale },
+        { crate_scale, -crate_scale },
+        { crate_scale, crate_scale },
+        { -crate_scale, crate_scale },
     };
     shape.Set(points, 4);
 
@@ -562,7 +560,7 @@ void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double a
     crate->SetLinearVelocity(velocity);
 
     auto foo = UniqueBody(crate, [this](b2Body* body) -> void { world.DestroyBody(body); });
-    crates.emplace_back(std::move(foo));
+    crates.emplace_back(std::move(foo) , tag);
 }
 
 void GameState::clearCrates()

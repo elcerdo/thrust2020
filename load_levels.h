@@ -16,10 +16,17 @@ struct LevelData
     std::string map_filename;
     std::vector<DoorData> doors;
     std::vector<PathData> paths;
+    b2Vec2 world_camera_position;
+    float world_screen_height;
 };
 
-using LevelDatas = std::vector<LevelData>;
+struct MainData
+{
+    using LevelDatas = std::vector<LevelData>;
+    LevelDatas levels;
+    int default_level;
+};
 
-LevelDatas load(const std::string& json_filename);
+MainData load(const std::string& json_filename);
 
 }

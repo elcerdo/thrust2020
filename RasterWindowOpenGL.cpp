@@ -35,7 +35,7 @@ void RasterWindowOpenGL::assertNoError()
             break;
         case GL_INVALID_VALUE:
             cerr << "GL_INVALID_VALUE" << endl;
-            cerr << "A numerir argument is out of range. The offending command is ignored and has no other side effect than to set the error flag." << endl;
+            cerr << "A numeric argument is out of range. The offending command is ignored and has no other side effect than to set the error flag." << endl;
             break;
         case GL_INVALID_OPERATION:
             cerr << "GL_INVALID_OPERATION" << endl;
@@ -257,7 +257,7 @@ std::unique_ptr<QOpenGLShaderProgram> RasterWindowOpenGL::loadAndCompileProgram(
     using std::cout;
     using std::endl;
 
-    cout << "========== shader" << endl;
+    cout << "========== compile shader" << endl;
     auto program = std::make_unique<QOpenGLShaderProgram>();
 
     const auto load_shader = [&program](const QOpenGLShader::ShaderType type, const std::string& filename) -> bool
@@ -311,6 +311,42 @@ std::unique_ptr<QOpenGLShaderProgram> RasterWindowOpenGL::loadAndCompileProgram(
     assert(all_ok);
 
     return program;
+}
+
+bool RasterWindowOpenGL::initLocations(const QOpenGLShaderProgram& program, const Locations& attr_locations, const Locations& unif_locations)
+{
+    using std::cout;
+    using std::endl;
+
+    cout << "========== init locations" << endl;
+
+    bool found_all = true;
+
+    for (auto& pair : attr_locations)
+    {
+        cout << "attr " << std::quoted(pair.first) << " ";
+        cout.flush();
+
+        pair.second = program.attributeLocation(QString::fromStdString(pair.first));
+        const bool found = pair.second >= 0;
+        cout << (found ? "OK": "ERROR") << endl;
+
+        found_all &= found;
+    }
+
+    for (auto& pair : unif_locations)
+    {
+        cout << "unif " << std::quoted(pair.first) << " ";
+        cout.flush();
+
+        pair.second = program.uniformLocation(QString::fromStdString(pair.first));
+        const bool found = pair.second >= 0;
+        cout << (found ? "OK": "ERROR") << endl;
+
+        found_all &= found;
+    }
+
+    return found_all;
 }
 
 void RasterWindowOpenGL::initializeGL()

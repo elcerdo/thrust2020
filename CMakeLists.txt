@@ -102,6 +102,7 @@ target_link_libraries(test_imgui_qt
     )
 
 add_executable(test_raster_window
+    Camera.cpp
     RasterWindowOpenGL.cpp
     test_raster_window.cpp
     data/shaders/shaders.qrc
@@ -115,6 +116,7 @@ add_executable(rocket
     data_polygons.cpp
     extract_polygons.cpp
     decompose_polygons.cpp
+    Camera.cpp
     RasterWindowOpenGL.cpp
     GameWindowOpenGL.cpp
     GameState.cpp
@@ -122,6 +124,7 @@ add_executable(rocket
     data/sounds/sounds.qrc
     data/shaders/shaders.qrc
     data/levels/levels.qrc
+    data/images/images.qrc
     )
 target_link_libraries(rocket
     Box2D

@@ -1,14 +1,15 @@
 #version 330
 
-in highp vec4 posAttr;
+in vec4 posAttr;
 
-out lowp vec4 pos;
+out vec4 pos;
 
-uniform highp mat4 matrix;
+uniform mat4 cameraMatrix;
+uniform mat4 worldMatrix;
 
 void main()
 {
    pos = posAttr;
-   gl_Position = matrix * posAttr;
+   gl_Position = cameraMatrix * worldMatrix * posAttr;
 }
 
