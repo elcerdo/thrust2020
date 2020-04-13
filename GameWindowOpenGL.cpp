@@ -127,8 +127,21 @@ void GameWindowOpenGL::resetLevel()
     }
 
     {
-        world_camera.screen_height = level.world_screen_height;
         world_camera.position = { level.world_camera_position.x, level.world_camera_position.y };
+        world_camera.screen_height = level.world_screen_height;
+        ship_camera.screen_height = level.ship_screen_height;
+    }
+
+    {
+        assert(state->ship);
+        assert(state->ball);
+        ship_spawn = level.ship_spawn;
+        ball_spawn = level.ball_spawn;
+        crate_spawn = level.crate_spawn;
+        water_spawn = level.water_spawn;
+        water_drop_size = level.water_drop_size;
+        state->resetShip(ship_spawn);
+        state->resetBall(ball_spawn);
     }
 
     enforceCallbackValues();
@@ -769,7 +782,7 @@ void GameWindowOpenGL::paintUI()
             system.SetDensity(value);
         }
 
-        ImGui::SliderFloat2("drop size", water_drop_size.data(), 0, 20);
+        ImGui::SliderFloat2("drop size", reinterpret_cast<float*>(&water_drop_size), 0, 20);
         ImGui::Checkbox("clean stuck in door", &state->clean_stuck_in_door);
 
         {

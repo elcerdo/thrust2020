@@ -49,8 +49,14 @@ levels::MainData levels::load(const std::string& json_filename)
             level_obj["map"].toString().toStdString(),
             {},
             {},
-            vec2_from_json(level_obj, "wcx", "wcy", b2Vec2 { 0, -120 }),
-            float_from_json(level_obj, "wsh", 500),
+            vec2_from_json(level_obj, "world_camera_x", "world_camera_y", b2Vec2 { 0, -120 }),
+            float_from_json(level_obj, "world_screen_height", 500),
+            float_from_json(level_obj, "ship_screen_height", 70),
+            vec2_from_json(level_obj, "ship_spawn_x", "ship_spawn_y", b2Vec2 { 0, 0 }),
+            vec2_from_json(level_obj, "ball_spawn_x", "ball_spawn_y", b2Vec2 { 20, 0 }),
+            vec2_from_json(level_obj, "crate_spawn_x", "crate_spawn_y", b2Vec2 { 0, 20 }),
+            vec2_from_json(level_obj, "water_spawn_x", "water_spawn_y", b2Vec2 { 0, 50 }),
+            vec2_from_json(level_obj, "water_drop_width", "water_drop_height", b2Vec2 { 15, 15 }),
         };
 
         for (const auto& door_json : level_obj["doors"].toArray())
@@ -58,7 +64,7 @@ levels::MainData levels::load(const std::string& json_filename)
             assert(door_json.isObject());
             const auto& door_obj = door_json.toObject();
             const b2Vec2 center = vec2_from_json(door_obj, "cx", "cy");
-            const b2Vec2 size = vec2_from_json(door_obj, "ww", "hh", b2Vec2 { 1, 10 });
+            const b2Vec2 size = vec2_from_json(door_obj, "width", "height", b2Vec2 { 1, 10 });
             const b2Vec2 delta = vec2_from_json(door_obj, "dx", "dy", b2Vec2 { 0, -20 });
             level.doors.emplace_back(LevelData::DoorData { center, size, delta });
         }
@@ -67,7 +73,7 @@ levels::MainData levels::load(const std::string& json_filename)
         {
             assert(path_json.isObject());
             const auto& path_obj = path_json.toObject();
-            const b2Vec2 size = vec2_from_json(path_obj, "ww", "hh", b2Vec2 { 1, 10 });
+            const b2Vec2 size = vec2_from_json(path_obj, "width", "height", b2Vec2 { 1, 10 });
 
             std::vector<b2Vec2> positions;
             for (const auto& pos_json : path_obj["positions"].toArray())

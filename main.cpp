@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
         if (!view.state)
             return;
         assert(view.state);
-        view.state->addWater({ 0, 70 }, { view.water_drop_size[0], view.water_drop_size[1] }, rng(), view.water_flags);
+        view.state->addWater(view.water_spawn, view.water_drop_size, rng(), view.water_flags);
     });
     view.addButton("drop crate", Qt::Key_R, [&view, &rng, &tag]() -> void {
         if (!view.state)
@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
         const auto angle = dist_angle(rng);
         std::normal_distribution<double> dist_normal(0, 10);
         const b2Vec2 velocity(dist_normal(rng), dist_normal(rng));
-        view.state->addCrate({ 0, 10 }, velocity, angle, tag++);
+        view.state->addCrate(view.crate_spawn, velocity, angle, tag++);
         return;
     });
     view.addButton("clear all water", Qt::Key_D, [&view]() -> void {
@@ -91,13 +91,13 @@ int main(int argc, char* argv[])
         if (!view.state)
             return;
         assert(view.state);
-        view.state->resetShip();
+        view.state->resetShip(view.ship_spawn);
     });
     view.addButton("reset ball", Qt::Key_B, [&view]() -> void {
         if (!view.state)
             return;
         assert(view.state);
-        view.state->resetBall();
+        view.state->resetBall(view.ball_spawn);
     });
     view.addButton("toggle doors", Qt::Key_T, [&view]() -> void {
         if (!view.state)

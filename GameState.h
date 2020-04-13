@@ -24,17 +24,17 @@ struct GameState : public b2ContactListener
     void grab();
     void release();
 
-    void addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle, const int tag);
+    void addCrate(const b2Vec2& pos, const b2Vec2& velocity, const double angle, const int tag);
     void clearCrates();
 
-    void addWater(const b2Vec2 pos, const b2Vec2 size, const size_t seed, const unsigned int flags);
+    void addWater(const b2Vec2& pos, const b2Vec2& size, const size_t seed, const unsigned int flags);
     void clearWater(const int group_count);
 
-    void addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 delta);
-    void addPath(const std::vector<b2Vec2>& positions, const b2Vec2 size);
+    void addDoor(const b2Vec2& pos, const b2Vec2& size, const b2Vec2& delta);
+    void addPath(const std::vector<b2Vec2>& positions, const b2Vec2& size);
 
-    void resetShip();
-    void resetBall();
+    void resetShip(const b2Vec2& pos);
+    void resetBall(const b2Vec2& pos);
     void resetParticleSystem();
     void resetGround(const std::string& map_filename);
 
