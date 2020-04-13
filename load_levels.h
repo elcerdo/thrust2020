@@ -18,6 +18,9 @@ struct LevelData
     std::vector<PathData> paths;
     b2Vec2 world_camera_position;
     float world_screen_height;
+    float ship_screen_height;
+    b2Vec2 ship_spawn;
+    b2Vec2 ball_spawn;
 };
 
 struct MainData

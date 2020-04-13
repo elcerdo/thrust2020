@@ -127,8 +127,18 @@ void GameWindowOpenGL::resetLevel()
     }
 
     {
-        world_camera.screen_height = level.world_screen_height;
         world_camera.position = { level.world_camera_position.x, level.world_camera_position.y };
+        world_camera.screen_height = level.world_screen_height;
+        ship_camera.screen_height = level.ship_screen_height;
+    }
+
+    {
+        assert(state->ship);
+        assert(state->ball);
+        state->ship_spawn = level.ship_spawn;
+        state->ball_spawn = level.ball_spawn;
+        state->resetShip();
+        state->resetBall();
     }
 
     enforceCallbackValues();

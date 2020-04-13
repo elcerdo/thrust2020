@@ -73,6 +73,9 @@ struct GameState : public b2ContactListener
 
     ShipState ship_state;
 
+    b2Vec2 ship_spawn = { 0, 0 };
+    b2Vec2 ball_spawn = { 20, 0 };
+
     unsigned int all_accum_contact = 0;
     bool clean_stuck_in_door = true;
 };

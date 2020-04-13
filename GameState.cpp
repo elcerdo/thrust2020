@@ -204,7 +204,7 @@ void GameState::resetBall()
 
     b2BodyDef def;
     def.type = b2_dynamicBody;
-    def.position.Set(20, 0);
+    def.position = ball_spawn;
     def.angle = 0;
     def.angularVelocity = 0;
 
@@ -239,7 +239,7 @@ void GameState::resetShip()
 
     b2BodyDef def;
     def.type = b2_dynamicBody;
-    def.position.Set(0, 0);
+    def.position = ship_spawn;
     def.angularVelocity = 0;
     def.angle = 0;
 

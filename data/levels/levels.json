@@ -4,6 +4,10 @@
     {
       "name": "cave",
       "map": ":/levels/map1.svg",
+      "ship_spawn_x": -100,
+      "ship_spawn_y": 50,
+      "ball_spawn_x": 125,
+      "ball_spawn_y": -300,
       "doors": [
         { "cx": 115, "cy": -170, "dx": 0, "dy": -20},
         { "cx": 15, "cy": -230, "dx": 20, "dy": 0},
@@ -13,12 +17,12 @@
     {
       "name": "sandhour",
       "map": ":/levels/map2.svg",
-      "wcy": -95,
-      "wsh": 415,
+      "world_camera_y": -95,
+      "world_screen_height": 415,
       "doors": [
         { "cx": -65, "cy": -160, "dx": 15, "dy": 0},
         { "cx": -90, "cy": 100, "dx": -15, "dy": 0},
-        { "cx": 80, "cy": -250, "dx": -160, "dy": 0, "ww": 30, "hh": 5}
+        { "cx": 80, "cy": -250, "dx": -160, "dy": 0, "width": 30, "height": 5}
       ]
     },
     {
@@ -30,8 +34,8 @@
     {
       "name": "pump",
       "map": ":/levels/map4.svg",
-      "wcy": 10,
-      "wsh": 330,
+      "world_camera_y": 10,
+      "world_screen_height": 330,
       "paths": [
         {
           "positions": [
@@ -40,8 +44,8 @@
             { "x": 50, "y": -122 },
             { "x": -10, "y": -122 }
           ],
-          "ww": 2,
-          "hh": 6
+          "width": 2,
+          "height": 6
         },
         {
           "positions": [
@@ -50,8 +54,8 @@
             { "x": -10, "y": -102 },
             { "x": 50, "y": -102 }
           ],
-          "ww": 2,
-          "hh": 6
+          "width": 2,
+          "height": 6
         }
       ]
     },
@@ -68,8 +72,8 @@
             { "x": -2, "y": -20 },
             { "x": -2, "y": -137 }
           ],
-          "ww": 10,
-          "hh": 10
+          "width": 10,
+          "height": 10
         }
       ]
     },
@@ -82,8 +86,8 @@
             { "x": 1, "y": 102},
             { "x": 1, "y": 10}
           ],
-          "ww": 100,
-          "hh": 10
+          "width": 100,
+          "height": 10
         }
       ]
     },
@@ -99,8 +103,8 @@
             { "x": -32, "y": -138},
             { "x": 32, "y": -138}
           ],
-          "ww": 2,
-          "hh": 6
+          "width": 2,
+          "height": 6
         }
       ]
     },
@@ -108,10 +112,10 @@
       "name": "spike",
       "map": ":/levels/map8.svg",
       "doors": [
-        { "cx": -108, "cy": -168, "dx": 0, "dy": 100, "ww": 3, "hh": 35},
-        { "cx": 108, "cy": -168, "dx": 0, "dy": 100, "ww": 3, "hh": 35},
-        { "cx": -127, "cy": -200, "dx": 0, "dy": 100, "ww": 18, "hh": 3},
-        { "cx": 127, "cy": -200, "dx": 0, "dy": 100, "ww": 18, "hh": 3}
+        { "cx": -108, "cy": -168, "dx": 0, "dy": 100, "width": 3, "height": 35},
+        { "cx": 108, "cy": -168, "dx": 0, "dy": 100, "width": 3, "height": 35},
+        { "cx": -127, "cy": -200, "dx": 0, "dy": 100, "width": 18, "height": 3},
+        { "cx": 127, "cy": -200, "dx": 0, "dy": 100, "width": 18, "height": 3}
       ]
     }
   ]
