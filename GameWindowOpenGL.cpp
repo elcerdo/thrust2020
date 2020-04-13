@@ -965,7 +965,7 @@ void GameWindowOpenGL::paintScene()
         { // draw with particle program
             ProgramBinder binder(*this, particle_program);
 
-            particle_program->setUniformValue(base_camera_mat_unif, camera_matrix);
+            particle_program->setUniformValue(particle_camera_mat_unif, camera_matrix);
 
             { // particle system
                 const auto& system = state->system;
