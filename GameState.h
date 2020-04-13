@@ -59,6 +59,8 @@ struct GameState : public b2ContactListener
         bool firing_thruster = false;
         bool turning_left = false;
         bool turning_right = false;
+        float turning_left_time = 0;
+        float turning_right_time = 0;
         bool touched_wall = false;
         float target_angle = 0;
         float thrust_factor = 1;

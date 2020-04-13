@@ -46,17 +46,22 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         std::array<float, 4> tensible_color = { 0, 1, 1, 1 };
         float mix_ratio = .2;
         bool draw_debug = false;
-        bool is_zoom_out = true;
         int shader_selection = 8;
         int poly_selection = 3;
         int level_selection = -1;
         float radius_factor = 1;
         float shading_max_speed = 60;
         float shading_alpha = -.65;
-        unsigned int water_flags = 0;
+        unsigned int water_flags = b2_viscousParticle | b2_tensileParticle;
         bool skip_state_step = false;
         bool use_painter = true;
         std::array<float, 2> water_drop_size = { 10, 10 };
+        float world_time = 0;
+
+        bool use_world_camera = false;
+        float ship_camera_zoom = 1;
+        float world_camera_zoom = 1;
+        std::array<float, 2> world_camera_center { 0, -120 };
 
     protected:
         QOpenGLPaintDevice* device = nullptr;
@@ -67,7 +72,6 @@ class GameWindowOpenGL : public RasterWindowOpenGL
 
         QSvgRenderer map_renderer;
 
-        float world_time = 0;
         bool is_muted = false;
 
         std::unique_ptr<QOpenGLShaderProgram> base_program = nullptr;

@@ -21,8 +21,6 @@
 #include <bitset>
 #include <iomanip>
 
-const float camera_world_zoom = 1.5;
-const QVector2D camera_world_center { 0, -120 };
 const char* shader_names[] = { "out group + dot speed", "out speed + dot flag", "out flag + dot speed", "out flag + dot group", "dot group", "dot uniform", "dot stuck", "dot flag", "dot speed" };
 const int shader_switch_key = Qt::Key_Q;
 const int level_switch_key = Qt::Key_L;
@@ -572,19 +570,27 @@ void GameWindowOpenGL::paintUI()
         if (state)
         {
             assert(state);
-            ImGui::Text("ship %.2f %.2f", state->ship->GetPosition().x, state->ship->GetPosition().y);
+            assert(state->ship);
+            ImGui::Text("ship m=%.2f x=%.2f y=%.2f", state->ship->GetMass(), state->ship->GetPosition().x, state->ship->GetPosition().y);
+            ImGui::Text("ball m=%.2f x=%.2f y=%.2f", state->ball->GetMass(), state->ball->GetPosition().x, state->ball->GetPosition().y);
             if (state->system) ImGui::Text("particles %d %d(%d)", state->system->GetParticleGroupCount(), state->system->GetParticleCount(), state->system->GetStuckCandidateCount());
             ImGui::Text("crates %d", static_cast<int>(state->crates.size()));
-            {
-                std::stringstream ss;
-                for (unsigned int kk=0, kk_max=std::min(state->all_accum_contact, 10u); kk<kk_max; kk++)
-                    ss << "*";
-                ImGui::Text("contact %s", ss.str().c_str());
-            }
-            ImGui::Text("ship mass %f", state->ship->GetMass());
-            ImGui::Text("ball mass %f", state->ball->GetMass());
-            ImGui::Text(state->ship_state.touched_wall ? "!!!!BOOOM!!!!" : "<3<3<3<3");
+
+            std::stringstream ss;
+            for (unsigned int kk=0, kk_max=std::min(state->all_accum_contact, 10u); kk<kk_max; kk++)
+                ss << "*";
+            ImGui::Text("contact %s %s", state->ship_state.touched_wall ? "!!BOOM!!" : "<3<3<3<3", ss.str().c_str());
         }
+
+        end_left();
+    }
+
+    { // camera window
+        begin_left("Camera");
+
+        ImGui::SliderFloat("world zoom", &world_camera_zoom, .1, 3);
+        ImGui::DragFloat2("world center", world_camera_center.data());
+        ImGui::SliderFloat("ship zoom", &ship_camera_zoom, .1, 3);
 
         end_left();
     }
@@ -592,47 +598,61 @@ void GameWindowOpenGL::paintUI()
     { // shading window
         begin_right("Shading");
 
-        //ImGui::Text("Hello, world!");
-        ImGui::ColorEdit3("water color", water_color.data());
-        ImGui::ColorEdit3("foam color", foam_color.data());
-        ImGui::ColorEdit4("halo out color", halo_out_color.data());
-        ImGui::ColorEdit4("halo in color", halo_in_color.data());
-        ImGui::ColorEdit3("viscous color", viscous_color.data());
-        ImGui::ColorEdit3("tensible color", tensible_color.data());
-        ImGui::SliderFloat("mix ratio", &mix_ratio, 0, 1);
-
+        if (ImGui::BeginTabBar("##shading_tabs", ImGuiTabBarFlags_None))
         {
-            shader_selection %= IM_ARRAYSIZE(shader_names);
-            const std::string key_name = QKeySequence(shader_switch_key).toString().toStdString();
-            std::stringstream ss;
-            ss << "shader (" << key_name << ")";
-            ImGui::Combo(ss.str().c_str(), &shader_selection, shader_names, IM_ARRAYSIZE(shader_names));
-            shader_selection %= IM_ARRAYSIZE(shader_names);
-        }
+            if (ImGui::BeginTabItem("Particle"))
+            {
+                //ImGui::Text("Hello, world!");
+                ImGui::ColorEdit3("water color", water_color.data());
+                ImGui::ColorEdit3("foam color", foam_color.data());
+                ImGui::ColorEdit3("viscous color", viscous_color.data());
+                ImGui::ColorEdit3("tensible color", tensible_color.data());
+                ImGui::SliderFloat("mix ratio", &mix_ratio, 0, 1);
 
-        {
-            const char* poly_names[] = { "octogon", "hexagon", "square", "triangle" };
-            poly_selection %= IM_ARRAYSIZE(poly_names);
-            ImGui::Combo("poly", &poly_selection, poly_names, IM_ARRAYSIZE(poly_names));
-        }
+                {
+                    shader_selection %= IM_ARRAYSIZE(shader_names);
+                    const std::string key_name = QKeySequence(shader_switch_key).toString().toStdString();
+                    std::stringstream ss;
+                    ss << "shader (" << key_name << ")";
+                    ImGui::Combo(ss.str().c_str(), &shader_selection, shader_names, IM_ARRAYSIZE(shader_names));
+                    shader_selection %= IM_ARRAYSIZE(shader_names);
+                }
 
-        ImGui::SliderFloat("radius factor", &radius_factor, 0.0f, 1.0f);
+                {
+                    const char* poly_names[] = { "octogon", "hexagon", "square", "triangle" };
+                    poly_selection %= IM_ARRAYSIZE(poly_names);
+                    ImGui::Combo("poly", &poly_selection, poly_names, IM_ARRAYSIZE(poly_names));
+                }
 
-        ImGui::SliderFloat("alpha", &shading_alpha, -1, 1);
-        ImGui::SliderFloat("max speed", &shading_max_speed, 0, 100);
+                ImGui::SliderFloat("radius factor", &radius_factor, 0.0f, 1.0f);
 
-        if (state && state->system)
-        {
-            ImGui::Separator();
+                ImGui::SliderFloat("alpha", &shading_alpha, -1, 1);
+                ImGui::SliderFloat("max speed", &shading_max_speed, 0, 100);
 
-            assert(state);
-            assert(state->system);
-            const b2Vec2* speeds = state->system->GetVelocityBuffer();
-            const auto kk_max = state->system->GetParticleCount();
-            const auto max_speed = std::accumulate(speeds, speeds + kk_max, 0.f, [](const float& max_speed, const b2Vec2& speed) -> float {
-                return std::max(max_speed, speed.Length());
-            });
-            ImGui::Text("max speed %f", max_speed);
+                if (state && state->system)
+                {
+                    ImGui::Separator();
+
+                    assert(state);
+                    assert(state->system);
+                    const b2Vec2* speeds = state->system->GetVelocityBuffer();
+                    const auto kk_max = state->system->GetParticleCount();
+                    const auto max_speed = std::accumulate(speeds, speeds + kk_max, 0.f, [](const float& max_speed, const b2Vec2& speed) -> float {
+                            return std::max(max_speed, speed.Length());
+                            });
+                    ImGui::Text("max speed %f", max_speed);
+                }
+                ImGui::EndTabItem();
+            }
+
+            if (ImGui::BeginTabItem("Ship"))
+            {
+                ImGui::ColorEdit4("halo out color", halo_out_color.data());
+                ImGui::ColorEdit4("halo in color", halo_in_color.data());
+                ImGui::EndTabItem();
+            }
+
+            ImGui::EndTabBar();
         }
 
         end_right();
@@ -647,62 +667,24 @@ void GameWindowOpenGL::paintUI()
         auto& system = *state->system;
 
         {
-            water_flags = 0;
-
             const auto ww = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) / 2.f;
             const auto ww_ = ww + ImGui::GetStyle().ItemSpacing.x + ImGui::GetStyle().WindowPadding.x;
 
-            {
-                static bool state = false;
-                ImGui::Checkbox("spring", &state);
-                if (state) water_flags |= b2_springParticle;
-            }
+            ImGui::CheckboxFlags("spring", &water_flags, b2_springParticle);
+            ImGui::SameLine(ww_);
+            ImGui::CheckboxFlags("elastic", &water_flags, b2_elasticParticle);
 
-            {
-                static bool state = false;
-                ImGui::SameLine(ww_);
-                ImGui::Checkbox("elastic", &state);
-                if (state) water_flags |= b2_elasticParticle;
-            }
+            ImGui::CheckboxFlags("viscous", &water_flags, b2_viscousParticle);
+            ImGui::SameLine(ww_);
+            ImGui::CheckboxFlags("powder", &water_flags, b2_powderParticle);
 
-            {
-                static bool state = true;
-                ImGui::Checkbox("viscous", &state);
-                if (state) water_flags |= b2_viscousParticle;
-            }
+            ImGui::CheckboxFlags("tensible", &water_flags, b2_tensileParticle);
+            ImGui::SameLine(ww_);
+            ImGui::CheckboxFlags("color mixing", &water_flags, b2_colorMixingParticle);
 
-            {
-                static bool state = false;
-                ImGui::SameLine(ww_);
-                ImGui::Checkbox("powder", &state);
-                if (state) water_flags |= b2_powderParticle;
-            }
-
-            {
-                static bool state = true;
-                ImGui::Checkbox("tensible", &state);
-                if (state) water_flags |= b2_tensileParticle;
-            }
-
-            {
-                static bool state = false;
-                ImGui::SameLine(ww_);
-                ImGui::Checkbox("color mixing", &state);
-                if (state) water_flags |= b2_colorMixingParticle;
-            }
-
-            {
-                static bool state = false;
-                ImGui::Checkbox("static pressure", &state);
-                if (state) water_flags |= b2_staticPressureParticle;
-            }
-
-            {
-                static bool state = false;
-                ImGui::SameLine(ww_);
-                ImGui::Checkbox("repulsive", &state);
-                if (state) water_flags |= b2_repulsiveParticle;
-            }
+            ImGui::CheckboxFlags("static pressure", &water_flags, b2_staticPressureParticle);
+            ImGui::SameLine(ww_);
+            ImGui::CheckboxFlags("repulsive", &water_flags, b2_repulsiveParticle);
         }
 
 
@@ -767,7 +749,13 @@ void GameWindowOpenGL::paintScene()
     { // ship state
         assert(state);
         state->ship_state.firing_thruster = io.KeysDown[ImGuiKey_UpArrow];
+
+        const bool pressed_left = (!state->ship_state.turning_left && io.KeysDown[ImGuiKey_LeftArrow]);
+        if (pressed_left) state->ship_state.turning_left_time = world_time;
         state->ship_state.turning_left = io.KeysDown[ImGuiKey_LeftArrow];
+
+        const bool pressed_right = (!state->ship_state.turning_right && io.KeysDown[ImGuiKey_RightArrow]);
+        if (pressed_right) state->ship_state.turning_right_time = world_time;
         state->ship_state.turning_right = io.KeysDown[ImGuiKey_RightArrow];
     }
 
@@ -799,18 +787,18 @@ void GameWindowOpenGL::paintScene()
             painter.translate(width() / 2, height() / 2);
             painter.scale(1., -1);
 
-            if (!is_zoom_out)
+            if (!use_world_camera)
             {
                 const auto& pos = state->ship->GetPosition();
-                const int side = qMin(width(), height());
-                const double ship_height = 75 * std::max(1., pos.y / 40.);
-                painter.scale(side / ship_height, side / ship_height);
+                const double side = ship_camera_zoom * qMin(width(), height()) / 100.;
+                const double foo = std::max(1., pos.y / 40.);
+                painter.scale(side / foo, side / foo);
                 painter.translate(-pos.x, -std::min(20.f, pos.y));
             }
             else
             {
-                painter.scale(camera_world_zoom, camera_world_zoom);
-                painter.translate(-camera_world_center.toPoint());
+                painter.scale(1.5 * world_camera_zoom, 1.5 *world_camera_zoom);
+                painter.translate(-world_camera_center[0], -world_camera_center[1]);
             }
 
             //{
@@ -890,21 +878,21 @@ void GameWindowOpenGL::paintScene()
         //matrix.perspective(60.0f, width() / static_cast<float>(height()), 0.1f, 10.0f);
 
         matrix.translate(0, 0, -50);
-        matrix.scale(2, 2, 2);
+        matrix.scale(2, 2, 1);
 
-        if (!is_zoom_out)
+        if (!use_world_camera)
         {
             const auto& pos = state->ship->GetPosition();
-            const auto side = std::min(ratio, 1.);
-            const double ship_height = 75 * std::max(1., pos.y / 40.);
-            matrix.scale(side / ship_height, side / ship_height, 1);
+            const double side = ship_camera_zoom * std::min(ratio, 1.) / 100.;
+            const double foo = std::max(1., pos.y / 40.);
+            matrix.scale(side / foo, side / foo, 1);
             matrix.translate(-pos.x, -std::min(20.f, pos.y), 0);
         }
         else
         {
             const int side = qMin(width(), height());
-            matrix.scale(camera_world_zoom/side, camera_world_zoom/side, camera_world_zoom);
-            matrix.translate(-camera_world_center);
+            matrix.scale(1.5 * world_camera_zoom / side, 1.5 * world_camera_zoom / side, 1.);
+            matrix.translate(-world_camera_center[0], -world_camera_center[1], 0);
         }
 
         return matrix;

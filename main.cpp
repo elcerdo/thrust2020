@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
         view.setMuted(checked);
     });
     view.addCheckbox("world view", Qt::Key_W, false, [&view](const bool checked) -> void {
-        view.is_zoom_out = checked;
+        view.use_world_camera = checked;
     });
     view.addCheckbox("pause", Qt::Key_X, false, [&view](const bool checked) -> void {
         view.skip_state_step = checked;

@@ -382,6 +382,10 @@ void GameState::step(const float dt)
         const auto target_angular_velocity = (
             ship_state.turning_right && !ship_state.turning_left ? -1 :
             !ship_state.turning_right && ship_state.turning_left ? 1 :
+            ship_state.turning_right && ship_state.turning_left ?
+                ship_state.turning_right_time == ship_state.turning_left_time ? 0 :
+                ship_state.turning_right_time < ship_state.turning_left_time ? 1 :
+                -1 :
             0) * (isGrabbed() ? 2. : 2.6) * M_PI / 2.;
 
         ship_state.target_angle += target_angular_velocity * dt;
