@@ -282,7 +282,7 @@ void GameWindowOpenGL::initializePrograms()
                 }, {
                 { "cameraMatrix", crate_camera_mat_unif },
                 { "worldMatrix", crate_world_mat_unif },
-                { "texture", crate_texture_unif },
+                { "crateTexture", crate_texture_unif },
                 { "baseColor", crate_color_unif },
                 { "maxTag", crate_max_tag_unif },
                 { "tag", crate_tag_unif },
@@ -978,7 +978,7 @@ void GameWindowOpenGL::paintScene()
         { // draw with particle program
             ProgramBinder binder(*this, particle_program);
 
-            particle_program->setUniformValue(base_camera_mat_unif, camera_matrix);
+            particle_program->setUniformValue(particle_camera_mat_unif, camera_matrix);
 
             { // particle system
                 const auto& system = state->system;
@@ -1142,7 +1142,7 @@ void GameWindowOpenGL::paintScene()
                 assertNoError();
             };
 
-            main_program->setUniformValue(base_camera_mat_unif, camera_matrix);
+            main_program->setUniformValue(main_camera_mat_unif, camera_matrix);
 
             { // ship
                 QMatrix4x4 world_matrix;
@@ -1254,7 +1254,7 @@ void GameWindowOpenGL::paintScene()
                 assertNoError();
             };
 
-            ball_program->setUniformValue(base_camera_mat_unif, camera_matrix);
+            ball_program->setUniformValue(ball_camera_mat_unif, camera_matrix);
 
             {
                 assert(state->ball);
@@ -1280,6 +1280,8 @@ void GameWindowOpenGL::paintScene()
         { // draw with grab program
             ProgramBinder binder(*this, grab_program);
 
+            assertNoError();
+
             const auto blit_square = [this]() -> void
             {
                 glBindBuffer(GL_ARRAY_BUFFER, vbos[2]);
@@ -1294,7 +1296,7 @@ void GameWindowOpenGL::paintScene()
                 assertNoError();
             };
 
-            ball_program->setUniformValue(base_camera_mat_unif, camera_matrix);
+            grab_program->setUniformValue(grab_camera_mat_unif, camera_matrix);
 
             { // grab indicator
                 QMatrix4x4 world_matrix;
@@ -1309,6 +1311,7 @@ void GameWindowOpenGL::paintScene()
                 grab_program->setUniformValue(grab_time_unif, world_time);
                 grab_program->setUniformValue(grab_halo_out_color_unif, QColor::fromRgbF(halo_out_color[0], halo_out_color[1], halo_out_color[2], halo_out_color[3]));
                 grab_program->setUniformValue(grab_halo_in_color_unif, QColor::fromRgbF(halo_in_color[0], halo_in_color[1], halo_in_color[2], halo_in_color[3]));
+                assertNoError();
 
                 blit_square();
 
