@@ -58,12 +58,17 @@ class GameWindowOpenGL : public RasterWindowOpenGL
         unsigned int water_flags = b2_viscousParticle | b2_tensileParticle;
         bool skip_state_step = false;
         bool use_painter = true;
-        std::array<float, 2> water_drop_size = { 10, 10 };
         float world_time = 0;
 
         bool use_world_camera = false;
         Camera ship_camera;
         Camera world_camera;
+
+        b2Vec2 ship_spawn = { 0, 0 };
+        b2Vec2 ball_spawn = { 20, 0 };
+        b2Vec2 crate_spawn = { 0, 20 };
+        b2Vec2 water_spawn = { 0, 50 };
+        b2Vec2 water_drop_size = { 10, 10 };
 
     protected:
         std::unique_ptr<QOpenGLPaintDevice> device = nullptr;

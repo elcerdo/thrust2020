@@ -22,8 +22,8 @@ const float default_restitution = 0.5;
 
 GameState::GameState()
 {
-    resetShip();
-    resetBall();
+    resetShip({ 0, 0 });
+    resetBall({ 0, 0 });
     resetParticleSystem();
 
     /*
@@ -190,7 +190,7 @@ void GameState::dumpCollisionData() const
     }
 }
 
-void GameState::resetBall()
+void GameState::resetBall(const b2Vec2& position)
 { // ball
     if (ball)
     {
@@ -204,7 +204,7 @@ void GameState::resetBall()
 
     b2BodyDef def;
     def.type = b2_dynamicBody;
-    def.position = ball_spawn;
+    def.position = position;
     def.angle = 0;
     def.angularVelocity = 0;
 
@@ -225,7 +225,7 @@ void GameState::resetBall()
     ball = UniqueBody(body, [this](b2Body* body) -> void { world.DestroyBody(body); });
 }
 
-void GameState::resetShip()
+void GameState::resetShip(const b2Vec2& position)
 { // ship
     if (ship)
     {
@@ -239,7 +239,7 @@ void GameState::resetShip()
 
     b2BodyDef def;
     def.type = b2_dynamicBody;
-    def.position = ship_spawn;
+    def.position = position;
     def.angularVelocity = 0;
     def.angle = 0;
 
@@ -266,7 +266,7 @@ void GameState::resetShip()
     ship_state = ShipState();
 }
 
-void GameState::addWater(const b2Vec2 position, const b2Vec2 size, const size_t seed, const unsigned int flags)
+void GameState::addWater(const b2Vec2& position, const b2Vec2& size, const size_t seed, const unsigned int flags)
 {
     using std::cout;
     using std::endl;
@@ -450,7 +450,7 @@ void GameState::BeginContact(b2Contact* contact)
     all_accum_contact++;
 }
 
-void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 delta)
+void GameState::addDoor(const b2Vec2& pos, const b2Vec2& size, const b2Vec2& delta)
 {
     UniqueBody door = nullptr;
     {
@@ -499,7 +499,7 @@ void GameState::addDoor(const b2Vec2 pos, const b2Vec2 size, const b2Vec2 delta)
 }
 
 
-void GameState::addPath(const std::vector<b2Vec2>& positions, const b2Vec2 size)
+void GameState::addPath(const std::vector<b2Vec2>& positions, const b2Vec2& size)
 {
     assert(!positions.empty());
     const auto& p0 = positions.front();
@@ -531,7 +531,7 @@ void GameState::addPath(const std::vector<b2Vec2>& positions, const b2Vec2 size)
     doors.emplace_back(std::move(door), positions, 0);
 }
 
-void GameState::addCrate(const b2Vec2 pos, const b2Vec2 velocity, const double angle, const int tag)
+void GameState::addCrate(const b2Vec2& pos, const b2Vec2& velocity, const double angle, const int tag)
 {
     b2BodyDef def;
     def.type = b2_dynamicBody;

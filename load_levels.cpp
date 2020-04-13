@@ -54,6 +54,9 @@ levels::MainData levels::load(const std::string& json_filename)
             float_from_json(level_obj, "ship_screen_height", 70),
             vec2_from_json(level_obj, "ship_spawn_x", "ship_spawn_y", b2Vec2 { 0, 0 }),
             vec2_from_json(level_obj, "ball_spawn_x", "ball_spawn_y", b2Vec2 { 20, 0 }),
+            vec2_from_json(level_obj, "crate_spawn_x", "crate_spawn_y", b2Vec2 { 0, 20 }),
+            vec2_from_json(level_obj, "water_spawn_x", "water_spawn_y", b2Vec2 { 0, 50 }),
+            vec2_from_json(level_obj, "water_drop_width", "water_drop_height", b2Vec2 { 15, 15 }),
         };
 
         for (const auto& door_json : level_obj["doors"].toArray())

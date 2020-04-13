@@ -8,6 +8,10 @@
       "ship_spawn_y": 50,
       "ball_spawn_x": 125,
       "ball_spawn_y": -300,
+      "crate_spawn_x": -110,
+      "crate_spawn_y": -50,
+      "water_drop_width": 15,
+      "water_drop_height": 10,
       "doors": [
         { "cx": 115, "cy": -170, "dx": 0, "dy": -20},
         { "cx": 15, "cy": -230, "dx": 20, "dy": 0},

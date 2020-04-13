@@ -21,6 +21,9 @@ struct LevelData
     float ship_screen_height;
     b2Vec2 ship_spawn;
     b2Vec2 ball_spawn;
+    b2Vec2 crate_spawn;
+    b2Vec2 water_spawn;
+    b2Vec2 water_drop_size;
 };
 
 struct MainData
