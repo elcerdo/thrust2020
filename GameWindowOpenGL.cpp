@@ -1283,7 +1283,7 @@ void GameWindowOpenGL::paintScene()
                 assertNoError();
             };
 
-            ball_program->setUniformValue(base_camera_mat_unif, camera_matrix);
+            grab_program->setUniformValue(base_camera_mat_unif, camera_matrix);
 
             { // grab indicator
                 QMatrix4x4 world_matrix;
@@ -1294,13 +1294,9 @@ void GameWindowOpenGL::paintScene()
                 world_matrix.translate(pos.x, pos.y, 2);
                 world_matrix.scale(6, 6, 1);
 
-                assertNoError();
                 grab_program->setUniformValue(grab_world_mat_unif, world_matrix);
-                assertNoError();
                 grab_program->setUniformValue(grab_time_unif, world_time);
-                assertNoError();
                 grab_program->setUniformValue(grab_halo_out_color_unif, QColor::fromRgbF(halo_out_color[0], halo_out_color[1], halo_out_color[2], halo_out_color[3]));
-                assertNoError();
                 grab_program->setUniformValue(grab_halo_in_color_unif, QColor::fromRgbF(halo_in_color[0], halo_in_color[1], halo_in_color[2], halo_in_color[3]));
                 assertNoError();
 
