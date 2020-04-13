@@ -1267,6 +1267,8 @@ void GameWindowOpenGL::paintScene()
         { // draw with grab program
             ProgramBinder binder(*this, grab_program);
 
+            assertNoError();
+
             const auto blit_square = [this]() -> void
             {
                 glBindBuffer(GL_ARRAY_BUFFER, vbos[2]);
@@ -1296,6 +1298,7 @@ void GameWindowOpenGL::paintScene()
                 grab_program->setUniformValue(grab_time_unif, world_time);
                 grab_program->setUniformValue(grab_halo_out_color_unif, QColor::fromRgbF(halo_out_color[0], halo_out_color[1], halo_out_color[2], halo_out_color[3]));
                 grab_program->setUniformValue(grab_halo_in_color_unif, QColor::fromRgbF(halo_in_color[0], halo_in_color[1], halo_in_color[2], halo_in_color[3]));
+                assertNoError();
 
                 blit_square();
 
