@@ -3,6 +3,7 @@
 #include <QSvgRenderer>
 #include <QPaintDevice>
 #include <QPaintEngine>
+#include <QPainterPath>
 
 using polygons::Color;
 using polygons::Poly;
